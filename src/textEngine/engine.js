@@ -180,38 +180,53 @@ class ModularTextEngine {
   /**
    * Render template by resolving slots and variant selection
    */
-  render(template, ctx, opts = {}) {
-    // Handle non-string templates
-    if (Array.isArray(template)) {
-      template = this.pick(template);
-    }
-    if (!template) return '';
-
-    // Resolve recursively
-    return this._resolveTemplate(template, ctx, 0, opts);
-  }
-
-  /**
-   * Recursively resolve template slots
-   */
-  _resolveTemplate(template, ctx, depth = 0, opts = {}) {
-    if (depth > 5) return template; // Max recursion depth
-
-    return template.replace(/\{([^}]+)\}/g, (match, slotExpr) => {
-      const [moduleKey, ...rest] = slotExpr.split(':');
-
-      // Select variant for module
-      const variant = this._selectVariant(moduleKey.trim(), ctx);
-      if (!variant) return match; // Fallback to original
+  render(moduleKey, ctx, opts = {}) {
+    // If moduleKey is called directly (not as slot), resolve it
+    try {
+      const variant = this._selectVariant(moduleKey, ctx);
+      if (!variant) return '';
 
       let text = variant.text;
       if (Array.isArray(text)) {
         text = this.pick(text);
       }
 
-      // Apply anti-repetition penalty
+      // Apply anti-repetition tracking
       if (opts.antiRepeat !== false) {
         const hash = `${moduleKey}:${text}`;
+        this.sessionUsed.add(hash);
+      }
+
+      // Resolve any nested slots in the text
+      return this._resolveTemplate(String(text), ctx, 0, opts);
+    } catch (error) {
+      return '';
+    }
+  }
+
+  /**
+   * Recursively resolve template slots within text
+   */
+  _resolveTemplate(text, ctx, depth = 0, opts = {}) {
+    if (depth > 5) return text; // Max recursion depth
+    if (!text) return text;
+
+    return text.replace(/\{([^}]+)\}/g, (match, slotExpr) => {
+      const [moduleKey, ...rest] = slotExpr.split(':');
+      const key = moduleKey.trim();
+
+      // Select variant for nested module
+      const variant = this._selectVariant(key, ctx);
+      if (!variant) return match; // Fallback to original
+
+      let nestedText = variant.text;
+      if (Array.isArray(nestedText)) {
+        nestedText = this.pick(nestedText);
+      }
+
+      // Apply anti-repetition penalty
+      if (opts.antiRepeat !== false) {
+        const hash = `${key}:${nestedText}`;
         if (this.sessionUsed.has(hash)) {
           return match; // Skip recently used text
         }
@@ -219,9 +234,9 @@ class ModularTextEngine {
       }
 
       // Recursively resolve nested slots
-      text = this._resolveTemplate(text, ctx, depth + 1, opts);
+      nestedText = this._resolveTemplate(String(nestedText), ctx, depth + 1, opts);
 
-      return text;
+      return nestedText;
     });
   }
 
