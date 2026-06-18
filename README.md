@@ -1,58 +1,123 @@
 # Dungeons & Fatties
 
-A web-based text adventure game built with **Vite** and **React**. This is a Dungeons & Dragons-inspired narrative-driven game with weight gain mechanics, using a modular text engine for flexible narrative and UI rendering.
+A web-based text adventure game built with **Vite** and **React**. This is a Dungeons & Dragons-inspired narrative-driven game with weight gain mechanics, featuring a robust, interactive magic system with extensive spell combinations and environmental interactions.
 
 ## Project Structure
 
 ```
 src/
 ├── engine/
-│   └── TextEngine.js          # Core modular text display system
+│   └── TextEngine.js                 # Modular text display system
 ├── game/
-│   ├── Character.js            # D&D character with stats and weight mechanics
-│   ├── GameState.js            # Global game state management with event system
-│   └── StoryEngine.js          # Scene and choice management
-├── components/
-│   ├── Game.jsx                # Main game controller
-│   ├── TextDisplay.jsx         # Renders narrative text
-│   ├── ChoicesPanel.jsx        # Displays player choices
-│   └── CharacterPanel.jsx      # Displays character stats and inventory
-├── App.jsx                      # Root component
-├── App.css                      # Game styling
-├── index.css                    # Theme and global styles
-└── main.jsx                     # Entry point
+│   ├── Character.js                  # D&D character with stats and weight mechanics
+│   ├── GameState.js                  # Global game state and event management
+│   ├── StoryEngine.js                # Scene and choice management
+│   ├── magic/
+│   │   ├── Spell.js                  # Base spell system with effects and interactions
+│   │   ├── SpellLibrary.js           # Collection of weight-gain themed spells
+│   │   └── MagicSystemExample.js     # Comprehensive examples and demonstrations
+│   ├── environment/
+│   │   └── EnvironmentalObject.js    # Objects that spells and players interact with
+│   ├── entities/
+│   │   ├── Creature.js               # Animals and creatures (Pig, Duck, Cow, etc.)
+│   │   └── NPC.js                    # Sentient NPCs (Innkeeper, Merchant, Guard, etc.)
+│   └── world/
+│       ├── Zone.js                   # Individual areas/zones
+│       └── World.js                  # World manager with 4 sample zones
+└── components/
+    ├── Game.jsx                      # Main game controller
+    ├── TextDisplay.jsx               # Renders narrative text
+    ├── ChoicesPanel.jsx              # Displays player choices
+    └── CharacterPanel.jsx            # Displays character stats
 ```
 
 ## Core Systems
 
-### TextEngine
-A modular text rendering system that handles:
-- Text buffering and history (up to 1000 entries)
-- Custom text formatters (bold, italic, colored text, etc.)
-- Tag system for interactive text elements
-- Real-time text updates
+### Magic System
+**Robust spell framework with extensive interactions:**
 
-### GameState
-Central state manager providing:
-- Player character management
-- Inventory system
-- World state tracking
-- Flag-based event/quest tracking
-- Event listener system for reactive updates
+**Spell Features:**
+- Base Spell class with customizable effects
+- Spell-to-spell interactions (synergies and combinations)
+- Environmental effects (spells can affect objects in zones)
+- Weight-gain theming for all spells adapted from D&D 5e
+
+**Example Spells (Adapted for Weight Gain Theme):**
+- **Enlarge Person** - Make targets grow larger, gain weight and strength
+- **Reduce Person** - Shrink targets (opposite of Enlarge)
+- **Shape Earth** - Reshape earth into basins, tables, structures
+- **Shape Wood** - Reshape wood into furniture, restraints, feeding stations
+- **Create Water** - Conjure water, milk, honey, and other liquids
+- **Oozing Abundance** - Fire arrows of nutritious ooze that damage and feed
+- **Feast of Shadows** - Create illusory food that sustains and causes weight gain
+- **Morph Mass** - Absorb surrounding matter into target, increasing weight
+
+**Spell Interactions:**
+- Shape Earth + Create Water = Fill basins
+- Shape Earth + Shape Wood = Create elaborate structures
+- Enlarge Person + Reduce Person = Size shifting
+- And many more combinations to discover
+
+### Zone System
+**Exploration-based world with interconnected areas:**
+
+**4 Sample Zones:**
+1. **The Bloated Boar Tavern** - Social hub with food, NPCs, low difficulty
+2. **The Abundant Garden** - Peaceful garden with creatures, fertile resources
+3. **The Grand Kitchen** - Dangerous cooking area, abundant ingredients
+4. **The Depths Below** - Dark dungeon with mysterious inhabitants, high difficulty
+
+**Zone Features:**
+- Environmental objects (Stone, Wood, Water, Earth, Furniture)
+- Creatures with hunger, feeding, and weight mechanics
+- NPCs with dialogue trees and personalities
+- Exit connections for world navigation
+- Spell affinities (certain spells work better in certain zones)
+
+### Entity Systems
+
+**Creatures:**
+- Base Creature class with health, weight, hunger
+- Specific types: Pig, Duck, Cow
+- Feeding mechanics that increase weight
+- Behavioral states (friendly, hostile, neutral, fearful)
+
+**NPCs:**
+- Named NPCs (Innkeeper, Merchant, Guard)
+- Unnamed NPCs for generic interactions
+- Personality and relationship tracking
+- Dialogue systems with state management
+- Can be fed to build relationships
+
+**Environmental Objects:**
+- Stone, Wood, Water, Earth, Furniture types
+- Spell affinity system (Shape Earth affects Earth, etc.)
+- Durability and state tracking
+- Can be reshaped by spells
 
 ### Character System
 D&D-based character with:
 - Six core attributes (STR, DEX, CON, INT, WIS, CHA)
 - Health and combat system
-- **Weight gain mechanics**: Track weight changes, accumulate gain, trigger effects
-- Body composition tracking (fat, muscle, etc.)
+- **Weight gain tracking** with multiple levels
+- Body composition tracking
 
-### StoryEngine
-Scene-based narrative system:
-- Scene creation and navigation
-- Conditional choices (show/hide based on game state)
-- Scene hooks (on enter/exit callbacks)
-- Choice history tracking
+### TextEngine
+- Text buffering with history
+- Custom formatters (bold, italic, colors)
+- Real-time updates
+
+## Magic System Examples
+
+See `src/game/magic/MagicSystemExample.js` for comprehensive examples:
+
+1. **Basic Spell Casting** - Cast spells on creatures
+2. **Environmental Interaction** - Spells affecting objects in zones
+3. **Spell Combinations** - Using multiple spells together for synergies
+4. **Feeding Sequences** - Creating food with magic and feeding creatures
+5. **Zone Exploration** - Navigating and discovering zones
+6. **NPC Interaction** - Dialogue and gift-giving
+7. **Weight Gain Tracking** - Monitoring changes from spells and feeding
 
 ## Getting Started
 
@@ -69,35 +134,47 @@ Server runs on `http://localhost:5173/`
 npm run build
 ```
 
+### Testing Magic System
+The magic system is fully functional and can be tested with the example file. Integration into the game UI is the next step.
+
 ## Next Steps
 
-To enhance the game:
+1. **Integrate magic system into UI** - Add spell casting interface and real-time effects
+2. **Expand spell library** - Add 20+ more spells with more interaction combinations
+3. **Create more zones** - Add 5-10 additional zones with unique themes
+4. **Combat system** - Turn-based magic combat with spell combinations
+5. **Creature behavior AI** - Creatures that seek food, react to spells
+6. **Save/Load system** - Persist game state and progress
+7. **Quests & NPCs** - More complex NPC interactions and quest chains
+8. **Visual effects** - Animations for spell casting and transformations
 
-1. **Import the modular text engine** from the GameDev repo - refactor TextEngine to match that system
-2. **Expand the story content** - add more scenes, NPCs, quests, and encounters
-3. **Implement combat system** - turn-based combat with abilities
-4. **Add persistence** - save/load game state to localStorage or backend
-5. **Visual enhancements** - ASCII art, better styling, animations
-6. **Audio system** - background music and sound effects
-7. **Item system** - equipment, consumables, quest items with effects
+## Architecture
+
+**Design Philosophy:**
+- Modular, decoupled systems that are independent and testable
+- Spell system is completely separate from UI - can be used in CLI or other interfaces
+- Environmental objects, creatures, and NPCs are game data, not UI concerns
+- Heavy focus on composition and interaction
+
+**Key Interactions:**
+- Spells affect environments and creatures
+- Spells interact with other spells for combo effects
+- Creatures and NPCs have weight gain that feeds into game progression
+- Zones provide context for where spells work best
 
 ## Features Implemented
 
-- ✅ Modular text engine with formatting
-- ✅ D&D character creation and stats
-- ✅ Weight gain tracking mechanics
-- ✅ Scene-based story system
-- ✅ Dynamic choice system (conditional availability)
-- ✅ Real-time character panel with stats
-- ✅ Game state management with events
-- ✅ Dark theme optimized for reading
-- ✅ Responsive UI layout
+✅ Robust spell system with interactions  
+✅ Environmental object manipulation  
+✅ Zone/world system with connections  
+✅ Creature and NPC systems  
+✅ Weight gain mechanics  
+✅ Spell library with themed spells  
+✅ Feeding and relationship systems  
+✅ Comprehensive examples and demonstrations  
+✅ GitHub Pages deployment ready  
 
-## Architecture Notes
+## Deployed Live
 
-The game uses a **model-view-controller pattern**:
-- **Models**: Character, GameState, TextEngine
-- **Views**: React components (TextDisplay, ChoicesPanel, etc.)
-- **Controller**: Game component orchestrating state and story flow
-
-All major systems are decoupled and can be tested independently.
+Game is deployed to GitHub Pages:
+🎮 **https://Rutilusaduro.github.io/Dungonsandfatties/**
