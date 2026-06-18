@@ -3,6 +3,8 @@
  * Named and unnamed sentient NPCs with personality, dialogue, and interactions
  */
 
+import { getTextEngine } from '../../textEngine/index.js';
+
 class NPC {
   constructor(name, options = {}) {
     this.name = name;
@@ -62,20 +64,48 @@ class NPC {
 
   // Get dialogue with context awareness
   getDialogue(state = null, context = {}) {
-    const dialogueKey = state || this.dialogue_state;
-    let dialogue = this.dialogues[dialogueKey] || `${this.name} looks at you.`;
+    try {
+      const engine = getTextEngine();
+      const ctx = this._createContext();
 
-    // React to weight changes
-    const weightChange = this.currentWeight - this.previousWeight;
-    if (weightChange > 0 && !context.skipWeightReaction) {
-      if (weightChange > 20) {
-        dialogue += ` She seems noticeably fuller than before!`;
-      } else if (weightChange > 10) {
-        dialogue += ` She looks a bit rounder.`;
+      // Map state to module key
+      const moduleKey = state ? `npc.dialogue.${state}` : 'npc.greeting';
+
+      // Try to render from engine
+      let dialogue = engine.render(moduleKey, ctx);
+
+      // Fallback if no module found
+      if (!dialogue) {
+        dialogue = this.dialogues[state] || `${this.name} looks at you.`;
       }
-    }
 
-    return dialogue;
+      // Add weight reaction if applicable
+      const weightChange = this.currentWeight - this.previousWeight;
+      if (weightChange > 0 && !context.skipWeightReaction) {
+        const reactionCtx = this._createContext();
+        const reaction = engine.render('npc.weight_reaction', reactionCtx);
+        if (reaction) {
+          dialogue += ` ${reaction}`;
+        }
+      }
+
+      return dialogue;
+    } catch (error) {
+      // Fallback to hardcoded dialogue if engine fails
+      const dialogueKey = state || this.dialogue_state;
+      let dialogue = this.dialogues[dialogueKey] || `${this.name} looks at you.`;
+
+      const weightChange = this.currentWeight - this.previousWeight;
+      if (weightChange > 0 && !context.skipWeightReaction) {
+        if (weightChange > 20) {
+          dialogue += ` She seems noticeably fuller than before!`;
+        } else if (weightChange > 10) {
+          dialogue += ` She looks a bit rounder.`;
+        }
+      }
+
+      return dialogue;
+    }
   }
 
   // Start conversation
@@ -86,6 +116,17 @@ class NPC {
 
   // Look at NPC - description with weight details
   examine() {
+    try {
+      const engine = getTextEngine();
+      const ctx = this._createContext();
+      const description = engine.render('npc.examine', ctx);
+      return description || this._examineWithFallback();
+    } catch (error) {
+      return this._examineWithFallback();
+    }
+  }
+
+  _examineWithFallback() {
     const weightDiff = this.currentWeight - this.baseWeight;
     const weightDesc =
       weightDiff > 30
@@ -185,6 +226,39 @@ class NPC {
         accumulated: this.weightGainAccumulated,
       },
     };
+  }
+
+  // Create context for text engine
+  _createContext() {
+    return {
+      stage: this._deriveWeightStage(),
+      corruption: 0,
+      bodyType: 'default',
+      reputation: this.playerReputation,
+      willingness: this.willingness,
+      hungerTier: 0,
+      fullness: this.isFullness ? 1 : 0,
+      season: 'spring',
+      mood: this.personality,
+      studentId: this.id,
+    };
+  }
+
+  // Derive weight stage (0-11) from current weight
+  _deriveWeightStage() {
+    const percentGain = ((this.currentWeight - this.baseWeight) / this.baseWeight) * 100;
+    if (percentGain < 5) return 0;
+    if (percentGain < 15) return 1;
+    if (percentGain < 30) return 2;
+    if (percentGain < 50) return 3;
+    if (percentGain < 75) return 4;
+    if (percentGain < 100) return 5;
+    if (percentGain < 150) return 6;
+    if (percentGain < 200) return 7;
+    if (percentGain < 300) return 8;
+    if (percentGain < 400) return 9;
+    if (percentGain < 500) return 10;
+    return 11;
   }
 }
 
