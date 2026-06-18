@@ -1,4 +1,4 @@
-import { Spell, SpellEffect, SpellOption } from './Spell';
+import { Spell, SpellEffect, SpellOption } from './Spell.js';
 
 /**
  * Spell Library

@@ -183,7 +183,13 @@ class ModularTextEngine {
   render(moduleKey, ctx, opts = {}) {
     // If moduleKey is called directly (not as slot), resolve it
     try {
-      const variant = this._selectVariant(moduleKey, ctx);
+      // Normalize context: if not already in {d: {...}} format, wrap it
+      let context = ctx;
+      if (ctx && !ctx.d) {
+        context = { d: ctx, raw: ctx };
+      }
+
+      const variant = this._selectVariant(moduleKey, context);
       if (!variant) return '';
 
       let text = variant.text;
@@ -198,7 +204,7 @@ class ModularTextEngine {
       }
 
       // Resolve any nested slots in the text
-      return this._resolveTemplate(String(text), ctx, 0, opts);
+      return this._resolveTemplate(String(text), context, 0, opts);
     } catch (error) {
       return '';
     }
