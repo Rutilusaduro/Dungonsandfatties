@@ -5,6 +5,14 @@
  */
 
 import ActiveConditions from './conditions/ActiveConditions.js';
+import {
+  applyBodyWeightChange,
+  calculateLivingCalories,
+  estimatePendingWeightGain,
+  initializeNutritionState,
+  processLongRestNutrition,
+  recordCalorieConsumption,
+} from './mechanics/NutritionSystem.js';
 
 class Character {
   constructor(name, options = {}) {
@@ -33,6 +41,8 @@ class Character {
     this.currentWeight = this.baseWeight;
     this.weightGainThreshold = options.weightGainThreshold || 10; // cumulative gain that triggers effects
     this.weightGainAccumulated = 0;
+    this.caloriesPerPound = options.caloriesPerPound || 900;
+    this.edibleYieldRatio = options.edibleYieldRatio || 0.55;
 
     // Body composition for flavor/effects
     this.bodyComposition = {
@@ -47,9 +57,16 @@ class Character {
     // Spell status + conditions (so the player can also be a narration subject)
     this.restrainedBy = null;
     this.suspensionState = null;
+    this.gravityMultiplier = options.gravityMultiplier || 1;
+    this.effectiveGravity = this.currentWeight * 0.1;
+    this.positionedOn = null;
+    this.isFloating = false;
+    this.floorTethered = false;
     this.isFullness = false;
     this.lastWeightGain = 0;
     this.conditions = new ActiveConditions();
+
+    initializeNutritionState(this, options);
   }
 
   // Engine context input ({ subject }) — see engine.js deriveFor().
@@ -82,19 +99,42 @@ class Character {
 
   // Weight gain system
   addWeight(amount) {
-    this.currentWeight += amount;
-    this.weightGainAccumulated += amount;
+    const result = applyBodyWeightChange(this, amount);
 
     // Update body composition
-    this.bodyComposition.fat += amount * 0.8;
-    this.bodyComposition.other += amount * 0.2;
+    if (amount > 0) {
+      this.bodyComposition.fat += amount * 0.8;
+      this.bodyComposition.other += amount * 0.2;
+    }
 
     // Could trigger stat changes, visual changes, etc.
     return {
       newWeight: this.currentWeight,
       accumulated: this.weightGainAccumulated,
       thresholdMet: this.weightGainAccumulated >= this.weightGainThreshold,
+      weightChange: result?.weightChange || 0,
     };
+  }
+
+  gainWeight(amount) {
+    return this.addWeight(amount);
+  }
+
+  consumeCalories(calories, source = 'Food', options = {}) {
+    return recordCalorieConsumption(this, calories, source, options);
+  }
+
+  processLongRestNutrition() {
+    const result = processLongRestNutrition(this);
+    if (result?.weightGain > 0) {
+      this.bodyComposition.fat += result.weightGain * 0.8;
+      this.bodyComposition.other += result.weightGain * 0.2;
+    }
+    return result;
+  }
+
+  getCalorieValue(options = {}) {
+    return calculateLivingCalories(this, options);
   }
 
   // Get character description
@@ -123,6 +163,14 @@ Weight: ${this.currentWeight} lbs (${weightStatus})
         current: this.currentWeight,
         base: this.baseWeight,
         accumulated: this.weightGainAccumulated,
+      },
+      nutrition: {
+        caloriesEatenToday: this.caloriesEatenToday,
+        caloriesEatenLifetime: this.caloriesEatenLifetime,
+        pendingWeightGain: estimatePendingWeightGain(this),
+        lastCaloriesConsumed: this.lastCaloriesConsumed,
+        retentionMultiplier: this.calorieRetentionMultiplier,
+        edibleCalories: this.getCalorieValue(),
       },
     };
   }

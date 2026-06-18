@@ -4,6 +4,14 @@
  */
 
 import ActiveConditions from '../conditions/ActiveConditions.js';
+import {
+  applyBodyWeightChange,
+  calculateLivingCalories,
+  estimatePendingWeightGain,
+  initializeNutritionState,
+  processLongRestNutrition,
+  recordCalorieConsumption,
+} from '../mechanics/NutritionSystem.js';
 
 class Creature {
   constructor(name, options = {}) {
@@ -40,6 +48,8 @@ class Creature {
     this.diet = options.diet || 'omnivore'; // 'herbivore', 'carnivore', 'omnivore'
     this.hungerLevel = options.hungerLevel || 50; // 0-100
     this.feedingRate = options.feedingRate || 1; // lbs per feeding
+    this.caloriesPerPound = options.caloriesPerPound || 900;
+    this.edibleYieldRatio = options.edibleYieldRatio || 0.55;
 
     // Unique ID
     this.id = options.id || Math.random().toString(36).substr(2, 9);
@@ -47,9 +57,16 @@ class Creature {
     // Spell status (mirrors NPC so the text engine can narrate creatures too)
     this.restrainedBy = null;
     this.suspensionState = null;
+    this.gravityMultiplier = options.gravityMultiplier || 1;
+    this.effectiveGravity = this.currentWeight * 0.1;
+    this.positionedOn = null;
+    this.isFloating = false;
+    this.floorTethered = false;
     this.isFullness = false;
     this.lastWeightGain = 0;
     this.conditions = new ActiveConditions();
+
+    initializeNutritionState(this, options);
   }
 
   // Engine context input ({ subject }) — see engine.js deriveFor().
@@ -58,12 +75,12 @@ class Creature {
   }
 
   // Feed the creature
-  feed(amount) {
+  feed(amount, foodName = 'Food', calories = null) {
     this.hungerLevel = Math.max(0, this.hungerLevel - amount);
-    this.currentWeight += this.feedingRate;
-    this.weightGainAccumulated += this.feedingRate;
+    const consumedCalories = calories ?? Math.max(0, amount) * 100;
+    this.consumeCalories(consumedCalories, foodName);
 
-    let status = 'fed';
+    let status;
     if (this.hungerLevel > 75) status = 'very_hungry';
     else if (this.hungerLevel > 50) status = 'hungry';
     else if (this.hungerLevel > 25) status = 'satisfied';
@@ -72,7 +89,8 @@ class Creature {
     return {
       creature: this.name,
       hungerLevel: this.hungerLevel,
-      newWeight: this.currentWeight,
+      calories: consumedCalories,
+      pendingWeightGain: estimatePendingWeightGain(this),
       status,
     };
   }
@@ -95,13 +113,25 @@ class Creature {
 
   // Gain weight (from spells, potions, etc.)
   gainWeight(amount) {
-    this.currentWeight += amount;
-    this.weightGainAccumulated += amount;
+    const result = applyBodyWeightChange(this, amount);
     return {
       creature: this.name,
       newWeight: this.currentWeight,
       accumulated: this.weightGainAccumulated,
+      weightChange: result?.weightChange || 0,
     };
+  }
+
+  consumeCalories(calories, source = 'Food', options = {}) {
+    return recordCalorieConsumption(this, calories, source, options);
+  }
+
+  processLongRestNutrition() {
+    return processLongRestNutrition(this);
+  }
+
+  getCalorieValue(options = {}) {
+    return calculateLivingCalories(this, options);
   }
 
   // Get creature status
@@ -120,6 +150,14 @@ class Creature {
         current: this.currentWeight,
         base: this.baseWeight,
         gained: this.weightGainAccumulated,
+      },
+      nutrition: {
+        caloriesEatenToday: this.caloriesEatenToday,
+        caloriesEatenLifetime: this.caloriesEatenLifetime,
+        pendingWeightGain: estimatePendingWeightGain(this),
+        lastCaloriesConsumed: this.lastCaloriesConsumed,
+        retentionMultiplier: this.calorieRetentionMultiplier,
+        edibleCalories: this.getCalorieValue(),
       },
       hunger: this.hungerLevel,
       behavior: this.behavior,
@@ -169,6 +207,8 @@ class Pig extends Beast {
       baseWeight: 200,
       diet: 'omnivore',
       feedingRate: 2,
+      caloriesPerPound: 1100,
+      edibleYieldRatio: 0.6,
       hungerLevel: 60,
       ...options,
     });
@@ -183,6 +223,8 @@ class Duck extends Beast {
       baseWeight: 5,
       diet: 'omnivore',
       feedingRate: 0.5,
+      caloriesPerPound: 900,
+      edibleYieldRatio: 0.45,
       canSwim: true,
       hungerLevel: 70,
       ...options,
@@ -198,6 +240,8 @@ class Cow extends Beast {
       baseWeight: 1200,
       diet: 'herbivore',
       feedingRate: 3,
+      caloriesPerPound: 1150,
+      edibleYieldRatio: 0.62,
       hungerLevel: 40,
       ...options,
     });

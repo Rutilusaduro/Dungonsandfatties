@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import TextDisplay from './TextDisplay';
 import CharacterPanel from './CharacterPanel';
 import SpellCaster from './SpellCaster';
@@ -9,6 +9,7 @@ import Character from '../game/Character';
 import TextEngine from '../engine/TextEngine';
 import SpellLibrary from '../game/magic/SpellLibrary';
 import SpellNarrator from '../game/magic/SpellNarrator';
+import SpellResolver from '../game/magic/SpellResolver';
 import { getTextEngine } from '../textEngine/index.js';
 import { RESTRAINT_MATERIAL } from '../game/conditions/ActiveConditions.js';
 import World from '../game/world/World';
@@ -33,8 +34,11 @@ function applySpellConditions(spell, target, selectedOption) {
     const material = RESTRAINT_MATERIAL[spellKey] || 'magic';
     target.conditions?.add('restrained', { source: spellKey, material, suspension });
   }
-  if (spellKey === 'erupting_earth' && optionName === 'Bury') {
-    target.conditions?.add('buried', {});
+  if (
+    (spellKey === 'erupting_earth' && optionName === 'Bury') ||
+    (spellKey === 'shape_earth' && optionName === 'Bury Target')
+  ) {
+    target.conditions?.add('buried', { depth: target.buriedDepth || 1 });
   }
   if (spellKey === 'rapid_digestion') {
     target.isFullness = true;
@@ -57,7 +61,6 @@ const Game = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [currentZone, setCurrentZone] = useState(null);
   const [textBuffer, setTextBuffer] = useState([]);
-  const [gameMode, setGameMode] = useState('exploration'); // 'exploration' or 'story'
   const [selectedNPC, setSelectedNPC] = useState(null);
 
   // Initialize game
@@ -89,14 +92,7 @@ const Game = () => {
     const caster = gameState.getPlayer();
     if (!caster) return;
 
-    const context = {
-      environmentalObjects: zone.getEnvironmentalObjects(),
-      creatures: zone.getCreatures(),
-      npcs: zone.getNPCs(),
-      previousSpells: [],
-    };
-
-    const result = spell.cast(caster, target, context, selectedOption);
+    const { result } = SpellResolver.cast({ spell, caster, target, zone, selectedOption });
 
     textEngine.clearBuffer();
 
@@ -105,10 +101,50 @@ const Game = () => {
       const scene = SpellNarrator.narrateSpellScene(spell, caster, target, selectedOption);
       textEngine.addText(scene);
 
-      // Accumulate total weight gain from all effects
-      const totalWeightGain = result.effects.reduce((sum, e) => {
-        return sum + (e.weightChange || e.weightGainPerCreature || 0);
-      }, 0);
+      if (result.interactions?.length > 0) {
+        result.interactions.forEach(interaction => {
+          let interactionText = '';
+          if (interaction.moduleKey && target?._createContext) {
+            const engine = getTextEngine();
+            interactionText = engine.render(
+              interaction.moduleKey,
+              target._createContext({
+                ref: caster,
+                globals: {
+                  spell: spell.name.toLowerCase().replace(/ /g, '_'),
+                  recentSpells: target.spellAffects || [],
+                },
+              }),
+            );
+          }
+          textEngine.addText(`Synergy: ${interactionText || interaction.description}`);
+        });
+      }
+
+      if (result.environmentalChanges?.length > 0) {
+        result.environmentalChanges.forEach(change => {
+          if (change.description) textEngine.addText(`Environment: ${change.description}`);
+        });
+      }
+
+      if (result.appliedModifiers?.length > 0) {
+        result.appliedModifiers.forEach(modifier => {
+          textEngine.addText(`Resonance: ${modifier.label}`);
+        });
+      }
+
+      if (result.createdFoods?.length > 0) {
+        const foodNames = result.createdFoods.map(food => food.name).join(', ');
+        textEngine.addText(`Created food now persists here: ${foodNames}.`);
+      }
+
+      if (result.summonedCreatures?.length > 0) {
+        const creatureNames = result.summonedCreatures.map(creature => creature.name).join(', ');
+        textEngine.addText(`Summoned creatures now occupy this area: ${creatureNames}.`);
+      }
+
+      const totalImmediateWeightGain = SpellResolver.totalImmediateWeightGain(result);
+      const totalCaloriesLogged = SpellResolver.totalCaloriesLogged(result);
 
       // Knowledge spells (Detect Cravings) surface revealed preferences as text.
       const knowledgeEffect = result.effects.find(e => e.type === 'knowledge_gained');
@@ -122,7 +158,14 @@ const Game = () => {
 
       // NPC reactions (weight gain + restraint status)
       if (target && target._createContext) {
-        if (totalWeightGain > 0) {
+        if (totalCaloriesLogged > 0) {
+          const pendingGain = target.pendingWeightGain || 0;
+          textEngine.addText(
+            `Nutrition: ${target.name} has taken in ${totalCaloriesLogged} calories today. Estimated long-rest gain: +${pendingGain} lbs.`,
+          );
+        }
+
+        if (totalImmediateWeightGain > 0) {
           // Check if target is suspended — render special suspended weight gain scene
           if (target.suspensionState === 'ceiling') {
             const engine = getTextEngine();
@@ -133,7 +176,7 @@ const Game = () => {
             }
           } else {
             // Normal weight gain reaction
-            const weightReaction = SpellNarrator.triggerNPCReactions(target, 'weight_gain', totalWeightGain);
+            const weightReaction = SpellNarrator.triggerNPCReactions(target, 'weight_gain', totalImmediateWeightGain);
             if (weightReaction) textEngine.addText(weightReaction);
           }
         }
@@ -154,6 +197,41 @@ const Game = () => {
     } else {
       textEngine.addText(`${result.message}`);
     }
+
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleLongRest = () => {
+    if (!currentZone) return;
+
+    const player = gameState.getPlayer();
+    const restTargets = [
+      player,
+      ...currentZone.getNPCs(),
+      ...currentZone.getCreatures(),
+    ].filter(Boolean);
+
+    textEngine.clearBuffer();
+    textEngine.addText('You take a long rest. The day\'s meals and magic settle into lasting changes.');
+
+    const summaries = restTargets
+      .map(entity => ({ entity, result: entity.processLongRestNutrition?.() }))
+      .filter(({ result }) => result && (result.rawCalories > 0 || result.weightGain > 0));
+
+    if (summaries.length === 0) {
+      textEngine.addText('No one has eaten enough today for the rest to change their weight.');
+    }
+
+    summaries.forEach(({ entity, result }) => {
+      textEngine.addText(
+        `${entity.name}: ${result.rawCalories} calories eaten, ${result.effectiveCalories} effective calories, +${result.weightGain} lbs after rest.`,
+      );
+
+      if (result.weightGain > 0 && entity._createContext) {
+        const reaction = SpellNarrator.triggerNPCReactions(entity, 'weight_gain', result.weightGain);
+        if (reaction) textEngine.addText(reaction);
+      }
+    });
 
     setTextBuffer(textEngine.getBuffer());
   };
@@ -206,6 +284,11 @@ const Game = () => {
       <div style={styles.mainContent}>
         <div style={styles.primaryPanel}>
           <TextDisplay textBuffer={textBuffer} />
+          <div style={styles.actionBar}>
+            <button onClick={handleLongRest} style={styles.restButton}>
+              Long Rest
+            </button>
+          </div>
           {currentZone && (
             <div style={styles.zoneSection}>
               <ZoneDisplay
@@ -308,6 +391,24 @@ const styles = {
   },
   panelSection: {
     borderBottom: '1px solid #333',
+  },
+  actionBar: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '8px',
+    padding: '10px 14px',
+    borderTop: '1px solid #333',
+    borderBottom: '1px solid #333',
+    backgroundColor: '#121212',
+  },
+  restButton: {
+    padding: '8px 14px',
+    backgroundColor: '#4a6a2a',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
   },
   startScreen: {
     display: 'flex',

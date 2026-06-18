@@ -114,7 +114,7 @@ class Spell {
   }
 
   // Get available options for a given target
-  getAvailableOptions(caster, target, context = {}) {
+  getAvailableOptions(caster, target) {
     return this.options.filter(opt => {
       if (opt.requiresTarget && !target) return false;
       if (opt.requiresObjectType && target && target.type !== opt.requiresObjectType) {
@@ -128,7 +128,7 @@ class Spell {
     });
   }
 
-  canCast(caster) {
+  canCast() {
     // Override in subclasses for spell requirements
     return true;
   }
@@ -164,38 +164,20 @@ class Spell {
     if (selectedOption && this.options.includes(selectedOption)) {
       const optionResult = selectedOption.apply(caster, target, context);
       results.effects.push(optionResult);
-
-      // Apply immediate weight changes from option
-      if (optionResult.weightChange && target) {
-        if (target.gainWeight) {
-          target.gainWeight(optionResult.weightChange);
-        } else if (target.currentWeight !== undefined) {
-          target.currentWeight += optionResult.weightChange;
-        }
-      }
     } else {
       // Apply default spell effects
       for (const effect of this.effects) {
         const result = effect.apply(caster, target, context);
         results.effects.push(result);
-
-        // Apply immediate weight changes
-        if (result.weightChange && target) {
-          if (target.gainWeight) {
-            target.gainWeight(result.weightChange);
-          } else if (target.currentWeight !== undefined) {
-            target.currentWeight += result.weightChange;
-          }
-        }
       }
     }
 
     // Check for environmental interactions
     if (context.environmentalObjects && this.environmentalEffects.length > 0) {
       for (const envEffect of this.environmentalEffects) {
-        const matchingObjects = context.environmentalObjects.filter(
-          obj => obj.type === envEffect.objectType
-        );
+        const matchingObjects = context.environmentalObjects.filter(obj => {
+          return obj.type === envEffect.objectType || obj.isAffectedBy?.(this.name);
+        });
 
         for (const obj of matchingObjects) {
           const result = envEffect.implementation(obj, caster, context, selectedOption);

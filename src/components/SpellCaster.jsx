@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone }) => {
+const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -79,6 +79,7 @@ const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone 
   const availableOptions = selectedSpell && selectedTarget
     ? selectedSpell.getAvailableOptions(null, selectedTarget, { zone: currentZone })
     : selectedSpell?.options || [];
+  const hasZoneAffinity = selectedSpell && currentZone?.spellAffinity?.includes(selectedSpell.name);
 
   return (
     <div style={styles.container}>
@@ -138,6 +139,12 @@ const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone 
               </p>
             )}
 
+            {hasZoneAffinity && (
+              <p style={styles.affinityText}>
+                This zone resonates with {selectedSpell.name}.
+              </p>
+            )}
+
             {selectedSpell.interactsWith.length > 0 && (
               <div style={styles.interactions}>
                 <p style={styles.interactionLabel}>Synergizes with:</p>
@@ -185,6 +192,7 @@ const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone 
                   >
                     {target.name}
                     {target.type === 'wood' || target.type === 'earth' ? ' (object)' : ''}
+                    {target.isAffectedBy?.(selectedSpell.name) ? ' - receptive' : ''}
                   </button>
                 ))}
               </div>
@@ -331,6 +339,14 @@ const styles = {
     fontSize: '11px',
     color: '#ffeb99',
     fontStyle: 'italic',
+  },
+  affinityText: {
+    margin: '8px 0 0 0',
+    padding: '7px',
+    backgroundColor: '#1f3322',
+    borderLeft: '3px solid #5a8a3a',
+    fontSize: '11px',
+    color: '#bfe6b8',
   },
   interactions: {
     marginTop: '10px',

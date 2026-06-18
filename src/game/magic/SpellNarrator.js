@@ -27,6 +27,7 @@ export class SpellNarrator {
         option: optionKey,
         recentSpells: (target && target.spellAffects) ? [...target.spellAffects] : [],
         lastWeightGain: target ? (target.lastWeightGain || 0) : 0,
+        lastCaloriesConsumed: target ? (target.lastCaloriesConsumed || 0) : 0,
       });
 
       let scene = '';

@@ -12,11 +12,47 @@ class GravityCalculator {
   // Calculate gravity for an NPC or creature based on weight
   calculateGravity(entity) {
     if (!entity.currentWeight) return 0;
+    return entity.currentWeight * this.gravityConstant * this.getGravityMultiplier(entity);
+  }
+
+  calculateBaseGravity(entity) {
+    if (!entity.currentWeight) return 0;
     return entity.currentWeight * this.gravityConstant;
+  }
+
+  getGravityMultiplier(entity) {
+    return entity?.gravityMultiplier ?? 1;
+  }
+
+  updateEntityGravity(entity) {
+    if (!entity) return 0;
+    const gravity = this.calculateGravity(entity);
+    entity.effectiveGravity = gravity;
+    entity.gravity = gravity;
+    entity.isFloating = !!entity.floatOverride || gravity <= 0.5;
+    return gravity;
+  }
+
+  multiplyGravity(entity, factor) {
+    if (!entity) return 1;
+    entity.gravityMultiplier = (entity.gravityMultiplier ?? 1) * factor;
+    this.updateEntityGravity(entity);
+    return entity.gravityMultiplier;
+  }
+
+  reduceGravity(entity, factor) {
+    if (!entity) return 1;
+    entity.gravityMultiplier = Math.max(0.05, (entity.gravityMultiplier ?? 1) * factor);
+    this.updateEntityGravity(entity);
+    return entity.gravityMultiplier;
   }
 
   // Get the breaking point for an environmental object or structure
   getBreakingPoint(object) {
+    if (object?.properties?.supportable_weight) {
+      return Number(object.properties.supportable_weight) * this.gravityConstant;
+    }
+
     if (!object.breakingPoint) {
       // Default breaking point based on material and size
       const materialStrength = {
@@ -82,7 +118,7 @@ class GravityCalculator {
       originalBreakingPoint: this.getBreakingPoint(structure),
       newBreakingPoint: Infinity,
       supportType: 'hybrid', // vines + ground
-      description: `Belly contact with ground provides additional support`,
+      description: `${entity?.name || 'The target'} gains additional support from belly contact with the ground`,
     };
   }
 
@@ -96,6 +132,7 @@ class GravityCalculator {
       vineCapacity: vineStrength,
       canSupport: entityGravity <= vineStrength,
       failureWeight: Math.ceil((vineStrength / this.gravityConstant) / 10) * 10, // Round to nearest 10 lbs
+      ceilingHeight,
       description: entityGravity > vineStrength
         ? `Too heavy! Target weighs too much for the vines (${Math.floor(entityGravity)} vs ${vineStrength} strength)`
         : `Vines can support target (${Math.floor(entityGravity)} vs ${vineStrength} strength)`,

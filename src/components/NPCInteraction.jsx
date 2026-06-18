@@ -172,6 +172,19 @@ const NPCInteraction = ({ npc, onClose, onAction }) => {
                   Total Gained: +{npc.weightGainAccumulated} lbs
                 </p>
               )}
+              <p style={styles.label}>Nutrition:</p>
+              <p style={styles.detailText}>
+                Today: {npc.caloriesEatenToday || 0} calories
+              </p>
+              <p style={styles.detailText}>
+                Pending Rest Gain: +{npc.pendingWeightGain || 0} lbs
+              </p>
+              <p style={styles.detailText}>
+                Retention: x{(npc.calorieRetentionMultiplier || 1).toFixed(2)}
+              </p>
+              <p style={styles.detailText}>
+                Calorie Value: {npc.getCalorieValue?.() || 0} calories
+              </p>
 
               <button onClick={handleExamine} style={styles.actionButton}>
                 Examine Closely

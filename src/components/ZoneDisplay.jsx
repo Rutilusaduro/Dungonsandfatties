@@ -48,6 +48,20 @@ const ZoneDisplay = ({ zone, onZoneAction, onNPCInteract }) => {
                           </span>
                         )}
                       </div>
+                      {(npc.caloriesEatenToday > 0 || npc.pendingWeightGain > 0 || (npc.calorieRetentionMultiplier || 1) !== 1) && (
+                        <div style={styles.nutritionState}>
+                          {npc.caloriesEatenToday || 0} cal today - rest gain +{npc.pendingWeightGain || 0} lbs
+                          {(npc.calorieRetentionMultiplier || 1) !== 1 ? ` - retention x${(npc.calorieRetentionMultiplier || 1).toFixed(2)}` : ''}
+                        </div>
+                      )}
+                      {(npc.gravityMultiplier !== 1 || npc.isFloating || npc.floorTethered || npc.positionedOn) && (
+                        <div style={styles.gravityState}>
+                          Gravity x{(npc.gravityMultiplier || 1).toFixed(2)}
+                          {npc.isFloating ? ' - floating' : ''}
+                          {npc.floorTethered ? ' - floor-tethered' : ''}
+                          {npc.positionedOn ? ` - on ${npc.positionedOn}` : ''}
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => onNPCInteract(npc)}
@@ -79,6 +93,23 @@ const ZoneDisplay = ({ zone, onZoneAction, onNPCInteract }) => {
                       </span>
                     )}
                   </div>
+                  <div style={styles.nutritionState}>
+                    Food value: {creature.getCalorieValue?.() || 0} cal
+                    {(creature.caloriesEatenToday > 0 || creature.pendingWeightGain > 0 || (creature.calorieRetentionMultiplier || 1) !== 1) && (
+                      <>
+                        {' '}| {creature.caloriesEatenToday || 0} cal today - rest gain +{creature.pendingWeightGain || 0} lbs
+                        {(creature.calorieRetentionMultiplier || 1) !== 1 ? ` - retention x${(creature.calorieRetentionMultiplier || 1).toFixed(2)}` : ''}
+                      </>
+                    )}
+                  </div>
+                  {(creature.gravityMultiplier !== 1 || creature.isFloating || creature.floorTethered || creature.positionedOn) && (
+                    <div style={styles.gravityState}>
+                      Gravity x{(creature.gravityMultiplier || 1).toFixed(2)}
+                      {creature.isFloating ? ' - floating' : ''}
+                      {creature.floorTethered ? ' - floor-tethered' : ''}
+                      {creature.positionedOn ? ` - on ${creature.positionedOn}` : ''}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -92,7 +123,30 @@ const ZoneDisplay = ({ zone, onZoneAction, onNPCInteract }) => {
               {zone.getEnvironmentalObjects().map(obj => (
                 <li key={obj.id} style={styles.entityItem}>
                   <strong>{obj.name}</strong> ({obj.type})
-                  <div style={styles.objectState}>{obj.description}</div>
+                  <div style={styles.objectState}>
+                    {obj.description}
+                    {obj.state && obj.state !== 'intact' ? ` - ${obj.state}` : ''}
+                    {obj.properties?.contains ? ` - contains ${obj.properties.contains}` : ''}
+                    {obj.properties?.supportable_weight ? ` - supports ${obj.properties.supportable_weight} lbs` : ''}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {zone.getFoods?.().length > 0 && (
+          <div style={styles.entityGroup}>
+            <p style={styles.entityLabel}>Created Food:</p>
+            <ul style={styles.entityList}>
+              {zone.getFoods().map((food, idx) => (
+                <li key={`${food.name}_${idx}`} style={styles.entityItem}>
+                  <strong>{food.name}</strong>
+                  <div style={styles.objectState}>
+                    {food.totalCalories} calories
+                    {food.isMagical ? ' - magical' : ''}
+                    {food.isReplicating ? ' - replicating' : ''}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -204,6 +258,16 @@ const styles = {
   gainedWeight: {
     color: '#ff9800',
     fontWeight: 'bold',
+  },
+  gravityState: {
+    marginTop: '3px',
+    fontSize: '11px',
+    color: '#9fd6ff',
+  },
+  nutritionState: {
+    marginTop: '3px',
+    fontSize: '11px',
+    color: '#d7b56d',
   },
   interactBtn: {
     padding: '4px 10px',

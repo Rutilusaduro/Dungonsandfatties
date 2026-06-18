@@ -5,6 +5,14 @@
 
 import { getTextEngine } from '../../textEngine/index.js';
 import ActiveConditions from '../conditions/ActiveConditions.js';
+import {
+  applyBodyWeightChange,
+  calculateLivingCalories,
+  estimatePendingWeightGain,
+  initializeNutritionState,
+  processLongRestNutrition,
+  recordCalorieConsumption,
+} from '../mechanics/NutritionSystem.js';
 
 class NPC {
   constructor(name, options = {}) {
@@ -32,6 +40,8 @@ class NPC {
     this.currentWeight = this.baseWeight;
     this.weightGainAccumulated = 0;
     this.previousWeight = this.baseWeight; // Track for dialogue about weight changes
+    this.caloriesPerPound = options.caloriesPerPound || 900;
+    this.edibleYieldRatio = options.edibleYieldRatio || 0.55;
 
     // Relationship tracking
     this.playerReputation = options.playerReputation || 0; // -100 to 100
@@ -60,6 +70,11 @@ class NPC {
 
     // Gravity and state
     this.gravity = this.currentWeight * 0.1; // gravity = weight * gravityConstant
+    this.gravityMultiplier = options.gravityMultiplier || 1;
+    this.effectiveGravity = this.gravity;
+    this.positionedOn = null;
+    this.isFloating = false;
+    this.floorTethered = false;
     this.isFullness = false; // Fullness state from Rapid Digestion spell
     this.suspensionState = null; // Track suspension: 'ceiling', 'hybrid' (belly touching), etc.
 
@@ -68,6 +83,8 @@ class NPC {
     this.lastWeightGain = 0;   // Most recent weight gain amount (for reaction scaling)
     this.spellAffects = [];    // Active spell effects on this NPC
     this.conditions = new ActiveConditions(); // Lingering spell conditions (text-engine dims)
+
+    initializeNutritionState(this, options);
   }
 
   // Get dialogue with context awareness
@@ -104,7 +121,7 @@ class NPC {
       const ctx = this._createContext();
       const description = engine.render('npc.examine', ctx);
       return description || this._examineWithFallback();
-    } catch (error) {
+    } catch {
       return this._examineWithFallback();
     }
   }
@@ -161,33 +178,49 @@ class NPC {
 
   // Gain weight
   gainWeight(amount) {
-    this.currentWeight += amount;
-    this.weightGainAccumulated += amount;
+    const result = applyBodyWeightChange(this, amount);
     this.recalculateGravity();
     return {
       npc: this.name,
       newWeight: this.currentWeight,
       accumulated: this.weightGainAccumulated,
       gravity: this.gravity,
+      weightChange: result?.weightChange || 0,
     };
   }
 
   // Recalculate gravity when weight changes
   recalculateGravity() {
-    this.gravity = this.currentWeight * 0.1;
+    const baseGravity = this.currentWeight * 0.1;
+    this.gravity = baseGravity;
+    this.effectiveGravity = baseGravity * (this.gravityMultiplier || 1);
   }
 
   // Feed the NPC (weight gain themed)
   feed(foodName, calorieValue = 100, weight = 1) {
-    this.gainWeight(weight);
+    const calories = calorieValue || weight * 3500;
+    this.consumeCalories(calories, foodName);
     this.modifyReputation(5); // Feeding builds relationship
 
     return {
       npc: this.name,
       food: foodName,
-      newWeight: this.currentWeight,
+      calories,
+      pendingWeightGain: estimatePendingWeightGain(this),
       reputation: this.playerReputation,
     };
+  }
+
+  consumeCalories(calories, source = 'Food', options = {}) {
+    return recordCalorieConsumption(this, calories, source, options);
+  }
+
+  processLongRestNutrition() {
+    return processLongRestNutrition(this);
+  }
+
+  getCalorieValue(options = {}) {
+    return calculateLivingCalories(this, options);
   }
 
   // Get NPC info for display
@@ -207,6 +240,14 @@ class NPC {
         current: this.currentWeight,
         base: this.baseWeight,
         accumulated: this.weightGainAccumulated,
+      },
+      nutrition: {
+        caloriesEatenToday: this.caloriesEatenToday,
+        caloriesEatenLifetime: this.caloriesEatenLifetime,
+        pendingWeightGain: estimatePendingWeightGain(this),
+        lastCaloriesConsumed: this.lastCaloriesConsumed,
+        retentionMultiplier: this.calorieRetentionMultiplier,
+        edibleCalories: this.getCalorieValue(),
       },
     };
   }

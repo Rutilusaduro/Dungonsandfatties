@@ -25,6 +25,10 @@ class Zone {
     // Spell interactions - which spells work well here
     this.spellAffinity = options.spellAffinity || [];
 
+    // Shared resources created or modified by magic in this zone
+    this.foodInventory = options.foodInventory || [];
+    this.spellHistory = options.spellHistory || [];
+
     // Zone state
     this.explored = false;
     this.discovered = false;
@@ -63,6 +67,11 @@ class Zone {
     return this;
   }
 
+  removeEnvironmentalObject(objectId) {
+    this.environmentalObjects.delete(objectId);
+    return this;
+  }
+
   // Get all entities in zone
   getEnvironmentalObjects() {
     return Array.from(this.environmentalObjects.values());
@@ -74,6 +83,60 @@ class Zone {
 
   getNPCs() {
     return Array.from(this.npcs.values());
+  }
+
+  addFood(food, source = null) {
+    this.foodInventory.push({
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      food,
+      source,
+      createdAt: Date.now(),
+    });
+    return food;
+  }
+
+  getFoods() {
+    return this.foodInventory.map(entry => entry.food);
+  }
+
+  consumeFood(food, servings = 1) {
+    const entry = this.foodInventory.find(item => item.food === food);
+    if (!entry) return null;
+
+    const consumedServings = Math.min(Math.max(1, servings), entry.food.servings || 1);
+    entry.food.servings = Math.max(0, (entry.food.servings || 1) - consumedServings);
+    entry.food.totalCalories = entry.food.caloriesPerServing * entry.food.servings;
+
+    if (entry.food.servings <= 0 && !entry.food.isReplicating) {
+      this.foodInventory = this.foodInventory.filter(item => item !== entry);
+    } else if (entry.food.isReplicating && entry.food.servings <= 0) {
+      entry.food.servings = 1;
+      entry.food.totalCalories = entry.food.caloriesPerServing;
+    }
+
+    return {
+      food: entry.food,
+      servings: consumedServings,
+      calories: entry.food.caloriesPerServing * consumedServings,
+    };
+  }
+
+  recordSpellCast(spell, target = null, result = null) {
+    const entry = {
+      name: spell.name,
+      key: spell.name.toLowerCase().replace(/ /g, '_'),
+      targetName: target ? target.name : 'area',
+      resultTypes: result?.effects?.map(effect => effect.type).filter(Boolean) || [],
+      castAt: Date.now(),
+    };
+
+    this.spellHistory.push(entry);
+    if (this.spellHistory.length > 12) this.spellHistory.shift();
+    return entry;
+  }
+
+  getRecentSpells(limit = 6) {
+    return this.spellHistory.slice(-limit);
   }
 
   // Get specific entity
@@ -144,6 +207,7 @@ Features: ${this.features.length > 0 ? this.features.join(', ') : 'None notable'
       environmentalObjects: this.getEnvironmentalObjects().length,
       creatures: this.getCreatures().length,
       npcs: this.getNPCs().length,
+      foods: this.foodInventory.length,
       explored: this.explored,
       discovered: this.discovered,
     };

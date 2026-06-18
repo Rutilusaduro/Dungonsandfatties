@@ -75,6 +75,22 @@ const CharacterPanel = ({ character }) => {
           <span>{stats.weight.accumulated}</span>
         </div>
       </div>
+
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>Nutrition</h3>
+        <div style={styles.stat}>
+          <span style={styles.label}>Today:</span>
+          <span>{stats.nutrition?.caloriesEatenToday || 0} cal</span>
+        </div>
+        <div style={styles.stat}>
+          <span style={styles.label}>Rest Gain:</span>
+          <span>+{stats.nutrition?.pendingWeightGain || 0} lbs</span>
+        </div>
+        <div style={styles.stat}>
+          <span style={styles.label}>Retention:</span>
+          <span>x{(stats.nutrition?.retentionMultiplier || 1).toFixed(2)}</span>
+        </div>
+      </div>
     </div>
   );
 };

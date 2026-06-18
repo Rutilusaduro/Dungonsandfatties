@@ -136,6 +136,8 @@ class SpellLibrary {
         tags: ['environmental', 'creation', 'shaping'],
       })
         .addValidTarget('object')
+        .addValidTarget('npc')
+        .addValidTarget('creature')
         .addOption(
           new SpellOption('Create Basin', 'Shape into a basin for holding liquids',
             (caster, target, context) => {
@@ -361,7 +363,7 @@ class SpellLibrary {
         duration: '1 hour',
         description: 'Create illusory food that sustains creatures',
         weightGainTheme:
-          'Conjure phantom food that feels and tastes real, providing sustenance but also disorientation. Targets gain weight from "eating".',
+          'Conjure phantom food that feels and tastes real, providing sustenance but also disorientation. Eaten illusion-food becomes calories that settle after a long rest.',
         tags: ['illusion', 'feeding', 'trickery'],
       })
         .addEffect(
@@ -509,23 +511,10 @@ class SpellLibrary {
                 };
               }
 
-              // Success - they eat and gain weight
-              const weightGain = 5;
-              if (target.gainWeight) {
-                target.gainWeight(weightGain);
-              } else if (target.currentWeight !== undefined) {
-                target.currentWeight += weightGain;
-              }
-
-              // Build reputation
-              if (target.modifyReputation) {
-                target.modifyReputation(10);
-              }
-
               return {
-                type: 'feeding_success',
-                weightGain: weightGain,
-                description: `${target.name} smiles and eats some food. She gains ${weightGain} lbs and seems pleased with your generosity.`,
+                type: 'suggestion',
+                targetChoosesFood: true,
+                description: `${target.name} is open to eating, but the choice of food is still hers.`,
               };
             }
           )
@@ -983,7 +972,7 @@ class SpellLibrary {
         duration: 'Instantaneous (fullness persists)',
         description: 'Accelerate target\'s digestive system',
         weightGainTheme:
-          'Magical haste floods the GI tract. Pending food instantly becomes permanent weight. Creates satiation state.',
+          'Magical haste floods the GI tract. Food already eaten converts more efficiently during the next long rest. Creates satiation state.',
         tags: ['transmutation', 'digestion', 'weight-gain'],
       })
         .addValidTarget('npc')
@@ -1028,7 +1017,7 @@ class SpellLibrary {
               type: 'digestion',
               weightGain: option.weightGain,
               fullnessApplied: true,
-              description: 'Rapid digestion processes food instantly into weight!',
+              description: 'Rapid digestion prepares today\'s food to settle heavily during rest!',
             };
           })
         )
@@ -1102,7 +1091,7 @@ class SpellLibrary {
         duration: 'Concentration, up to 1 minute',
         description: 'Target moves and acts with supernatural speed',
         weightGainTheme:
-          'Eating and food consumption accelerates 2x. Magical metabolism only burns 50% of calories. Net rapid weight gain.',
+          'Eating and food consumption accelerates. Magical metabolism burns fewer calories, improving long-rest conversion.',
         tags: ['transmutation', 'speed', 'weight-gain'],
       })
         .addValidTarget('npc')
@@ -1272,6 +1261,216 @@ class SpellLibrary {
 
     // LEVEL 4 SPELLS
 
+    // Culinary Transmutation - turn mundane objects into edible food
+    this.registerSpell(
+      new Spell('Culinary Transmutation', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Permanent',
+        description: 'Transform a mundane object into edible food.',
+        weightGainTheme:
+          'Tables, barrels, chairs, and other objects become dense edible matter that can be offered, chosen, or used by feeding restraints.',
+        tags: ['transmutation', 'food', 'object-conversion'],
+      })
+        .addValidTarget('object')
+        .addOption(
+          new SpellOption('Sweet Conversion', 'Turn the object into dessert', (caster, target) => ({
+            type: 'object_to_food',
+            foodName: 'Pudding',
+            servings: 8,
+            caloriesPerServing: 450,
+            description: `${target?.name || 'The object'} softens into rich dessert portions.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Savory Conversion', 'Turn the object into hearty food', (caster, target) => ({
+            type: 'object_to_food',
+            foodName: 'Meat',
+            servings: 10,
+            caloriesPerServing: 500,
+            description: `${target?.name || 'The object'} becomes warm, savory portions.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Creamy Conversion', 'Turn the object into cream or custard', (caster, target) => ({
+            type: 'object_to_food',
+            foodName: 'Cream',
+            servings: 12,
+            caloriesPerServing: 420,
+            description: `${target?.name || 'The object'} melts into thick creamy food.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Object Conversion', 'Object becomes food', (caster, target) => ({
+            type: 'object_to_food',
+            foodName: 'Food',
+            servings: 8,
+            caloriesPerServing: 400,
+            description: `${target?.name || 'The object'} becomes edible food.`,
+          }))
+        )
+        .addInteraction(
+          'Suggestion',
+          'Targets can choose the transformed food from nearby options'
+        )
+        .addInteraction(
+          'Confection Snare',
+          'Forced-feeding bindings can use the transformed food as fuel'
+        )
+        .addInteraction(
+          'Duplication',
+          'Transformed food can be copied into a larger supply'
+        )
+    );
+
+    // Summon Cattle - create heavy edible/targetable creatures
+    this.registerSpell(
+      new Spell('Summon Cattle', {
+        level: 3,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: '1 hour',
+        description: 'Summon cattle into the current area.',
+        weightGainTheme:
+          'Creates large, heavy food-adjacent creatures that can be fed, enlarged, moved, converted, or used to overwhelm a room.',
+        tags: ['conjuration', 'creature', 'food-source', 'gravity'],
+      })
+        .addOption(
+          new SpellOption('One Cow', 'Summon one cow', () => ({
+            type: 'summon_cattle',
+            count: 1,
+            baseWeight: 1200,
+            description: 'A cow appears in the area.',
+          }))
+        )
+        .addOption(
+          new SpellOption('Small Herd', 'Summon three cattle', () => ({
+            type: 'summon_cattle',
+            count: 3,
+            baseWeight: 1100,
+            description: 'A small herd appears in the area.',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Cattle Summoning', 'Cattle appear', () => ({
+            type: 'summon_cattle',
+            count: 1,
+            baseWeight: 1200,
+            description: 'A cow appears in the area.',
+          }))
+        )
+        .addInteraction(
+          'Flesh to Food',
+          'Summoned cattle can become a massive food source'
+        )
+        .addInteraction(
+          'Ravenous Expansion',
+          'Ravenous targets can handle larger prey-sized meals'
+        )
+        .addInteraction(
+          'Enhance Gravity',
+          'Summoned cattle become serious structural hazards under enhanced gravity'
+        )
+    );
+
+    // Goodberry - compact portable food
+    this.registerSpell(
+      new Spell('Goodberry', {
+        level: 1,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: 'Touch',
+        duration: '24 hours',
+        description: 'Create compact magical berries packed with nourishment.',
+        weightGainTheme:
+          'Small, easy-to-eat magical berries create a subtle feeding option that NPCs may choose when stronger food is absent.',
+        tags: ['transmutation', 'food', 'healing', 'portable'],
+      })
+        .addEffect(
+          new SpellEffect('Berry Creation', 'Goodberries appear', () => ({
+            type: 'goodberry_created',
+            count: 10,
+            caloriesPerBerry: 180,
+            description: 'A handful of magical goodberries appears.',
+          }))
+        )
+        .addInteraction(
+          'Suggestion',
+          'Suggestion can make a target pick berries as a low-pressure option'
+        )
+    );
+
+    // Plant Growth - zone-scale food production
+    this.registerSpell(
+      new Spell('Plant Growth', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous',
+        description: 'Cause nearby plants to burst into edible abundance.',
+        weightGainTheme:
+          'Turns gardens, taverns with stored produce, and fertile zones into heavy food supplies.',
+        tags: ['transmutation', 'environmental', 'food', 'zone'],
+      })
+        .addEffect(
+          new SpellEffect('Abundant Growth', 'Food-bearing plants surge', () => ({
+            type: 'plant_growth_food',
+            servings: 12,
+            caloriesPerServing: 260,
+            description: 'Nearby plants produce sudden edible abundance.',
+          }))
+        )
+        .addInteraction(
+          'Create Water',
+          'Fresh water increases the yield of edible growth'
+        )
+        .addInteraction(
+          'Ravenous Expansion',
+          'Expanded appetite meets a sudden supply of produce'
+        )
+    );
+
+    // Slow - D&D control spell adapted for metabolism and restraint setups
+    this.registerSpell(
+      new Spell('Slow', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 minute',
+        description: 'Slow a target physically and metabolically.',
+        weightGainTheme:
+          'The target moves sluggishly, resists less effectively, and burns fewer calories while eating.',
+        tags: ['transmutation', 'control', 'metabolism', 'mobility'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addEffect(
+          new SpellEffect('Slowing Field', 'Target slows down', (caster, target) => ({
+            type: 'slow_applied',
+            calorieRetentionMultiplier: 1.5,
+            movementPenalty: 'slowed',
+            description: `${target?.name || 'The target'} slows under heavy transmutation magic.`,
+          }))
+        )
+        .addInteraction(
+          'Confection Snare',
+          'Slowed targets are easier for bindings to control'
+        )
+        .addInteraction(
+          'Haste',
+          'Opposes or creates unstable metabolism swings'
+        )
+        .addInteraction(
+          'Suggestion',
+          'Slowed metabolism makes chosen food settle heavier'
+        )
+    );
+
     // Confection Snare - licorice/candy vines for restraint and feeding
     this.registerSpell(
       new Spell('Confection Snare', {
@@ -1353,6 +1552,220 @@ class SpellLibrary {
               description: 'Sugary vines animate and wrap around the target!',
             };
           })
+        )
+    );
+
+    // Enhance Gravity - stacking gravity multiplier
+    this.registerSpell(
+      new Spell('Enhance Gravity', {
+        level: 2,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 10 minutes',
+        description: 'Multiply the force of gravity on one target. The effect stacks.',
+        weightGainTheme:
+          'The target becomes effectively heavier without changing mass. Suspensions, furniture, and burial effects all become more dangerous.',
+        tags: ['transmutation', 'gravity', 'weight-force', 'stacking'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption('Heavy Pull', 'Double effective gravity', (caster, target) => ({
+            type: 'gravity_enhanced',
+            gravityMultiplier: 2,
+            description: `${target?.name || 'The target'} is dragged harder toward the ground.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Crushing Pull', 'Triple effective gravity', (caster, target) => ({
+            type: 'gravity_enhanced',
+            gravityMultiplier: 3,
+            description: `${target?.name || 'The target'} is hit by a crushing gravitational surge.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Gravity Increase', 'Gravity increases', (caster, target) => ({
+            type: 'gravity_enhanced',
+            gravityMultiplier: 2,
+            description: `${target?.name || 'The target'} grows much heavier under altered gravity.`,
+          }))
+        )
+        .addInteraction(
+          'Confection Snare',
+          'Can overload ceiling suspension until the bonds tear loose'
+        )
+        .addInteraction(
+          'Telekinesis',
+          'Can make tables and other supports fail after placement'
+        )
+        .addInteraction(
+          'Shape Earth',
+          'Buried targets sink deeper under multiplied gravity'
+        )
+    );
+
+    // Telekinesis - move a target onto environmental surfaces
+    this.registerSpell(
+      new Spell('Telekinesis', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 10 minutes',
+        description: 'Move a creature or NPC onto another surface or back to the floor.',
+        weightGainTheme:
+          'Position a target onto tables, stone benches, floors, or prepared objects, then let gravity determine whether the surface holds.',
+        tags: ['transmutation', 'movement', 'gravity', 'positioning'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption('Move Onto Table', 'Place target on a table-like object', (caster, target) => ({
+            type: 'telekinesis_move',
+            destination: 'table',
+            description: `${target?.name || 'The target'} is lifted and carried toward a table.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Move Onto Bar', 'Place target on a bar counter', (caster, target) => ({
+            type: 'telekinesis_move',
+            destination: 'bar',
+            description: `${target?.name || 'The target'} is lifted and carried toward the bar.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Set On Stool', 'Balance target onto a stool', (caster, target) => ({
+            type: 'telekinesis_move',
+            destination: 'stool',
+            description: `${target?.name || 'The target'} is lowered toward a narrow stool.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Move Onto Stone', 'Place target on a stone surface', (caster, target) => ({
+            type: 'telekinesis_move',
+            destination: 'stone',
+            description: `${target?.name || 'The target'} is lifted and carried toward stone support.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Set On Floor', 'Place target on the floor', (caster, target) => ({
+            type: 'telekinesis_move',
+            destination: 'floor',
+            description: `${target?.name || 'The target'} is lowered to the floor.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Telekinetic Movement', 'Target is moved', (caster, target) => ({
+            type: 'telekinesis_move',
+            destination: 'floor',
+            description: `${target?.name || 'The target'} is moved by invisible force.`,
+          }))
+        )
+        .addInteraction(
+          'Enhance Gravity',
+          'Moving a heavy-gravity target onto furniture can break it'
+        )
+        .addInteraction(
+          'Float',
+          'Low-gravity targets are easier to place precisely'
+        )
+    );
+
+    // Float - reduce gravity until a target can drift upward
+    this.registerSpell(
+      new Spell('Float', {
+        level: 2,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 10 minutes',
+        description: 'Reduce the target\'s gravity, potentially making them float.',
+        weightGainTheme:
+          'The target becomes light enough for suspension, floor tethering, and gravity reversal tricks.',
+        tags: ['transmutation', 'gravity', 'floating', 'mobility'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption('Lighten', 'Halve effective gravity', (caster, target) => ({
+            type: 'gravity_reduced',
+            gravityMultiplier: 0.5,
+            floatThreshold: false,
+            description: `${target?.name || 'The target'} becomes easier to lift.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Drift', 'Reduce gravity to a gentle drift', (caster, target) => ({
+            type: 'gravity_reduced',
+            gravityMultiplier: 0.2,
+            floatThreshold: true,
+            description: `${target?.name || 'The target'} begins to drift off the ground.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Near Weightless', 'Reduce gravity to almost nothing', (caster, target) => ({
+            type: 'gravity_reduced',
+            gravityMultiplier: 0.1,
+            floatThreshold: true,
+            description: `${target?.name || 'The target'} becomes nearly weightless.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Gravity Reduction', 'Gravity decreases', (caster, target) => ({
+            type: 'gravity_reduced',
+            gravityMultiplier: 0.5,
+            floatThreshold: false,
+            description: `${target?.name || 'The target'} becomes lighter under altered gravity.`,
+          }))
+        )
+        .addInteraction(
+          'Confection Snare',
+          'Floating targets can be tied down to the floor'
+        )
+        .addInteraction(
+          'Telekinesis',
+          'Floating targets can be moved with less structural stress'
+        )
+        .addInteraction(
+          'Enhance Gravity',
+          'Can counteract or soften previous gravity enhancement'
+        )
+    );
+
+    // Arcane Appraisal - magical inspection of structural support
+    this.registerSpell(
+      new Spell('Arcane Appraisal', {
+        level: 1,
+        school: 'Divination',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous',
+        description: 'Reveal how much weight a surface or object can support.',
+        weightGainTheme:
+          'Read the hidden limits of benches, tables, bars, stools, and other supports before they fail.',
+        tags: ['divination', 'inspection', 'support', 'structure'],
+      })
+        .addValidTarget('object')
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addEffect(
+          new SpellEffect('Appraisal', 'Reveal structural support data', (caster, target) => ({
+            type: 'structural_appraisal',
+            description: `${target?.name || 'The target'} is examined by arcane sight.`,
+          }))
+        )
+        .addInteraction(
+          'Telekinesis',
+          'Appraisal can identify surfaces that will fail if a target is placed there'
+        )
+        .addInteraction(
+          'Enhance Gravity',
+          'Appraisal shows when a support is already close to breaking'
+        )
+        .addInteraction(
+          'Float',
+          'Appraisal can judge whether floor tethering or weightlessness matters'
         )
     );
   }

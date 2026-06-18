@@ -167,7 +167,10 @@ function deriveFor(subject, ref) {
   let restrainedBy = subject.restrainedBy || 'none';
   let suspensionState = subject.suspensionState || 'none';
   let fullness = subject.isFullness ? 1 : 0;
-  let buried = 0, mindControlled = 0, oozeCoated = 0, enlarged = 0;
+  let buried = 0, mindControlled = 0, oozeCoated = 0, enlarged = 0, slowed = 0;
+  let floating = subject.isFloating ? 1 : 0;
+  let floorTethered = subject.floorTethered ? 1 : 0;
+  let buriedDepth = subject.buriedDepth || 0;
 
   const cond = subject.conditions;
   if (cond && typeof cond.has === 'function') {
@@ -181,6 +184,10 @@ function deriveFor(subject, ref) {
     if (cond.has('ooze_coated')) oozeCoated = 1;
     if (cond.has('enlarged')) enlarged = 1;
     if (cond.has('satiated')) fullness = 1;
+    if (cond.has('floating')) floating = 1;
+    if (cond.has('floor_tethered')) floorTethered = 1;
+    if (cond.has('buried')) buriedDepth = cond.get('buried')?.depth || buriedDepth;
+    if (cond.has('slowed')) slowed = 1;
   }
 
   const isRestrained = restrainedBy !== 'none' ? 1 : 0;
@@ -190,6 +197,8 @@ function deriveFor(subject, ref) {
   const capacity = subject.stomachCapacity || 0;
 
   const refLbs = ref ? (ref.currentWeight ?? ref.baseWeight ?? cur) : null;
+  const gravityMultiplier = subject.gravityMultiplier ?? 1;
+  const effectiveGravity = subject.effectiveGravity ?? (cur * 0.1 * gravityMultiplier);
 
   return {
     stage,
@@ -210,9 +219,26 @@ function deriveFor(subject, ref) {
     suspensionState,
     suspended: suspensionState !== 'none' ? 1 : 0,
     buried,
+    buriedDepth,
+    floating,
+    floorTethered,
+    gravityMultiplier,
+    effectiveGravity,
+    heavyGravity: gravityMultiplier > 1 ? 1 : 0,
+    lowGravity: gravityMultiplier < 1 ? 1 : 0,
+    positionedOn: subject.positionedOn || 'none',
+    lastFoodChoice: subject.lastFoodChoice || null,
+    lastFoodPreference: subject.lastFoodPreference || null,
+    lastFoodDeliveryMode: subject.lastFoodDeliveryMode || null,
+    caloriesEatenToday: subject.caloriesEatenToday ?? 0,
+    pendingWeightGain: subject.pendingWeightGain ?? 0,
+    lastCaloriesConsumed: subject.lastCaloriesConsumed ?? 0,
+    calorieRetentionMultiplier: subject.calorieRetentionMultiplier ?? 1,
+    lastRestWeightGain: subject.lastRestWeightGain ?? 0,
     mindControlled,
     oozeCoated,
     enlarged,
+    slowed,
     lastWeightGain: subject.lastWeightGain ?? 0,
     subjectId: subject.id ?? null,
     relSize: ref ? relSize({ lbs: cur }, { lbs: refLbs }) : null,

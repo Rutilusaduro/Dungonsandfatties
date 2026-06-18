@@ -11,6 +11,11 @@
 //   enlarged        -> { factor, intensity }
 //   ravenous        -> { intensity }
 //   satiated        -> { intensity }
+//   gravity_enhanced -> { multiplier, intensity }
+//   gravity_reduced  -> { multiplier, intensity }
+//   floating         -> { height, intensity }
+//   floor_tethered   -> { source, intensity }
+//   slowed           -> { intensity }
 // ═══════════════════════════════════════════════════════════════
 
 export const CONDITION_KEYS = [
@@ -21,6 +26,11 @@ export const CONDITION_KEYS = [
   'enlarged',
   'ravenous',
   'satiated',
+  'gravity_enhanced',
+  'gravity_reduced',
+  'floating',
+  'floor_tethered',
+  'slowed',
 ];
 
 // Spell key (name lowercased, spaces -> _) -> restraint material.

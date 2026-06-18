@@ -361,6 +361,45 @@ export function registerSpellModules(engine) {
     },
   ]);
 
+  engine.registerModule('spell.scene.culinary_transmutation', [
+    {
+      when: {},
+      text: 'Transmutation rolls through the object and rewrites its purpose. Wood, iron, barrel staves, chair legs, and polish lose their old certainty, softening into edible abundance with a warm, impossible smell. What was furniture a moment ago is now food, portioned and waiting.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.summon_cattle', [
+    {
+      when: {},
+      text: 'The air folds open with a low, barn-warm shimmer, and cattle step into the world as if led from some conjured pasture. They are solid, heavy, breathing creatures, immediately changing the weight and appetite of the room.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.goodberry', [
+    {
+      when: {},
+      text: 'A cluster of small magical berries appears in your hand, glossy and jewel-bright. They look harmless, almost delicate, but each one is dense with nourishment and quiet magical potency.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.plant_growth', [
+    {
+      when: {},
+      text: 'Green magic pulses outward and every edible plant nearby answers at once. Vines thicken, fruit swells, leaves unfurl, and the area fills with sudden ripe abundance, as though a full harvest has been compressed into a single breath.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.slow', [
+    {
+      when: { isRestrained: 1 },
+      text: 'Slow magic settles into {subject.name} while she is already held. Her struggles lose speed and force, each movement dragging behind intention. Even her breathing seems heavier, more economical, as the spell makes resistance expensive.',
+    },
+    {
+      when: {},
+      text: 'The transmutation catches {subject.name} and drags the tempo out of her body. Movement becomes sluggish, reactions delayed, and her metabolism seems to bank its fires low, keeping more of what she takes in.',
+    },
+  ]);
+
   // ─────────────────────────────────────────────
   // RAVENOUS EXPANSION
   // ─────────────────────────────────────────────
@@ -593,6 +632,469 @@ export function registerSpellModules(engine) {
     {
       when: {},
       text: 'Bound by candy vines, she cannot escape the food eruption. The cascade buries her to the neck, licorice bonds still holding firm beneath the pile. She is thoroughly, helplessly covered.',
+    },
+  ]);
+
+  // GRAVITY SPELLS
+  engine.registerModule('spell.scene.enhance_gravity', [
+    {
+      when: { suspended: 1 },
+      text: 'Gravity tightens around {subject.name} like an invisible hand. Her effective weight multiplies all at once, dragging hard against whatever holds her up. Every support point complains under the sudden load.',
+    },
+    {
+      when: { buried: 1 },
+      text: 'The gravity spell presses down on {subject.name} with brutal certainty. Soil and stone compact around her as her body becomes effectively heavier, forcing her deeper into the earth that already holds her.',
+    },
+    {
+      when: {},
+      text: 'The spell changes no flesh and adds no mass, but the result is immediate: {subject.name} becomes heavier in the only way physics cares about. The floor takes more of her. Furniture looks less trustworthy. Anything holding her up is suddenly under real strain.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.telekinesis', [
+    {
+      when: { floating: 1 },
+      text: 'Telekinetic force catches {subject.name} with almost insulting ease. With her gravity already reduced, she drifts where the spell guides her, light enough that placement becomes precise rather than forceful.',
+    },
+    {
+      when: { heavyGravity: 1 },
+      text: 'The telekinesis strains as it takes hold of {subject.name}. Altered gravity makes her harder to move, but the invisible force lifts and carries her anyway, placing all that effective weight exactly where you direct it.',
+    },
+    {
+      when: {},
+      text: 'Invisible force closes around {subject.name} and lifts. Her feet leave the ground, her balance becomes irrelevant, and the spell carries her smoothly toward the chosen surface before setting her down.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.float', [
+    {
+      when: { heavyGravity: 1 },
+      text: 'The float spell fights against the earlier gravity enhancement. The pressure around {subject.name} loosens by degrees, dragging weight out of the equation until her body begins to feel liftable again.',
+    },
+    {
+      when: { restrained: 1 },
+      text: 'Gravity releases its grip on {subject.name}, but her restraints still have a vote. Her body grows light, almost buoyant, tugging upward against whatever keeps her tied down.',
+    },
+    {
+      when: {},
+      text: 'The spell reduces gravity around {subject.name} in a smooth, uncanny fade. Her stance lightens first, then her balance shifts, and finally the ground seems to become optional beneath her.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.arcane_appraisal', [
+    {
+      when: { supportable_weight: { min: 1 } },
+      text: 'Arcane sight maps the target\'s hidden limits in a clean, practical overlay: how much weight it can carry, where the stress gathers, and how close it is to failure. The numbers settle into place like runes overlaid on the object itself.',
+    },
+    {
+      when: {},
+      text: 'The spell reads the target as if it were written in force and tension. Support, strain, and breaking point surface in your mind with unnatural clarity.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.create_water.delightful_transmutation', [
+    {
+      when: {},
+      text: 'The conjured water does not merely become dessert; it becomes an invitation. The new ice cream gleams with creamy abundance, cool and sweet and endlessly renewing, turning the room into a private fountain of indulgence.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.detect_cravings.suggestion', [
+    {
+      when: { willingness: { min: 70 } },
+      text: 'Because you know exactly what {subject.name} wants, the suggestion lands like a compliment instead of a command. Her expression softens into pleased anticipation, cheeks warming as the magic frames indulgence as something chosen, flattering, and deliciously personal.',
+    },
+    {
+      when: {},
+      text: 'The divination gives the enchantment a precise shape. It whispers in the language of {subject.name}\'s own cravings, making the offered food feel intimate, tailored, and difficult to refuse.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.detect_cravings.conjure_food', [
+    {
+      when: {},
+      text: 'The conjuration forms around the secret tastes you uncovered. Scent, texture, and sweetness arrive in perfect alignment with {subject.name}\'s appetite, making the food feel less summoned than seductively prepared for her alone.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.create_food_and_water.ravenous_expansion', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The feast is already waiting when the expansion hits. {subject.name}\'s belly swells with new capacity, and the spread in front of her suddenly looks less like a meal than a promise. Her softened body shifts with hungry interest, ready to be filled further.',
+    },
+    {
+      when: {},
+      text: 'The prepared food and the new hunger answer each other. A full table meets an expanding appetite, and the magic turns simple eating into a warm, greedy rhythm of want, taste, and growing fullness.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ravenous_expansion.haste', [
+    {
+      when: { stage: { min: 5 } },
+      text: 'Ravenous capacity meets supernatural speed. {subject.name} eats with breathless eagerness, her softening body keeping every calorie while her hands move almost too quickly to follow. The effect is sensual in its excess: appetite, motion, and growth all accelerating together.',
+    },
+    {
+      when: {},
+      text: 'The haste spell catches the hunger and makes it quick. Every bite follows the last with eager momentum, turning a craving into a fast, flushed cascade of indulgence.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ravenous_expansion.rapid_digestion', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The expanded hunger becomes permanent softness almost as soon as it is satisfied. {subject.name} shivers as digestion magic rolls through her, converting recent indulgence into new weight that settles warmly across her already generous body.',
+    },
+    {
+      when: {},
+      text: 'Hunger opens the door; digestion locks it behind her. The food she craved becomes real added weight, leaving her flushed, full, and visibly softer.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.enlarge_person.oozing_abundance', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The ooze spreads across all that new surface area, glossy and warm, clinging to every expanded curve before sinking in. {subject.name} looks almost lacquered in abundance, her body fed through the skin as the spell adds still more softness to what enlargement began.',
+    },
+    {
+      when: {},
+      text: 'Enlargement gives the nutritive ooze more of her to coat. It glides over newly softened curves and soaks in with a warm shimmer, making the growth feel rich, glossy, and intimate.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.enlarge_person.grease', [
+    {
+      when: { stage: { min: 5 } },
+      text: 'The grease catches on {subject.name}\'s enlarged body in shining highlights. Every softened curve gleams under the spell, turning size into spectacle: glossy, heavy, and impossible not to notice.',
+    },
+    {
+      when: {},
+      text: 'The slick conjuration makes the enlargement look deliberate and decadent. Light slides over her softened shape, emphasizing the new weight with a shameless gloss.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.delightful_transmutation.duplication', [
+    {
+      when: {},
+      text: 'The magical ice cream doubles, then seems eager to double again. What was a dessert becomes a supply, and what was a supply becomes temptation with logistics: enough sweetness to make restraint feel theoretical.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.prestidigitation.feast_of_shadows', [
+    {
+      when: {},
+      text: 'The cantrip perfumes the illusion with impossible precision. Butter, sugar, cream, heat, spice - every sensory note becomes intimate and convincing, making the shadow-feast feel sinfully real before the first bite is even taken.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.grease.confection_snare', [
+    {
+      when: { restraintMaterial: 'candy' },
+      text: 'The candy bonds slide through the grease without losing their grip, leaving {subject.name} wrapped in a slick, sweet sheen. The restraint looks less like a trap now and more like confectionery display: sticky, glossy, and indulgently humiliating.',
+    },
+    {
+      when: {},
+      text: 'Grease and candy magic merge into a shining tangle. The vines grip where they need to and glaze everywhere else, turning restraint into sticky, sugar-slick spectacle.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.suggestion.enlarge_person', [
+    {
+      when: { willingness: { min: 70 } },
+      text: '{subject.name} receives the growth with a soft, startled breath, but not rejection. The prior suggestion leaves indulgence feeling acceptable, even desirable, and her expanding body seems to luxuriate in every added inch and pound.',
+    },
+    {
+      when: {},
+      text: 'The suggestion leaves a permissive warmth behind. When the enlargement comes, it feels less like an attack and more like being coaxed into softness: bigger, heavier, and increasingly aware of her own curves.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ravenous_expansion.suggestion', [
+    {
+      when: {},
+      text: 'The suggestion barely has to work. Ravenous magic has already made food the center of {subject.name}\'s attention, so the enchantment simply gives her hunger permission to become eager, open, and pleased with itself.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.duplication.create_food_and_water', [
+    {
+      when: {},
+      text: 'The banquet arrives already multiplied. Platters mirror into more platters, portions double before settling, and the whole spread takes on a lavish, almost teasing excess. There is far too much food, which is exactly the point.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ravenous_expansion.fireball', [
+    {
+      when: { ravenous: 1 },
+      text: 'The roasted feast detonates into a hunger already primed to receive it. Smoke, heat, and savory richness wash over {subject.name}; her ravenous body responds with flushed urgency, every bite promising more softness.',
+    },
+    {
+      when: {},
+      text: 'The fireball leaves food instead of flame, and the earlier expansion makes the result feel inevitable. There is room inside her now, and the roasted abundance seems designed to fill it.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.suggestion.haste', [
+    {
+      when: {},
+      text: 'The persuaded appetite becomes quick and eager. {subject.name} moves through each bite with bright, breathless focus, the haste making indulgence look practiced, hungry, and almost flirtatiously enthusiastic.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.suggestion.food_choice.love', [
+    {
+      when: {},
+      text: (ctx) => `The suggestion opens the door, but ${ctx.subject.name} makes the choice herself. Her eyes find ${ctx.subject.lastFoodChoice}, and recognition turns into appetite. She chooses what she already wanted most and eats with obvious pleasure.`,
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.suggestion.food_choice.like', [
+    {
+      when: {},
+      text: (ctx) => `${ctx.subject.name} scans the nearby food and settles on ${ctx.subject.lastFoodChoice}. It is not forced into her hands; she chooses it, drawn by familiar taste and a softened willingness to indulge.`,
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.suggestion.food_choice.neutral', [
+    {
+      when: {},
+      text: (ctx) => `${ctx.subject.name} looks over what is available, considering for herself. After a moment she picks ${ctx.subject.lastFoodChoice}, accepting the suggestion without surrendering her own preference.`,
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.suggestion.food_choice.dislike', [
+    {
+      when: {},
+      text: (ctx) => `${ctx.subject.name} hesitates over the nearby food and finally chooses ${ctx.subject.lastFoodChoice}, though her expression makes clear it was not her first preference. The suggestion nudges her to eat, but taste still matters.`,
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.suggestion.no_food_available', [
+    {
+      when: {},
+      text: 'The suggestion lands, and {subject.name} actually looks ready to choose something for herself. The problem is practical: there is no prepared food nearby for her to choose.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.feast_of_shadows.rapid_digestion', [
+    {
+      when: {},
+      text: 'The illusion should not leave weight behind, but digestion magic insists otherwise. {subject.name} feels phantom sweetness become bodily consequence, a softening warmth that proves the feast was real enough where it mattered.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.grease.delightful_transmutation', [
+    {
+      when: {},
+      text: 'The slick conjuration sweetens and thickens into a dessert glaze. It shines over every surface it touches, creamy and fragrant, turning slipperiness into something richer, stickier, and far more tempting.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.oozing_abundance.morph_mass', [
+    {
+      when: { oozeCoated: 1 },
+      text: 'The mass spell finds the nutritive ooze already clinging to {subject.name} and folds it inward. The glossy coating disappears into her body in slow waves, leaving fresh softness in its place.',
+    },
+    {
+      when: {},
+      text: 'Ooze and mass transmutation cooperate beautifully. What was coating her becomes part of her, converted into dense, warm weight that settles visibly across her figure.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.enlarge_person.reduce_person', [
+    {
+      when: {},
+      text: 'The opposed size magic snaps back through {subject.name} with a dizzying contrast. For a moment she is all remembered largeness and sudden tightness, flushed by the strange awareness of how much body the magic just took away.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.reduce_person.enlarge_person', [
+    {
+      when: {},
+      text: 'The rebound growth arrives with extra plushness, as though the spell is overcorrecting. {subject.name} fills back out with a warm rush, softer than before, newly aware of every curve returning with interest.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.enhance_gravity.ceiling_suspension_break', [
+    {
+      when: {},
+      text: 'The ceiling suspension cannot survive the new force. The candy ropes stretch, squeal, and snap in sequence, dropping {subject.name} hard as enhanced gravity wins the argument.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.enhance_gravity.table_break', [
+    {
+      when: {},
+      text: 'The support underneath {subject.name} fails with a sharp crack. Enhanced gravity turns a risky perch into a broken one, and the surface gives way beneath her effective weight.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.telekinesis.table_break', [
+    {
+      when: { heavyGravity: 1 },
+      text: 'Telekinesis places {subject.name} exactly where intended, but altered gravity makes the landing too much for the surface. The table bows, splinters, and collapses under her.',
+    },
+    {
+      when: {},
+      text: 'The chosen surface holds for one breath, then fails. Telekinesis has moved {subject.name} onto it cleanly; gravity handles the rest, snapping the support beneath her.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.float.floor_tether', [
+    {
+      when: {},
+      text: '{subject.name} tries to rise as gravity fades, but the floor anchor catches her. She floats just enough for the restraint to pull taut, leaving her suspended low and tied down at the same time.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.enhance_gravity.shape_earth_burial', [
+    {
+      when: { buriedDepth: { min: 4 } },
+      text: 'Shape Earth opens beneath {subject.name}, and enhanced gravity makes the burial severe. She sinks deeper than the spell alone should allow, earth packing around her with the force of her multiplied weight.',
+    },
+    {
+      when: {},
+      text: 'The shaped earth receives {subject.name} and gravity pulls her farther down. What would have been a shallow burial becomes a deeper, tighter hold.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.float.telekinesis', [
+    {
+      when: {},
+      text: 'With gravity reduced, telekinesis barely has to fight physics. {subject.name} glides into place smoothly, more guided than dragged, and the chosen surface receives far less force than it otherwise would.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.float.suggestion_food', [
+    {
+      when: { floorTethered: 1 },
+      text: '{subject.name} is not quite on the ground and not quite free of it. The chosen food has to be brought upward to meet her, rising in little guided motions while the floor tether keeps her from drifting away from the meal.',
+    },
+    {
+      when: { floating: 1 },
+      text: 'Reduced gravity changes the whole feeding rhythm. {subject.name} drifts lightly while the chosen food is guided up through the air to meet her, making the act feel less like sitting down to eat and more like being fed inside a slow, buoyant orbit.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.float.confection_snare_food', [
+    {
+      when: { floorTethered: 1 },
+      text: 'The bindings take advantage of the buoyancy without losing control. Food lifts from nearby surfaces in small jerking rises, drawn upward until the tethered target can be fed where she hangs taut above the floor.',
+    },
+    {
+      when: { floating: 1 },
+      text: 'With gravity softened, the bindings do not have to drag food across the ground at all. Portions simply rise and spiral inward through the air, feeding {subject.name} in a steady suspended rhythm.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.enhance_gravity.float', [
+    {
+      when: {},
+      text: 'Float pushes back against the prior gravity surge. The crushing pull loosens, not vanishing entirely but becoming negotiable, and {subject.name} regains a little of the lightness gravity had taken away.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.float.enhance_gravity', [
+    {
+      when: {},
+      text: 'Enhanced Gravity wins the contest with Float. The buoyant lift collapses at once, pulling {subject.name} back down as the spell restores weight to the world around her.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.culinary_transmutation.suggestion', [
+    {
+      when: {},
+      text: 'The suggestion points {subject.name} toward the nearby spread, but the choice remains hers. The strange appeal is that some of that food used to be furniture; curiosity and appetite meet halfway.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.culinary_transmutation.confection_snare', [
+    {
+      when: {},
+      text: 'The confection bindings find the transmuted object-food immediately. What used to be furniture becomes feedstock for the spell, pulled close in soft, edible portions.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.culinary_transmutation.duplication', [
+    {
+      when: {},
+      text: 'Duplication catches the transmuted food at the perfect moment. One former object becomes two spreads, then more, turning a single conversion into a practical supply.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.confection_snare.world_food', [
+    {
+      when: {},
+      text: 'The bindings do not need to invent food this time. They seize what is already nearby, dragging prepared portions into their feeding rhythm with efficient magical insistence.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.summon_cattle.flesh_to_food', [
+    {
+      when: {},
+      text: 'The summoned cattle give the conversion spell an enormous target. Living mass becomes prepared abundance, and the room fills with the warm, heavy smell of a feast made from conjured livestock.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.summon_cattle.ravenous_expansion', [
+    {
+      when: {},
+      text: 'The cattle arrive first; then the appetite expands to match them. {subject.name} looks at the heavy animals with a hunger that has suddenly been given scale.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.summon_cattle.enhance_gravity', [
+    {
+      when: {},
+      text: 'Enhanced gravity turns the summoned cattle into moving structural problems. Their hooves hit harder, the floor complains louder, and every heavy body in the room matters more.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.goodberry.suggestion', [
+    {
+      when: {},
+      text: 'The goodberries make the suggestion feel easy. Small, bright, and harmless-looking, they give {subject.name} something she can choose without feeling like she has committed to a full meal.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.create_water.plant_growth', [
+    {
+      when: {},
+      text: 'The conjured water disappears into roots and stems, and the growth answers with extra force. Fruit swells larger, leaves thicken, and the new food arrives juicier and more abundant.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.plant_growth.ravenous_expansion', [
+    {
+      when: {},
+      text: 'Fresh produce erupts into the area just as appetite opens wide. The timing is almost too neat: abundance within reach, and a body newly ready to receive it.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.slow.suggestion', [
+    {
+      when: {},
+      text: 'Slow leaves {subject.name} less hurried and more receptive to the act of eating. Whatever she chooses settles heavier, the spell making indulgence linger in her body.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.slow.confection_snare', [
+    {
+      when: {},
+      text: 'The bindings work better against a slowed target. Every attempt to pull away arrives late, and the candy restraints tighten before {subject.name} can build momentum.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.slow.haste', [
+    {
+      when: {},
+      text: 'Haste tears through the slowing field and the two spells fight inside {subject.name} for a dizzy instant: quick hunger, sluggish burn, and a body caught between incompatible tempos.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.haste.slow', [
+    {
+      when: {},
+      text: 'Slow clamps down over the haste magic, dragging the pace back to something thick and heavy. The frantic edge fades, but the metabolic confusion remains.',
     },
   ]);
 

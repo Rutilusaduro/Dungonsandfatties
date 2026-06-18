@@ -6,7 +6,8 @@
 import Zone from './Zone';
 import { Earth, Wood, Stone, Furniture, Water } from '../environment/EnvironmentalObject';
 import { Pig, Duck, Cow } from '../entities/Creature';
-import { Innkeeper, Merchant, Gardener, Guard, Chef } from '../entities/NPC';
+import { NPC, Innkeeper, Merchant, Gardener, Guard, Chef } from '../entities/NPC';
+import { Bread, Meat, Pastry, Cream, Food } from '../items/Food.js';
 
 class World {
   constructor(options = {}) {
@@ -108,6 +109,113 @@ class World {
         description: 'A large barrel of fresh water for drinking and cooking',
       })
     );
+    tavern.addEnvironmentalObject(
+      new Furniture('bar_counter', 'Long Tavern Bar', {
+        description: 'A polished oak bar crowded with bottles, mugs, and half-finished drinks',
+        material: 'wood',
+        properties: { supportable_weight: 650, surfaceRole: 'bar', foodCapacity: 16 },
+      })
+    );
+    tavern.addEnvironmentalObject(
+      new Furniture('bar_stool_1', 'Bar Stool', {
+        description: 'A narrow wooden stool tucked against the bar',
+        material: 'wood',
+        durability: 70,
+        properties: { supportable_weight: 220, seating: true },
+      })
+    );
+    tavern.addEnvironmentalObject(
+      new Furniture('bar_stool_2', 'Bar Stool', {
+        description: 'A second stool with one rung worn smooth by regulars',
+        material: 'wood',
+        durability: 70,
+        properties: { supportable_weight: 220, seating: true },
+      })
+    );
+    tavern.addEnvironmentalObject(
+      new Water('ale_keg', 'Beer Keg', {
+        description: 'A tapped keg of dark beer standing behind the bar',
+        material: 'wood',
+        properties: { contains: 'beer', servings: 20, liquid: true },
+      })
+    );
+    tavern.addEnvironmentalObject(
+      new Water('beer_bottle_1', 'Brown Beer Bottle', {
+        description: 'A squat bottle beaded with condensation',
+        material: 'glass',
+        durability: 30,
+        properties: { contains: 'beer', servings: 1, portable: true },
+      })
+    );
+    tavern.addEnvironmentalObject(
+      new Water('beer_bottle_2', 'Green Beer Bottle', {
+        description: 'A half-full bottle left near the edge of the bar',
+        material: 'glass',
+        durability: 30,
+        properties: { contains: 'beer', servings: 1, portable: true },
+      })
+    );
+    tavern.addEnvironmentalObject(
+      new Water('beer_glass_1', 'Foaming Beer Glass', {
+        description: 'A thick glass mug filled with amber beer and foam',
+        material: 'glass',
+        durability: 20,
+        properties: { contains: 'beer', servings: 1, portable: true },
+      })
+    );
+    tavern.addEnvironmentalObject(
+      new Water('beer_glass_2', 'Half-Finished Mug', {
+        description: 'A sturdy mug with a ring of foam clinging to the inside',
+        material: 'glass',
+        durability: 20,
+        properties: { contains: 'beer', servings: 1, portable: true },
+      })
+    );
+
+    tavern.addFood(new Meat('Roasted Tavern Platter', {
+      servings: 6,
+      caloriesPerServing: 420,
+      description: 'A platter of roasted meat set out for hungry patrons.',
+      appetizingness: 82,
+    }), 'Tavern Stock');
+    tavern.addFood(new Bread('Fresh Brown Loaf', {
+      servings: 8,
+      caloriesPerServing: 180,
+      description: 'Fresh tavern bread still warm from the kitchen.',
+      appetizingness: 74,
+    }), 'Tavern Stock');
+    tavern.addFood(new Pastry('Honey Pastry Basket', {
+      servings: 5,
+      caloriesPerServing: 260,
+      description: 'Sticky pastries kept near the bar for regulars.',
+      appetizingness: 86,
+    }), 'Tavern Stock');
+    tavern.addFood(new Cream('Spiced Ale Cream', {
+      servings: 4,
+      caloriesPerServing: 240,
+      description: 'A rich whipped cream topping used for tavern desserts and drinks.',
+      appetizingness: 71,
+    }), 'Tavern Stock');
+    tavern.addFood(new Food('Dark Beer', {
+      servings: 8,
+      caloriesPerServing: 180,
+      tasteType: 'bitter',
+      texture: 'foamy',
+      color: 'amber',
+      shape: 'mug',
+      description: 'A round of dark tavern beer poured and ready on the bar.',
+      appetizingness: 64,
+    }), 'Bar Stock');
+    tavern.addFood(new Food('Foamy Ale', {
+      servings: 6,
+      caloriesPerServing: 190,
+      tasteType: 'malty',
+      texture: 'frothy',
+      color: 'gold',
+      shape: 'glass',
+      description: 'Fresh ale sloshing in heavy tavern glasses.',
+      appetizingness: 66,
+    }), 'Bar Stock');
 
     // Add NPCs to tavern
     tavern.addNPC(
@@ -121,6 +229,39 @@ class World {
       new Merchant('Silvia the Spice Merchant', {
         description: 'A merchant woman with exotic spices and foods from distant lands',
         baseWeight: 170,
+      })
+    );
+    tavern.addNPC(
+      new NPC('Mira the Regular', {
+        role: 'Bar Patron',
+        personality: 'friendly',
+        description: 'A relaxed patron perched on a stool with an unfinished drink and a plate of tavern food',
+        baseWeight: 185,
+        willingness: 68,
+        foodLoves: ['Beer', 'Bread', 'Pastry'],
+        foodLikes: ['Meat', 'Cream', 'Ice Cream'],
+        foodDislikes: [],
+      })
+    );
+    tavern.addNPC(
+      new NPC('Tansy the Drinker', {
+        role: 'Bar Patron',
+        personality: 'boisterous',
+        description: 'A loud tavern regular guarding a beer bottle and laughing between bites',
+        baseWeight: 210,
+        willingness: 72,
+        foodLoves: ['Ale', 'Bread', 'Meat'],
+        foodLikes: ['Pastry'],
+        foodDislikes: ['Cream'],
+      })
+    );
+    tavern.addNPC(
+      new Guard('Off-Duty Captain Lenna', {
+        role: 'Off-Duty Guard',
+        personality: 'stern',
+        description: 'A guard off shift, leaning against the bar with a heavy mug and a watchful eye on the room',
+        baseWeight: 200,
+        foodLikes: ['Beer', 'Meat', 'Bread'],
       })
     );
 
