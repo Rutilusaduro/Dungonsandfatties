@@ -278,6 +278,74 @@ class SpellLibrary {
           description: `The ${obj.name} is partially absorbed into the target's body`,
         }))
     );
+
+    // LEVEL 1 (continued)
+
+    // Grease - create slippery substance
+    this.registerSpell(
+      new Spell('Grease', {
+        level: 1,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: '1 minute',
+        description: 'Create a slippery, greasy substance',
+        weightGainTheme:
+          'Conjure sticky, slippery grease to coat surfaces or create a basin. The grease is thick and calorie-rich, perfect for coating food or creating a feeding area.',
+        tags: ['conjuration', 'environmental', 'feeding'],
+      })
+        .addEffect(
+          new SpellEffect('Grease Creation', 'Create greasy substance', (caster, target) => ({
+            type: 'grease_creation',
+            volume: 'covers 10x10 feet',
+            description: 'A thick, slippery coating of grease appears',
+          }))
+        )
+        .addEnvironmentalEffect('earth', 'Create grease basin', (obj, caster) => ({
+          type: 'grease_basin',
+          description: `The ${obj.name} is coated with slippery grease, forming a basin perfect for pooling liquids`,
+        }))
+        .addInteraction(
+          'Create Water',
+          'Water poured onto grease creates a slippery puddle perfect for sliding... or pooling calories'
+        )
+    );
+
+    // Liquid to Ice Cream - transmute water into ice cream
+    this.registerSpell(
+      new Spell('Delightful Transmutation', {
+        level: 2,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Permanent',
+        description: 'Transform water into magical ice cream',
+        weightGainTheme:
+          'Transmute plain water into delicious, high-calorie ice cream. The spell can modify the flavor, and the ice cream gains magical properties - it never melts and can provide unlimited sustenance.',
+        tags: ['transmutation', 'food', 'magical', 'feeding'],
+      })
+        .addEffect(
+          new SpellEffect('Water Transmutation', 'Transform water to ice cream', (caster, target) => ({
+            type: 'food_creation',
+            foodType: 'Ice Cream',
+            calorieMult: 2,
+            description: 'Water shimmers and solidifies into magical ice cream!',
+          }))
+        )
+        .addEnvironmentalEffect('water', 'Transmute water to ice cream', (obj, caster) => ({
+          type: 'transmuted_food',
+          from: 'water',
+          to: 'ice cream',
+          calorieContent: 'Very High',
+          magical: true,
+          selfReplicating: true,
+          description: `The ${obj.name} transforms into magical ice cream that never melts and continuously replicates!`,
+        }))
+        .addInteraction(
+          'Create Water',
+          'Create Water followed by this spell creates unlimited magical ice cream'
+        )
+    );
   }
 }
 
