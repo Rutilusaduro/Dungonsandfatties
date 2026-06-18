@@ -1304,7 +1304,7 @@ class SpellLibrary {
             const vineCapacity = 5; // gravity units
             return {
               type: 'suspension',
-              suspensionType: 'ceiling',
+              suspensionState: 'ceiling',
               bindPoints: ['wrists', 'ankles', 'waist'],
               maxSupportedWeight: 500, // Fails at 500+ lbs
               movementAllowed: 0,

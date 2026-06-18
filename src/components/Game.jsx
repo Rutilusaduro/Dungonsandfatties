@@ -110,6 +110,16 @@ const Game = () => {
         return sum + (e.weightChange || e.weightGainPerCreature || 0);
       }, 0);
 
+      // Knowledge spells (Detect Cravings) surface revealed preferences as text.
+      const knowledgeEffect = result.effects.find(e => e.type === 'knowledge_gained');
+      if (knowledgeEffect && target) {
+        const parts = [];
+        if (knowledgeEffect.loves?.length) parts.push(`Loves: ${knowledgeEffect.loves.join(', ')}`);
+        if (knowledgeEffect.likes?.length) parts.push(`Likes: ${knowledgeEffect.likes.join(', ')}`);
+        if (knowledgeEffect.dislikes?.length) parts.push(`Dislikes: ${knowledgeEffect.dislikes.join(', ')}`);
+        if (parts.length) textEngine.addText(parts.join(' • '));
+      }
+
       // NPC reactions (weight gain + restraint status)
       if (target && target._createContext) {
         if (totalWeightGain > 0) {
