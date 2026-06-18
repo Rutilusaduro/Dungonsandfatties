@@ -658,6 +658,688 @@ class SpellLibrary {
           }))
         )
     );
+
+    // LEVEL 3 SPELLS
+
+    // Erupting Earth - food erupts from ground, forces consumption
+    this.registerSpell(
+      new Spell('Erupting Earth', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '120 feet',
+        duration: 'Instantaneous',
+        description: 'The earth erupts with conjured food, creating abundance from stone and soil',
+        weightGainTheme:
+          'Magical soil transforms into sustenance with astounding caloric density. Creatures in the area are buried and forced to consume.',
+        tags: ['transmutation', 'food', 'area-effect', 'forced-feeding'],
+      })
+        .addValidTarget('object')
+        .addOption(
+          new SpellOption('Vegetable Explosion', 'Light food eruption', (caster, target, context) => ({
+            type: 'food_eruption',
+            radiusMax: 15,
+            foodItems: 12,
+            caloriesPerItem: 300,
+            consumptionRate: 0.5,
+            resistanceModifier: -20,
+            description: 'Vegetables and grains erupt from the earth in a gentle cascade!',
+          }))
+        )
+        .addOption(
+          new SpellOption('Grain Deluge', 'Standard eruption', (caster, target, context) => ({
+            type: 'food_eruption',
+            radiusMax: 18,
+            foodItems: 18,
+            caloriesPerItem: 400,
+            consumptionRate: 0.5,
+            resistanceModifier: -40,
+            description: 'A torrential eruption of grain and feast-foods bursts from the ground!',
+          }))
+        )
+        .addOption(
+          new SpellOption('Luxury Eruption', 'Rich food eruption', (caster, target, context) => ({
+            type: 'food_eruption',
+            radiusMax: 20,
+            foodItems: 10,
+            caloriesPerItem: 500,
+            consumptionRate: 0.6,
+            resistanceModifier: -60,
+            description: 'Incredibly rich and decadent foods explode from the earth in abundance!',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Earth Eruption', 'Food erupts from ground', (caster, target, context, selectedOption) => {
+            const option = selectedOption || {
+              foodItems: 15,
+              caloriesPerItem: 400,
+              consumptionRate: 0.5,
+            };
+            return {
+              success: true,
+              type: 'area_effect',
+              effectsPerCreature: option.foodItems,
+              weightGainPerCreature: Math.floor(option.caloriesPerItem * option.consumptionRate / 10),
+              description: `Food erupts from the earth, covering everything in sight!`,
+            };
+          })
+        )
+    );
+
+    // Hold Person - paralyze, force-feed
+    this.registerSpell(
+      new Spell('Hold Person', {
+        level: 3,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 minute',
+        description: 'A humanoid is paralyzed by magical command',
+        weightGainTheme:
+          'The spell paralyzes movement but allows feeding. Held targets cannot resist consumption.',
+        tags: ['enchantment', 'restraint', 'forced-feeding'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption('Gentle Restraint', 'Single target, partial resistance', (caster, target) => ({
+            type: 'paralysis',
+            targets: 1,
+            canResist: true,
+            willingness: 50,
+            description: 'Target is held in place but retains some will',
+          }))
+        )
+        .addOption(
+          new SpellOption('Absolute Paralysis', 'Single target, no resistance', (caster, target) => ({
+            type: 'paralysis',
+            targets: 1,
+            canResist: false,
+            willingness: 0,
+            description: 'Target is completely immobilized',
+          }))
+        )
+        .addOption(
+          new SpellOption('Mass Enthrallment', 'Up to 3 targets in radius', (caster, target) => ({
+            type: 'paralysis',
+            targets: 3,
+            rangeRadius: 30,
+            canResist: false,
+            willingness: 0,
+            description: 'Multiple targets are held in place',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Paralysis', 'Target is paralyzed', (caster, target, context, selectedOption) => ({
+            success: true,
+            type: 'paralysis_applied',
+            targetCanMoveVoluntarily: false,
+            canBeForced: true,
+            willnessRemovedForFeeding: true,
+            description: `${target.name || 'The target'} is frozen in place!`,
+          }))
+        )
+    );
+
+    // Fireball - roasting food, hunger compulsion
+    this.registerSpell(
+      new Spell('Fireball', {
+        level: 3,
+        school: 'Evocation',
+        castingTime: '1 action',
+        range: '150 feet',
+        duration: 'Instantaneous',
+        description: 'A bright streak flashes and blooms into roaring flame',
+        weightGainTheme:
+          'Magically roasted food emerges from the flames, perfectly seasoned and impossibly caloric. Creatures compelled to eat.',
+        tags: ['evocation', 'food', 'area-effect', 'hunger-compulsion'],
+      })
+        .addOption(
+          new SpellOption('Roasting Abundance', 'Small area roast', (caster, target) => ({
+            type: 'food_roasting',
+            areaRadius: 10,
+            foodItems: 25,
+            caloriesPerItem: 400,
+            hungerCompulsion: 20,
+            description: 'Medium area covered in roasted food',
+          }))
+        )
+        .addOption(
+          new SpellOption('Inferno Feast', 'Medium area roast', (caster, target) => ({
+            type: 'food_roasting',
+            areaRadius: 20,
+            foodItems: 45,
+            caloriesPerItem: 500,
+            hungerCompulsion: 30,
+            description: 'Large area blanketed in roasted abundance',
+          }))
+        )
+        .addOption(
+          new SpellOption('Cataclysm Spread', 'Large area roast', (caster, target) => ({
+            type: 'food_roasting',
+            areaRadius: 30,
+            foodItems: 70,
+            caloriesPerItem: 600,
+            hungerCompulsion: 40,
+            description: 'Massive area engulfed in roasted food',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Food Roasting', 'Roasted food appears', (caster, target, context, selectedOption) => {
+            const option = selectedOption || {
+              foodItems: 45,
+              caloriesPerItem: 500,
+              hungerCompulsion: 30,
+            };
+            return {
+              success: true,
+              type: 'area_effect',
+              effectsPerCreature: option.foodItems,
+              hungerDamage: option.hungerCompulsion,
+              description: 'Roasted food emerges from the flames, smelling incredible!',
+            };
+          })
+        )
+    );
+
+    // Create Food and Water - conjure food at scale
+    this.registerSpell(
+      new Spell('Create Food and Water', {
+        level: 3,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Instantaneous',
+        description: 'Conjure enough delicious food to feed up to 15 creatures',
+        weightGainTheme:
+          'Magical food shimmers into being with potent nutritional properties. High caloric density.',
+        tags: ['conjuration', 'food', 'creation'],
+      })
+        .addValidTarget('object')
+        .addOption(
+          new SpellOption('Light Feast', '5 food items', (caster, target) => ({
+            type: 'food_created',
+            itemCount: 5,
+            caloriesPerItem: 400,
+            description: 'Basic sustenance materializes',
+          }))
+        )
+        .addOption(
+          new SpellOption('Hearty Spread', '10 food items', (caster, target) => ({
+            type: 'food_created',
+            itemCount: 10,
+            caloriesPerItem: 500,
+            description: 'Satisfying meal-worth of food appears',
+          }))
+        )
+        .addOption(
+          new SpellOption('Grand Banquet', '15 food items', (caster, target) => ({
+            type: 'food_created',
+            itemCount: 15,
+            caloriesPerItem: 600,
+            description: 'Opulent feast materializes before you',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Food Conjuration', 'Food is conjured', (caster, target, context, selectedOption) => {
+            const option = selectedOption || { itemCount: 10, caloriesPerItem: 500 };
+            return {
+              success: true,
+              type: 'food_created',
+              itemCount: option.itemCount,
+              totalCalories: option.itemCount * option.caloriesPerItem,
+              description: 'Magical food shimmers into existence!',
+            };
+          })
+        )
+    );
+
+    // Polymorph - transform to beast with appetite
+    this.registerSpell(
+      new Spell('Polymorph', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 hour',
+        description: 'Transform a creature into a new form',
+        weightGainTheme:
+          'Target transforms into a larger beast form, gaining size, weight, and insatiable appetite.',
+        tags: ['transmutation', 'transformation', 'shape-change'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption('Pig Form', 'Transform to pig', (caster, target) => ({
+            type: 'beast_form',
+            form: 'pig',
+            weightGain: 50,
+            willingnessModifier: 40,
+            hungerPerRound: 20,
+            description: 'Transform into a medium pig form',
+          }))
+        )
+        .addOption(
+          new SpellOption('Bear Form', 'Transform to bear', (caster, target) => ({
+            type: 'beast_form',
+            form: 'bear',
+            weightGain: 100,
+            willingnessModifier: 60,
+            hungerPerRound: 30,
+            description: 'Transform into a large bear form',
+          }))
+        )
+        .addOption(
+          new SpellOption('Cow Form', 'Transform to cow', (caster, target) => ({
+            type: 'beast_form',
+            form: 'cow',
+            weightGain: 80,
+            willingnessModifier: 50,
+            hungerPerRound: 25,
+            description: 'Transform into a sedentary cow form',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Beast Transformation', 'Transform into beast form', (caster, target, context, selectedOption) => {
+            const option = selectedOption || {
+              form: 'pig',
+              weightGain: 50,
+              willingnessModifier: 40,
+            };
+            return {
+              success: true,
+              type: 'transformation',
+              newForm: option.form,
+              weightChange: option.weightGain,
+              willingnessModified: true,
+              description: `${target.name || 'The target'} transforms into a ${option.form}!`,
+            };
+          })
+        )
+    );
+
+    // Rapid Digestion - clear stomach, create fullness state
+    this.registerSpell(
+      new Spell('Rapid Digestion', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous (fullness persists)',
+        description: 'Accelerate target\'s digestive system',
+        weightGainTheme:
+          'Magical haste floods the GI tract. Pending food instantly becomes permanent weight. Creates satiation state.',
+        tags: ['transmutation', 'digestion', 'weight-gain'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption('Quick Digestion', 'Process 1 stomach', (caster, target) => ({
+            type: 'digestion_acceleration',
+            stomachsCleared: 1,
+            weightGain: 40,
+            fullnessDuration: 5,
+            description: 'Fast digestion completes',
+          }))
+        )
+        .addOption(
+          new SpellOption('Accelerated Metabolism', 'Process 2 stomachs', (caster, target) => ({
+            type: 'digestion_acceleration',
+            stomachsCleared: 2,
+            weightGain: 80,
+            fullnessDuration: 10,
+            description: 'Rapid digestion processes multiple meals',
+          }))
+        )
+        .addOption(
+          new SpellOption('Digestive Frenzy', 'Process 3 stomachs', (caster, target) => ({
+            type: 'digestion_acceleration',
+            stomachsCleared: 3,
+            weightGain: 120,
+            fullnessDuration: 15,
+            description: 'Extreme digestive overload',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Digestion', 'Rapid digestion occurs', (caster, target, context, selectedOption) => {
+            const option = selectedOption || {
+              weightGain: 80,
+              fullnessDuration: 10,
+            };
+            if (target.isFullness === undefined) target.isFullness = false;
+            target.isFullness = true;
+            return {
+              success: true,
+              type: 'digestion',
+              weightGain: option.weightGain,
+              fullnessApplied: true,
+              description: 'Rapid digestion processes food instantly into weight!',
+            };
+          })
+        )
+    );
+
+    // Flesh to Food - transform creatures into food
+    this.registerSpell(
+      new Spell('Flesh to Food', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous (permanent)',
+        description: 'Transform living flesh into edible food',
+        weightGainTheme:
+          'Creatures transmute into pure culinary abundance. Living beings become sustenance ready for consumption.',
+        tags: ['transmutation', 'conversion', 'food'],
+      })
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption('Delicate Conversion', 'Light food conversion', (caster, target) => ({
+            type: 'creature_to_food',
+            portionCount: 5,
+            caloriesPerPortion: 350,
+            quality: 'high',
+            description: 'Beast transforms into exquisite food portions',
+          }))
+        )
+        .addOption(
+          new SpellOption('Hearty Transformation', 'Standard conversion', (caster, target) => ({
+            type: 'creature_to_food',
+            portionCount: 10,
+            caloriesPerPortion: 350,
+            quality: 'standard',
+            description: 'Beast transforms into food portions',
+          }))
+        )
+        .addOption(
+          new SpellOption('Complete Absorption', 'Maximum yield', (caster, target) => ({
+            type: 'creature_to_food',
+            portionCount: 15,
+            caloriesPerPortion: 300,
+            quality: 'variable',
+            description: 'Complete transformation including all matter',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Transmutation', 'Creature becomes food', (caster, target, context, selectedOption) => {
+            const option = selectedOption || {
+              portionCount: 10,
+              caloriesPerPortion: 350,
+            };
+            return {
+              success: true,
+              type: 'creature_transformed',
+              portionCount: option.portionCount,
+              totalCalories: option.portionCount * option.caloriesPerPortion,
+              description: `${target.name || 'The creature'} transforms into food portions!`,
+            };
+          })
+        )
+    );
+
+    // Haste (Metabolic) - eat faster, burn less
+    this.registerSpell(
+      new Spell('Haste', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Concentration, up to 1 minute',
+        description: 'Target moves and acts with supernatural speed',
+        weightGainTheme:
+          'Eating and food consumption accelerates 2x. Magical metabolism only burns 50% of calories. Net rapid weight gain.',
+        tags: ['transmutation', 'speed', 'weight-gain'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption('Quick Consumption', 'Double eating speed', (caster, target) => ({
+            type: 'metabolic_acceleration',
+            eatingSpeedMultiplier: 2,
+            caloriBurningRate: 0.5,
+            weightGainPerRound: 15,
+            description: 'Target eats twice as fast',
+          }))
+        )
+        .addOption(
+          new SpellOption('Frenzied Gorging', 'Triple eating speed', (caster, target) => ({
+            type: 'metabolic_acceleration',
+            eatingSpeedMultiplier: 3,
+            caloriBurningRate: 0.3,
+            weightGainPerRound: 25,
+            description: 'Target eats in frenzy',
+          }))
+        )
+        .addOption(
+          new SpellOption('Metabolic Breakdown', 'Quadruple eating speed', (caster, target) => ({
+            type: 'metabolic_acceleration',
+            eatingSpeedMultiplier: 4,
+            caloriBurningRate: 0.1,
+            weightGainPerRound: 40,
+            description: 'Target metabolism breaks down',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Acceleration', 'Metabolic haste applied', (caster, target, context, selectedOption) => {
+            const option = selectedOption || {
+              eatingSpeedMultiplier: 2,
+              caloriBurningRate: 0.5,
+              weightGainPerRound: 15,
+            };
+            return {
+              success: true,
+              type: 'haste_applied',
+              eatingSpeedMultiplier: option.eatingSpeedMultiplier,
+              caloriBurningRate: option.caloriBurningRate,
+              description: 'Target moves and eats with supernatural speed!',
+            };
+          })
+        )
+    );
+
+    // Duplication - copy objects/food
+    this.registerSpell(
+      new Spell('Duplication', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Permanent',
+        description: 'Create perfect magical duplicates of objects',
+        weightGainTheme:
+          'Food items multiply. One plate becomes two, two become four. Create infinite food loops.',
+        tags: ['transmutation', 'creation', 'duplication'],
+      })
+        .addValidTarget('object')
+        .addOption(
+          new SpellOption('Single Copy', 'Create 1 duplicate', (caster, target) => ({
+            type: 'object_duplication',
+            duplicateCount: 1,
+            description: 'One duplicate is created',
+          }))
+        )
+        .addOption(
+          new SpellOption('Double Reflection', 'Create 2 duplicates', (caster, target) => ({
+            type: 'object_duplication',
+            duplicateCount: 2,
+            description: 'Two duplicates materialize',
+          }))
+        )
+        .addOption(
+          new SpellOption('Triple Abundance', 'Create 3 duplicates', (caster, target) => ({
+            type: 'object_duplication',
+            duplicateCount: 3,
+            description: 'Three duplicates appear',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Duplication', 'Objects are duplicated', (caster, target, context, selectedOption) => {
+            const option = selectedOption || { duplicateCount: 2 };
+            return {
+              success: true,
+              type: 'duplication',
+              duplicateCount: option.duplicateCount,
+              description: 'Perfect magical duplicates appear!',
+            };
+          })
+        )
+    );
+
+    // Ravenous Expansion - double stomach capacity, ravenous appetite
+    // Note: This spell supports upcasting (Levels 3-7)
+    this.registerSpell(
+      new Spell('Ravenous Expansion', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, 1 hour',
+        description: 'Target\'s stomach swells with magical capacity and hunger',
+        weightGainTheme:
+          'Target becomes ravenous yet capable. Stomach capacity doubles, desperate hunger sets in. No satiation mechanics.',
+        tags: ['transmutation', 'hunger', 'capacity'],
+        supportedUpcasts: [3, 4, 5, 6, 7], // Can be upcast to Level 7
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption('Hungry Stretch', 'Basic expansion', (caster, target) => ({
+            type: 'stomach_expansion',
+            capacityMultiplier: 2,
+            willingnessModifier: -30,
+            duration: 3600, // 1 hour in seconds
+            maxSwallowWeight: 2000, // Chicken
+            description: 'Target\'s stomach swells with hunger',
+          }))
+        )
+        .addOption(
+          new SpellOption('Ravenous Void', 'Strong hunger', (caster, target) => ({
+            type: 'stomach_expansion',
+            capacityMultiplier: 2,
+            willingnessModifier: -40,
+            duration: 3600,
+            maxSwallowWeight: 2000, // Chicken
+            description: 'Target becomes ravenous',
+          }))
+        )
+        .addOption(
+          new SpellOption('Insatiable Belly', 'Extreme desperation', (caster, target) => ({
+            type: 'stomach_expansion',
+            capacityMultiplier: 2,
+            willingnessModifier: -50,
+            duration: 3600,
+            maxSwallowWeight: 2000, // Chicken
+            description: 'Target\'s belly screams for food',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Expansion', 'Stomach expands dramatically', (caster, target, context, selectedOption, spellLevel = 3) => {
+            // Upcasting multipliers
+            const upcasts = {
+              3: { capacityMultiplier: 2, willingnessModifier: -40, maxSwallowWeight: 2000 }, // Chicken
+              4: { capacityMultiplier: 3, willingnessModifier: -50, maxSwallowWeight: 8000 }, // Sheep
+              5: { capacityMultiplier: 4, willingnessModifier: -60, maxSwallowWeight: 12000 }, // Pig
+              6: { capacityMultiplier: 5, willingnessModifier: -70, maxSwallowWeight: 18000 }, // Cow
+              7: { capacityMultiplier: 6, willingnessModifier: -80, maxSwallowWeight: 45000 }, // Elephant
+            };
+            const upcast = upcasts[spellLevel] || upcasts[3];
+            return {
+              success: true,
+              type: 'stomach_expansion',
+              capacityMultiplier: upcast.capacityMultiplier,
+              willingnessModifier: upcast.willingnessModifier,
+              maxSwallowableCreature: ['Unknown', 'Chicken', 'Sheep', 'Pig', 'Cow', 'Elephant', 'Elephant', 'Whale'][spellLevel] || 'Chicken',
+              description: 'Target\'s stomach swells and hunger sets in!',
+            };
+          })
+        )
+    );
+
+    // LEVEL 4 SPELLS
+
+    // Confection Snare - licorice/candy vines for restraint and feeding
+    this.registerSpell(
+      new Spell('Confection Snare', {
+        level: 4,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 hour (or until broken)',
+        description: 'Conjure animated vines made of candy/licorice for restraint and feeding',
+        weightGainTheme:
+          'Sugary bonds wrap around targets. Both restraint and temptation. Integrates with gravity system for suspension mechanics.',
+        tags: ['transmutation', 'restraint', 'feeding', 'gravity-dependent'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addValidTarget('object')
+        .addOption(
+          new SpellOption('Restraint Bonds', 'Wrap hands and feet', (caster, target) => ({
+            type: 'restraint',
+            bindPoint: ['hands', 'feet'],
+            movementAllowed: 0,
+            feedingPossible: true,
+            description: 'Candy vines wrap around limbs',
+          }))
+        )
+        .addOption(
+          new SpellOption('Ceiling Suspension', 'Suspend from above', (caster, target, context) => {
+            // Check gravity for failure
+            const targetGravity = (target.currentWeight || target.baseWeight) * 0.1;
+            const vineCapacity = 5; // gravity units
+            return {
+              type: 'suspension',
+              suspensionType: 'ceiling',
+              bindPoints: ['wrists', 'ankles', 'waist'],
+              maxSupportedWeight: 500, // Fails at 500+ lbs
+              movementAllowed: 0,
+              feedingPossible: true,
+              gravityCheck: targetGravity <= vineCapacity,
+              description: 'Vines suspend target from above',
+            };
+          })
+        )
+        .addOption(
+          new SpellOption('Forced Feeding Gullet', 'Force feed via vines', (caster, target) => ({
+            type: 'forced_feeding',
+            feedingMethod: 'gullet',
+            weightGainPerRound: 30,
+            canResist: false,
+            description: 'Vines pump food directly down throat',
+          }))
+        )
+        .addOption(
+          new SpellOption('Mouth Suction', 'Pull objects into mouth', (caster, target) => ({
+            type: 'mouth_suction',
+            pullObjectsToMouth: true,
+            autoConsumption: true,
+            weightGainPerObject: 50,
+            canResist: false,
+            description: 'Vines pull food/objects into mouth',
+          }))
+        )
+        .addOption(
+          new SpellOption('Sticky Entanglement', 'Wrap entire body', (caster, target) => ({
+            type: 'entanglement',
+            bindPoints: ['entire_body'],
+            movementPenalty: 'immobilized',
+            feedingPossible: true,
+            escapeAllowed: false,
+            description: 'Vines wrap target completely',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Snare', 'Confection vines trap target', (caster, target, context, selectedOption) => {
+            return {
+              success: true,
+              type: 'restraint_applied',
+              vinesMaterial: 'candy/licorice',
+              targetRestricted: true,
+              description: 'Sugary vines animate and wrap around the target!',
+            };
+          })
+        )
+    );
   }
 }
 

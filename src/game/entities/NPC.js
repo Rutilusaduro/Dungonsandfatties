@@ -53,6 +53,11 @@ class NPC {
 
     // Track if we've detected their cravings
     this.cravinessRevealed = false;
+
+    // Gravity and state
+    this.gravity = this.currentWeight * 0.1; // gravity = weight * gravityConstant
+    this.isFullness = false; // Fullness state from Rapid Digestion spell
+    this.suspensionState = null; // Track suspension: 'ceiling', 'hybrid' (belly touching), etc.
   }
 
   // Get dialogue with context awareness
@@ -134,11 +139,18 @@ class NPC {
   gainWeight(amount) {
     this.currentWeight += amount;
     this.weightGainAccumulated += amount;
+    this.recalculateGravity();
     return {
       npc: this.name,
       newWeight: this.currentWeight,
       accumulated: this.weightGainAccumulated,
+      gravity: this.gravity,
     };
+  }
+
+  // Recalculate gravity when weight changes
+  recalculateGravity() {
+    this.gravity = this.currentWeight * 0.1;
   }
 
   // Feed the NPC (weight gain themed)
