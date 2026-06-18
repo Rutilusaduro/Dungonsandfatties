@@ -8,6 +8,7 @@ import GameState from '../game/GameState';
 import Character from '../game/Character';
 import TextEngine from '../engine/TextEngine';
 import SpellLibrary from '../game/magic/SpellLibrary';
+import SpellNarrator from '../game/magic/SpellNarrator';
 import World from '../game/world/World';
 
 const Game = () => {
@@ -51,55 +52,50 @@ const Game = () => {
     const caster = gameState.getPlayer();
     if (!caster) return;
 
-    // Prepare context for spell casting
     const context = {
       environmentalObjects: zone.getEnvironmentalObjects(),
       creatures: zone.getCreatures(),
       npcs: zone.getNPCs(),
-      previousSpells: [], // Track spell history for interactions
+      previousSpells: [],
     };
 
-    // Cast the spell with the selected option
     const result = spell.cast(caster, target, context, selectedOption);
 
-    // Add narrative to text display
     textEngine.clearBuffer();
+
     if (result.success) {
-      let castText = `✨ ${caster.name} casts ${spell.name}!`;
-      if (result.optionUsed) {
-        castText += ` (${result.optionUsed})`;
-      }
-      textEngine.addText(castText);
+      // Single cohesive scene narrative
+      const scene = SpellNarrator.narrateSpellScene(spell, caster, target, selectedOption);
+      textEngine.addText(scene);
 
-      if (result.weightGainFlavor) {
-        textEngine.addText(result.weightGainFlavor);
-      }
+      // Accumulate total weight gain from all effects
+      const totalWeightGain = result.effects.reduce((sum, e) => {
+        return sum + (e.weightChange || e.weightGainPerCreature || 0);
+      }, 0);
 
-      if (result.effects.length > 0) {
-        result.effects.forEach(effect => {
-          if (effect.description) {
-            textEngine.addText(effect.description);
+      // NPC reactions (weight gain + restraint status)
+      if (target && target._createContext) {
+        if (totalWeightGain > 0) {
+          const weightReaction = SpellNarrator.triggerNPCReactions(target, 'weight_gain', totalWeightGain);
+          if (weightReaction) textEngine.addText(weightReaction);
+        }
+
+        // Apply restraint state to NPC so examine/dialogue reflects it
+        const isRestraintSpell = spell.tags && (
+          spell.tags.includes('restraint') || spell.tags.includes('paralysis')
+        );
+        if (isRestraintSpell) {
+          const spellKey = spell.name.toLowerCase().replace(/ /g, '_');
+          target.restrainedBy = spellKey;
+          if (selectedOption && selectedOption.name === 'Ceiling Suspension') {
+            target.suspensionState = 'ceiling';
           }
-        });
-      }
-
-      if (result.environmentalChanges.length > 0) {
-        textEngine.addText('Environmental effects:');
-        result.environmentalChanges.forEach(change => {
-          if (change.description) {
-            textEngine.addText(`  • ${change.description}`);
-          }
-        });
-      }
-
-      if (result.interactions.length > 0) {
-        textEngine.addText('Spell combinations:');
-        result.interactions.forEach(inter => {
-          textEngine.addText(`  • ${inter.description}`);
-        });
+          const restraintReaction = SpellNarrator.triggerNPCReactions(target, 'restrained');
+          if (restraintReaction) textEngine.addText(restraintReaction);
+        }
       }
     } else {
-      textEngine.addText(`❌ ${result.message}`);
+      textEngine.addText(`${result.message}`);
     }
 
     setTextBuffer(textEngine.getBuffer());

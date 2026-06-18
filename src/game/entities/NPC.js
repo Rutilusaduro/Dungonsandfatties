@@ -60,52 +60,31 @@ class NPC {
     this.gravity = this.currentWeight * 0.1; // gravity = weight * gravityConstant
     this.isFullness = false; // Fullness state from Rapid Digestion spell
     this.suspensionState = null; // Track suspension: 'ceiling', 'hybrid' (belly touching), etc.
+
+    // Spell status effects
+    this.restrainedBy = null;  // 'hold_person', 'confection_snare', etc.
+    this.lastWeightGain = 0;   // Most recent weight gain amount (for reaction scaling)
+    this.spellAffects = [];    // Active spell effects on this NPC
   }
 
   // Get dialogue with context awareness
   getDialogue(state = null, context = {}) {
-    try {
-      const engine = getTextEngine();
-      const ctx = this._createContext();
+    const engine = getTextEngine();
+    const ctx = this._createContext();
+    const dialogueKey = state || this.dialogue_state;
+    const moduleKey = `npc.dialogue.${dialogueKey}`;
 
-      // Map state to module key
-      const moduleKey = state ? `npc.dialogue.${state}` : 'npc.greeting';
+    let dialogue = engine.render(moduleKey, ctx)
+      || `${this.name} looks at you.`;
 
-      // Try to render from engine
-      let dialogue = engine.render(moduleKey, ctx);
-
-      // Fallback if no module found
-      if (!dialogue) {
-        dialogue = this.dialogues[state] || `${this.name} looks at you.`;
-      }
-
-      // Add weight reaction if applicable
-      const weightChange = this.currentWeight - this.previousWeight;
-      if (weightChange > 0 && !context.skipWeightReaction) {
-        const reactionCtx = this._createContext();
-        const reaction = engine.render('npc.weight_reaction', reactionCtx);
-        if (reaction) {
-          dialogue += ` ${reaction}`;
-        }
-      }
-
-      return dialogue;
-    } catch (error) {
-      // Fallback to hardcoded dialogue if engine fails
-      const dialogueKey = state || this.dialogue_state;
-      let dialogue = this.dialogues[dialogueKey] || `${this.name} looks at you.`;
-
-      const weightChange = this.currentWeight - this.previousWeight;
-      if (weightChange > 0 && !context.skipWeightReaction) {
-        if (weightChange > 20) {
-          dialogue += ` She seems noticeably fuller than before!`;
-        } else if (weightChange > 10) {
-          dialogue += ` She looks a bit rounder.`;
-        }
-      }
-
-      return dialogue;
+    // Weight reaction appendix — only if we just gained weight this interaction
+    const weightChange = this.currentWeight - this.previousWeight;
+    if (weightChange > 0 && !context.skipWeightReaction) {
+      const reaction = engine.render('npc.reaction.weight_gain', { ...ctx, lastWeightGain: weightChange });
+      if (reaction) dialogue += `\n${reaction}`;
     }
+
+    return dialogue;
   }
 
   // Start conversation
@@ -241,6 +220,11 @@ class NPC {
       season: 'spring',
       mood: this.personality,
       studentId: this.id,
+      // Status dimensions
+      isRestrained: this.restrainedBy ? 1 : 0,
+      restrainedBy: this.restrainedBy || 'none',
+      suspensionState: this.suspensionState || 'none',
+      lastWeightGain: this.lastWeightGain || 0,
     };
   }
 
@@ -292,19 +276,10 @@ class Innkeeper extends NamedNPC {
       personality: 'friendly',
       description: 'A warm tavern keeper with a cheerful disposition',
       baseWeight: 220,
-      willingness: 80, // Very willing to eat
+      willingness: 80,
       foodLoves: ['Pastry', 'Cream', 'Pudding', 'Meat'],
       foodLikes: ['Bread', 'IceCream'],
       foodDislikes: [],
-      dialogues: {
-        greeting:
-          "Well hello there, dear! Welcome to the Bloated Boar! What can I get ya? I've got the finest food and drink in town.",
-        tavern_chat:
-          "Business is wonderful this season! The harvest has been so bountiful. I've been enjoying the abundance myself, as you can see!",
-        offer_food:
-          "Care for something hearty? My cook makes the most delicious pies. I may have sampled a few myself...",
-        after_feeding: "Oh my, that was absolutely delicious! Thank you, dear. I do love a good meal...",
-      },
       ...options,
     });
   }
@@ -317,20 +292,10 @@ class Merchant extends NamedNPC {
       personality: 'shrewd',
       description: 'A clever merchant with keen eye for opportunity and fine goods',
       baseWeight: 180,
-      willingness: 60, // Moderately willing
+      willingness: 60,
       foodLoves: ['IceCream', 'Cream', 'Pudding'],
       foodLikes: ['Pastry', 'Meat'],
       foodDislikes: ['Bread'],
-      dialogues: {
-        greeting:
-          "Ah, a potential customer! Care to see my exotic wares? I've acquired some truly special items.",
-        selling:
-          "These goods are of exceptional quality. Name your price... within reason, of course.",
-        haggle:
-          "Your offer is... intriguing. Perhaps we can come to an agreement, especially if you sweeten the deal with some refreshments.",
-        after_feeding:
-          "Mmm, quite excellent! You certainly know how to negotiate. Perhaps we can do business more often.",
-      },
       ...options,
     });
   }
@@ -347,14 +312,6 @@ class Gardener extends NamedNPC {
       foodLoves: ['Bread', 'Cream', 'Meat'],
       foodLikes: ['Pastry', 'IceCream'],
       foodDislikes: [],
-      dialogues: {
-        greeting:
-          "Welcome to the garden, dear. It's such a lovely day to enjoy nature's abundance.",
-        gardening:
-          "The plants are growing wonderfully. There's something satisfying about watching things flourish and grow, don't you think?",
-        after_feeding:
-          "Thank you for the meal. I do enjoy taking time to appreciate good food and the simple pleasures of life.",
-      },
       ...options,
     });
   }
@@ -368,7 +325,7 @@ class Guard extends NamedNPC {
       description: 'A vigilant guard captain keeping watch with unwavering dedication',
       maxHealth: 35,
       baseWeight: 190,
-      willingness: 40, // Less willing to be swayed
+      willingness: 40,
       foodLoves: ['Meat'],
       foodLikes: ['Bread', 'Pastry'],
       foodDislikes: ['Cream', 'Pudding'],
@@ -379,13 +336,6 @@ class Guard extends NamedNPC {
         intelligence: 10,
         wisdom: 12,
         charisma: 10,
-      },
-      dialogues: {
-        greeting: "State your business here.",
-        friendly: "You seem trustworthy. The town is safer with honorable folk like yourself.",
-        warning: "Trouble-making won't be tolerated here. Not on my watch.",
-        after_feeding:
-          "I appreciate the gesture. Proper nutrition keeps one sharp for duty.",
       },
       ...options,
     });
@@ -399,17 +349,10 @@ class Chef extends NamedNPC {
       personality: 'commanding',
       description: 'A skilled chef who runs a tight but delicious kitchen',
       baseWeight: 260,
-      willingness: 90, // Chef loves food!
+      willingness: 90,
       foodLoves: ['Meat', 'Cream', 'Pudding', 'Pastry'],
       foodLikes: ['Bread', 'IceCream'],
       foodDislikes: [],
-      dialogues: {
-        greeting: "What brings you to my kitchen? Are you here to appreciate fine cuisine?",
-        cooking:
-          "Cooking is an art form. Every meal is an opportunity to create something magnificent.",
-        after_feeding:
-          "Ah, now THAT is exquisite! You have good taste. A fine meal is one of life's greatest pleasures.",
-      },
       ...options,
     });
   }
