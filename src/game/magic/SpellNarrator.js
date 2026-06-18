@@ -87,6 +87,14 @@ export class SpellNarrator {
       }
 
       const ctx = SpellNarrator._createSpellContext(target);
+
+      if (reactionType === 'weight_gain') {
+        const growthProse = engine.render('word.growth', ctx);
+        const reaction = engine.render('npc.reaction.weight_gain', ctx);
+        const parts = [growthProse, reaction].filter(Boolean);
+        return parts.join(' ');
+      }
+
       const moduleKey = `npc.reaction.${reactionType}`;
       const reaction = engine.render(moduleKey, ctx);
 

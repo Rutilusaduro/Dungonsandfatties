@@ -89,6 +89,105 @@ export function registerBodyLexicon() {
     { when: { sizeClass: 'leviathan', buried: 1 },
       text: 'her leviathan form swallowing the entire mound, the eruption merely a dusting across a body too vast to bury' },
 
+    // ───── OOZE-COATED (oozing abundance) ─────
+    { when: { sizeClass: 'thin', oozeCoated: 1 },
+      text: 'her slender frame coated head to toe in sweet nutritive ooze, the dense slick filling every hollow and angle with warm, caloric weight' },
+    { when: { sizeClass: 'plump', oozeCoated: 1 },
+      text: 'her softening body glazed in thick, sweet ooze, the slick pooling in her new curves and creases and making everything glisten' },
+    { when: { sizeClass: 'fat', oozeCoated: 1 },
+      text: 'her heavy body drenched in nutritive ooze, the slick filling every fold and roll with a warm, caloric embrace she can feel seeping in' },
+    { when: { sizeClass: 'ssbbw', oozeCoated: 1 },
+      text: 'her vast body shellacked in a continuous gleaming coat, rivers of sweet ooze carving slow channels between enormous rolls' },
+    { when: { sizeClass: 'immobile', oozeCoated: 1 },
+      text: 'her colossal form all but lacquered in ooze so thick it takes on its own geography, pooling in valleys of flesh too wide to map' },
+    { when: { sizeClass: 'leviathan', oozeCoated: 1 },
+      text: 'her leviathan body swathed in a continuous sweet slick, ooze pooling and dripping across acres of flesh like caloric rainfall' },
+    { when: { oozeCoated: 1 },
+      text: 'her body coated in thick, sweet nutritive ooze, the dense slick warm against her skin' },
+
+    // ───── ENLARGED / POLYMORPH FORM ─────
+    { when: { sizeClass: 'thin', enlarged: 1 },
+      text: 'her formerly-slight body surged to beast proportions, the transformation doubling her in every dimension — a creature now where a girl stood, driven by simple, enormous hunger' },
+    { when: { sizeClass: 'plump', enlarged: 1 },
+      text: 'her softening human form swollen dramatically by the polymorph, beast-mass added to human curves, a much larger creature now with appetite scaled to match' },
+    { when: { sizeClass: 'fat', enlarged: 1 },
+      text: 'her already-heavy body expanded into beast proportions, the transformation compounding what was already substantial — enormous, and hungry' },
+    { when: { sizeClass: 'ssbbw', enlarged: 1 },
+      text: 'her already-vast form pushed further by the polymorph, beast-bulk stacked on human bulk, a staggering combined mass governed by one simple animal thought' },
+    { when: { sizeClass: 'immobile', enlarged: 1 },
+      text: 'her near-immobile mass inflated to beast scale, an almost unthinkable accumulation of transformed flesh, a creature barely possible' },
+    { when: { sizeClass: 'leviathan', enlarged: 1 },
+      text: 'her leviathan body grown to beast scale beyond all comprehension, the polymorph straining against its own limits to contain her' },
+    { when: { enlarged: 1 },
+      text: 'her body swollen to beast proportions by the transformation, larger in every dimension and ravenous with it' },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // COMBO CONDITIONS — priority:1 beats any single-condition size-class variant.
+    // Suspension combos use priority:2 to beat the priority:1 suspended variants.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // ───── OOZE-COATED + RAVENOUS ─────
+    { when: { sizeClass: 'thin', oozeCoated: 1, ravenous: 1 }, priority: 1,
+      text: 'her ooze-slicked, shaking frame — the cruel irony of being coated head to toe in sweet caloric abundance while hunger gnaws at her; her tongue works at the slick on her lips and cheeks, consuming what little she can reach and desperate for more' },
+    { when: { sizeClass: 'fat', oozeCoated: 1, ravenous: 1 }, priority: 1,
+      text: 'her ooze-drenched heavy body driven by ravenous need, thick fingers scooping the slick from her own rolls and stuffing it past her lips, consuming herself in a frantic, blissful loop' },
+    { when: { sizeClass: 'ssbbw', oozeCoated: 1, ravenous: 1 }, priority: 1,
+      text: 'her enormous ooze-coated body wracked with insatiable hunger — every vast roll of her sheathed in sweet calories she can barely reach and desperately needs' },
+    { when: { oozeCoated: 1, ravenous: 1 }, priority: 1,
+      text: 'her ooze-covered body frantic with hunger, lips and hands working at the sweet caloric coating as fast as she can manage, consuming her own coating rather than wait' },
+
+    // ───── OOZE-COATED + CANDY BONDS ─────
+    { when: { sizeClass: 'thin', oozeCoated: 1, restraintMaterial: 'candy' }, priority: 1,
+      text: 'her ooze-slicked thin frame fighting the candy ropes — the bonds gleam with it, the licorice soaked in sweetness wherever it bites into her glistening skin, everything sticky, everything edible' },
+    { when: { sizeClass: 'fat', oozeCoated: 1, restraintMaterial: 'candy' }, priority: 1,
+      text: 'her ooze-drenched heavy body bound in candy ropes that have soaked up the slick, the licorice turning soft and slick where it presses into doughy, glistening rolls — everything sweet, everything yielding' },
+    { when: { oozeCoated: 1, restraintMaterial: 'candy' }, priority: 1,
+      text: 'her ooze-coated body bound in candy ropes that have absorbed the slick — bonds and flesh and coating all melting together into one sweet, sticky, inescapable mass' },
+
+    // ───── OOZE-COATED + MAGICAL PARALYSIS ─────
+    { when: { sizeClass: 'thin', oozeCoated: 1, restrainedBy: 'hold_person' }, priority: 1,
+      text: 'her ooze-glazed slight body locked in magical stillness, the slick dripping from frozen limbs in slow, warm falls — she cannot wipe it off, cannot move toward anything, can only feel it soaking in' },
+    { when: { oozeCoated: 1, restrainedBy: 'hold_person' }, priority: 1,
+      text: 'her ooze-soaked body held in perfect paralytic stillness, the nutritive slick seeping into every inch of her while she cannot move, cannot wipe it away, can only absorb it' },
+
+    // ───── ENLARGED + RAVENOUS ─────
+    { when: { sizeClass: 'thin', enlarged: 1, ravenous: 1 }, priority: 1,
+      text: 'her enlarged beast-body — vast where she was once slight — convulsing with enormous animal hunger; the transformation has given her the size and the ravenous spell has given her the need, and the combination is overwhelming' },
+    { when: { sizeClass: 'fat', enlarged: 1, ravenous: 1 }, priority: 1,
+      text: 'her beast-expanded heavy form driven by a hunger scaled to her new size, thick beast-muscles straining as she strains toward anything edible, the animal mind brooking no delay' },
+    { when: { enlarged: 1, ravenous: 1 }, priority: 1,
+      text: 'her beast-enlarged form convulsing with ravenous animal hunger — a body several times its natural size screaming to be fed at the same scale, simple and absolute' },
+
+    // ───── MAGICAL PARALYSIS + RAVENOUS ─────
+    { when: { sizeClass: 'thin', restrainedBy: 'hold_person', ravenous: 1 }, priority: 1,
+      text: 'her paralyzed slight frame screaming with hunger she cannot answer — completely frozen, completely starving, only her eyes able to move toward the food she cannot reach' },
+    { when: { sizeClass: 'fat', restrainedBy: 'hold_person', ravenous: 1 }, priority: 1,
+      text: 'her heavy paralyzed body aching with ravenous hunger, every frozen muscle straining against the spell\'s grip toward food she cannot reach on her own' },
+    { when: { restrainedBy: 'hold_person', ravenous: 1 }, priority: 1,
+      text: 'her frozen, desperately hungry body — the paralysis having removed the last barrier between her ravenous need and your will; she cannot resist, and she cannot wait' },
+
+    // ───── CANDY BONDS + RAVENOUS ─────
+    { when: { restraintMaterial: 'candy', ravenous: 1 }, priority: 1,
+      text: 'her candy-bound body gnawing at the licorice itself in desperation — the bonds are sweet, at least, and she is hungry enough to find even that some comfort' },
+
+    // ───── SUSPENDED + RAVENOUS (priority:2 beats suspended-alone at priority:1) ─────
+    { when: { sizeClass: 'thin', suspended: 1, ravenous: 1 }, priority: 2,
+      text: 'her slender body strung up face-down and desperately hungry, dangling above the food she can see and smell below her while the bonds hold her perfectly, cruelly out of reach' },
+    { when: { sizeClass: 'fat', suspended: 1, ravenous: 1 }, priority: 2,
+      text: 'her heavy suspended body convulsing with ravenous hunger, thick limbs swinging against the straining bonds trying to reach anything edible below her outstretched hands' },
+    { when: { sizeClass: 'ssbbw', suspended: 1, ravenous: 1 }, priority: 2,
+      text: 'her enormous suspended bulk wracked with ravenous hunger — vast and helpless and desperate, every roll of her trembling with need she cannot answer' },
+    { when: { suspended: 1, ravenous: 1 }, priority: 2,
+      text: 'her suspended body wracked with ravenous hunger — face-down, helpless, every nerve screaming for food that hangs just beyond the reach of her bound hands' },
+
+    // ───── SUSPENDED + OOZE-COATED (priority:2) ─────
+    { when: { sizeClass: 'thin', suspended: 1, oozeCoated: 1 }, priority: 2,
+      text: 'her slender body strung face-down and glazed in ooze, the slick dripping from her in a slow continuous fall toward the floor below — suspended and glistening and feeding herself drop by drop against her will' },
+    { when: { sizeClass: 'fat', suspended: 1, oozeCoated: 1 }, priority: 2,
+      text: 'her heavy suspended body shellacked in ooze, the slick dripping from her bulk in thick caloric falls to splash uselessly on the floor below her dangling form' },
+    { when: { suspended: 1, oozeCoated: 1 }, priority: 2,
+      text: 'her suspended body coated in ooze that drips steadily toward the floor below, the sweet slick running off her hanging form in a slow, caloric rain she cannot catch' },
+
     // ───── MIND-CONTROLLED (blissful, eager) ─────
     { when: { sizeClass: 'thin', mindControlled: 1 },
       text: 'her slight body swaying with glassy-eyed eagerness, thin hands already reaching for more, will gone soft as wax' },

@@ -10,6 +10,7 @@ import * as Engine from './engine.js';
 import { lexicon } from './lexicon.js';
 import { registerVocab } from './vocab.js';
 import { registerBodyLexicon } from './lexicon/body.js';
+import { registerGrowthLexicon } from './lexicon/growth.js';
 import registerNPCModules from './scenes/npc.js';
 import registerSpellModules from './scenes/spell.js';
 import registerNPCPersonas from './scenes/personas.js';
@@ -76,6 +77,7 @@ export function initializeTextEngine() {
     // then persona overlays (prepended so they win ties).
     registerVocab();
     registerBodyLexicon();
+    registerGrowthLexicon(engine);
     registerNPCModules(engine, lexicon);
     registerSpellModules(engine);
     registerNPCPersonas(engine);
