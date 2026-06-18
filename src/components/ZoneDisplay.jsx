@@ -1,4 +1,4 @@
-const ZoneDisplay = ({ zone, onZoneAction }) => {
+const ZoneDisplay = ({ zone, onZoneAction, onNPCInteract }) => {
   if (!zone) return <div style={styles.empty}>No zone loaded</div>;
 
   return (
@@ -36,15 +36,25 @@ const ZoneDisplay = ({ zone, onZoneAction }) => {
             <ul style={styles.entityList}>
               {zone.getNPCs().map(npc => (
                 <li key={npc.id} style={styles.entityItem}>
-                  <strong>{npc.name}</strong> ({npc.role}) - {npc.personality}
-                  <div style={styles.entityWeight}>
-                    {npc.currentWeight} lbs
-                    {npc.weightGainAccumulated > 0 && (
-                      <span style={styles.gainedWeight}>
-                        {' '}
-                        +{npc.weightGainAccumulated}
-                      </span>
-                    )}
+                  <div style={styles.entityHeader}>
+                    <div>
+                      <strong>{npc.name}</strong> ({npc.role}) - {npc.personality}
+                      <div style={styles.entityWeight}>
+                        {npc.currentWeight} lbs
+                        {npc.weightGainAccumulated > 0 && (
+                          <span style={styles.gainedWeight}>
+                            {' '}
+                            +{npc.weightGainAccumulated}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => onNPCInteract(npc)}
+                      style={styles.interactBtn}
+                    >
+                      Talk
+                    </button>
                   </div>
                 </li>
               ))}
@@ -180,6 +190,12 @@ const styles = {
     fontSize: '12px',
     borderLeft: '3px solid #8B4513',
   },
+  entityHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '8px',
+  },
   entityWeight: {
     marginTop: '4px',
     fontSize: '11px',
@@ -188,6 +204,17 @@ const styles = {
   gainedWeight: {
     color: '#ff9800',
     fontWeight: 'bold',
+  },
+  interactBtn: {
+    padding: '4px 10px',
+    backgroundColor: '#8B4513',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '3px',
+    cursor: 'pointer',
+    fontSize: '11px',
+    whiteSpace: 'nowrap',
+    transition: 'background-color 0.2s',
   },
   objectState: {
     marginTop: '4px',

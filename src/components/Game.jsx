@@ -3,6 +3,7 @@ import TextDisplay from './TextDisplay';
 import CharacterPanel from './CharacterPanel';
 import SpellCaster from './SpellCaster';
 import ZoneDisplay from './ZoneDisplay';
+import NPCInteraction from './NPCInteraction';
 import GameState from '../game/GameState';
 import Character from '../game/Character';
 import TextEngine from '../engine/TextEngine';
@@ -19,6 +20,7 @@ const Game = () => {
   const [currentZone, setCurrentZone] = useState(null);
   const [textBuffer, setTextBuffer] = useState([]);
   const [gameMode, setGameMode] = useState('exploration'); // 'exploration' or 'story'
+  const [selectedNPC, setSelectedNPC] = useState(null);
 
   // Initialize game
   const startGame = (playerName) => {
@@ -116,6 +118,27 @@ const Game = () => {
     }
   };
 
+  const handleNPCInteract = (npc) => {
+    setSelectedNPC(npc);
+  };
+
+  const handleNPCAction = ({ type, npc, dialogue, description }) => {
+    textEngine.clearBuffer();
+
+    if (type === 'talk') {
+      textEngine.addText(`${npc}:`);
+      textEngine.addText(dialogue);
+    } else if (type === 'examine') {
+      textEngine.addText(description);
+    }
+
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleCloseNPC = () => {
+    setSelectedNPC(null);
+  };
+
   if (!gameStarted) {
     return <StartScreen onStart={startGame} />;
   }
@@ -132,7 +155,11 @@ const Game = () => {
           <TextDisplay textBuffer={textBuffer} />
           {currentZone && (
             <div style={styles.zoneSection}>
-              <ZoneDisplay zone={currentZone} onZoneAction={handleZoneAction} />
+              <ZoneDisplay
+                zone={currentZone}
+                onZoneAction={handleZoneAction}
+                onNPCInteract={handleNPCInteract}
+              />
             </div>
           )}
         </div>
@@ -152,6 +179,14 @@ const Game = () => {
           </div>
         </aside>
       </div>
+
+      {selectedNPC && (
+        <NPCInteraction
+          npc={selectedNPC}
+          onClose={handleCloseNPC}
+          onAction={handleNPCAction}
+        />
+      )}
     </div>
   );
 };

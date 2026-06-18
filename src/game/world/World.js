@@ -6,7 +6,7 @@
 import Zone from './Zone';
 import { Earth, Wood, Stone, Furniture, Water } from '../environment/EnvironmentalObject';
 import { Pig, Duck, Cow } from '../entities/Creature';
-import { Innkeeper, Merchant, Guard } from '../entities/NPC';
+import { Innkeeper, Merchant, Gardener, Guard, Chef } from '../entities/NPC';
 
 class World {
   constructor(options = {}) {
@@ -168,14 +168,7 @@ class World {
     );
 
     // Add NPCs to garden
-    garden.addNPC(
-      new Guard('Gardener Gregg', {
-        role: 'Gardener',
-        personality: 'peaceful',
-        description: 'A stout gardener who tends the plants',
-        baseWeight: 210,
-      })
-    );
+    garden.addNPC(new Gardener());
 
     // KITCHEN ZONE
     const kitchen = new Zone('kitchen', 'The Grand Kitchen', {
@@ -208,15 +201,7 @@ class World {
     );
 
     // Add NPCs to kitchen
-    kitchen.addNPC(
-      new Innkeeper('Chef Gertrude', {
-        role: 'Chef',
-        personality: 'stern',
-        description: 'A commanding chef who runs a tight kitchen',
-        baseWeight: 260,
-        foodPreferences: ['quality ingredients', 'organization'],
-      })
-    );
+    kitchen.addNPC(new Chef());
 
     // DUNGEON ZONE
     const dungeon = new Zone('dungeon', 'The Depths Below', {

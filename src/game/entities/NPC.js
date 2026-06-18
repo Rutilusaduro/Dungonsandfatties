@@ -9,6 +9,7 @@ class NPC {
     this.role = options.role || 'Traveler'; // 'Merchant', 'Guard', 'Innkeeper', etc.
     this.description = options.description || '';
     this.personality = options.personality || 'neutral'; // 'friendly', 'suspicious', 'greedy', 'noble', etc.
+    this.gender = 'female'; // All NPCs are female
 
     // Stats similar to characters
     this.stats = options.stats || {
@@ -26,6 +27,7 @@ class NPC {
     this.baseWeight = options.baseWeight || 160;
     this.currentWeight = this.baseWeight;
     this.weightGainAccumulated = 0;
+    this.previousWeight = this.baseWeight; // Track for dialogue about weight changes
 
     // Relationship tracking
     this.playerReputation = options.playerReputation || 0; // -100 to 100
@@ -42,15 +44,65 @@ class NPC {
     this.id = options.id || Math.random().toString(36).substr(2, 9);
 
     // Food preferences (for weight gain themed interactions)
-    this.foodPreferences = options.foodPreferences || [];
-    this.likes = options.likes || [];
-    this.dislikes = options.dislikes || [];
+    this.foodLoves = options.foodLoves || []; // LOVES these foods
+    this.foodLikes = options.foodLikes || []; // Likes these
+    this.foodDislikes = options.foodDislikes || []; // Dislikes these
+
+    // Willingness to eat (0-100, affects Suggestion spell)
+    this.willingness = options.willingness || 50;
+
+    // Track if we've detected their cravings
+    this.cravinessRevealed = false;
   }
 
-  // Get dialogue based on current state
-  getDialogue(state = null) {
+  // Get dialogue with context awareness
+  getDialogue(state = null, context = {}) {
     const dialogueKey = state || this.dialogue_state;
-    return this.dialogues[dialogueKey] || `${this.name} looks at you silently.`;
+    let dialogue = this.dialogues[dialogueKey] || `${this.name} looks at you.`;
+
+    // React to weight changes
+    const weightChange = this.currentWeight - this.previousWeight;
+    if (weightChange > 0 && !context.skipWeightReaction) {
+      if (weightChange > 20) {
+        dialogue += ` She seems noticeably fuller than before!`;
+      } else if (weightChange > 10) {
+        dialogue += ` She looks a bit rounder.`;
+      }
+    }
+
+    return dialogue;
+  }
+
+  // Start conversation
+  startConversation() {
+    this.dialogue_state = 'greeting';
+    return this.getDialogue('greeting');
+  }
+
+  // Look at NPC - description with weight details
+  examine() {
+    const weightDiff = this.currentWeight - this.baseWeight;
+    const weightDesc =
+      weightDiff > 30
+        ? ' Her frame is noticeably fuller and rounder.'
+        : weightDiff > 15
+        ? ' She has gained a bit of weight.'
+        : weightDiff > 0
+        ? ' She looks slightly heavier than average.'
+        : '';
+
+    const reputationDesc =
+      this.playerReputation > 50
+        ? ' She smiles warmly at you.'
+        : this.playerReputation > 25
+        ? ' She nods politely.'
+        : this.playerReputation < -50
+        ? ' She eyes you with suspicion.'
+        : this.playerReputation < -25
+        ? ' She seems wary of you.'
+        : '';
+
+    return `${this.name} is a ${this.personality} woman. ${this.description}${weightDesc}${reputationDesc}`;
   }
 
   // Progress dialogue
@@ -145,22 +197,27 @@ class UnnamedNPC extends NPC {
   }
 }
 
-// Example Named NPCs
+// Example Named NPCs (All Female)
 
 class Innkeeper extends NamedNPC {
-  constructor(name = 'Tavern Keeper', options = {}) {
+  constructor(name = 'Barkeep Bella', options = {}) {
     super(name, {
       role: 'Innkeeper',
       personality: 'friendly',
-      description: 'A portly tavern keeper with a hearty laugh',
+      description: 'A warm tavern keeper with a cheerful disposition',
       baseWeight: 220,
-      foodPreferences: ['hearty meals', 'ales', 'pastries'],
-      likes: ['good stories', 'coin', 'customers'],
+      willingness: 80, // Very willing to eat
+      foodLoves: ['Pastry', 'Cream', 'Pudding', 'Meat'],
+      foodLikes: ['Bread', 'IceCream'],
+      foodDislikes: [],
       dialogues: {
         greeting:
-          "Welcome to my tavern! What can I get ya? I've got the finest food and drink in town.",
-        tavern_chat: "Business is good this season. The harvest was bountiful!",
-        offer_food: "Care for a hearty meal? My cook makes the best pies in the region.",
+          "Well hello there, dear! Welcome to the Bloated Boar! What can I get ya? I've got the finest food and drink in town.",
+        tavern_chat:
+          "Business is wonderful this season! The harvest has been so bountiful. I've been enjoying the abundance myself, as you can see!",
+        offer_food:
+          "Care for something hearty? My cook makes the most delicious pies. I may have sampled a few myself...",
+        after_feeding: "Oh my, that was absolutely delicious! Thank you, dear. I do love a good meal...",
       },
       ...options,
     });
@@ -168,19 +225,49 @@ class Innkeeper extends NamedNPC {
 }
 
 class Merchant extends NamedNPC {
-  constructor(name = 'Traveling Merchant', options = {}) {
+  constructor(name = 'Silvia the Merchant', options = {}) {
     super(name, {
       role: 'Merchant',
-      personality: 'greedy',
-      description: 'A shrewd merchant with a keen eye for profit',
+      personality: 'shrewd',
+      description: 'A clever merchant with keen eye for opportunity and fine goods',
       baseWeight: 180,
-      likes: ['coin', 'exotic goods', 'deals'],
-      dislikes: ['haggling', 'theft'],
+      willingness: 60, // Moderately willing
+      foodLoves: ['IceCream', 'Cream', 'Pudding'],
+      foodLikes: ['Pastry', 'Meat'],
+      foodDislikes: ['Bread'],
       dialogues: {
-        greeting: "Ah, a potential customer! Care to see my wares?",
+        greeting:
+          "Ah, a potential customer! Care to see my exotic wares? I've acquired some truly special items.",
         selling:
-          "These items are of the finest quality. Name your price... within reason, of course.",
-        haggle: "Hmm, your offer is... interesting. Perhaps we can reach an agreement.",
+          "These goods are of exceptional quality. Name your price... within reason, of course.",
+        haggle:
+          "Your offer is... intriguing. Perhaps we can come to an agreement, especially if you sweeten the deal with some refreshments.",
+        after_feeding:
+          "Mmm, quite excellent! You certainly know how to negotiate. Perhaps we can do business more often.",
+      },
+      ...options,
+    });
+  }
+}
+
+class Gardener extends NamedNPC {
+  constructor(name = 'Gardener Gregg', options = {}) {
+    super(name, {
+      role: 'Gardener',
+      personality: 'peaceful',
+      description: 'A serene gardener who tends the plants with care and patience',
+      baseWeight: 210,
+      willingness: 70,
+      foodLoves: ['Bread', 'Cream', 'Meat'],
+      foodLikes: ['Pastry', 'IceCream'],
+      foodDislikes: [],
+      dialogues: {
+        greeting:
+          "Welcome to the garden, dear. It's such a lovely day to enjoy nature's abundance.",
+        gardening:
+          "The plants are growing wonderfully. There's something satisfying about watching things flourish and grow, don't you think?",
+        after_feeding:
+          "Thank you for the meal. I do enjoy taking time to appreciate good food and the simple pleasures of life.",
       },
       ...options,
     });
@@ -188,13 +275,17 @@ class Merchant extends NamedNPC {
 }
 
 class Guard extends NamedNPC {
-  constructor(name = 'Town Guard', options = {}) {
+  constructor(name = 'Captain Cassandra', options = {}) {
     super(name, {
-      role: 'Guard',
+      role: 'Guard Captain',
       personality: 'stern',
-      description: 'A vigilant town guard keeping watch',
+      description: 'A vigilant guard captain keeping watch with unwavering dedication',
       maxHealth: 35,
       baseWeight: 190,
+      willingness: 40, // Less willing to be swayed
+      foodLoves: ['Meat'],
+      foodLikes: ['Bread', 'Pastry'],
+      foodDislikes: ['Cream', 'Pudding'],
       stats: {
         strength: 14,
         dexterity: 12,
@@ -203,16 +294,39 @@ class Guard extends NamedNPC {
         wisdom: 12,
         charisma: 10,
       },
-      likes: ['order', 'duty', 'discipline'],
-      dislikes: ['thieves', 'troublemakers', 'chaos'],
       dialogues: {
         greeting: "State your business here.",
-        friendly: "You seem trustworthy. Welcome to town.",
-        warning: "Trouble-making won't be tolerated here.",
+        friendly: "You seem trustworthy. The town is safer with honorable folk like yourself.",
+        warning: "Trouble-making won't be tolerated here. Not on my watch.",
+        after_feeding:
+          "I appreciate the gesture. Proper nutrition keeps one sharp for duty.",
       },
       ...options,
     });
   }
 }
 
-export { NPC, NamedNPC, UnnamedNPC, Innkeeper, Merchant, Guard };
+class Chef extends NamedNPC {
+  constructor(name = 'Chef Gertrude', options = {}) {
+    super(name, {
+      role: 'Chef',
+      personality: 'commanding',
+      description: 'A skilled chef who runs a tight but delicious kitchen',
+      baseWeight: 260,
+      willingness: 90, // Chef loves food!
+      foodLoves: ['Meat', 'Cream', 'Pudding', 'Pastry'],
+      foodLikes: ['Bread', 'IceCream'],
+      foodDislikes: [],
+      dialogues: {
+        greeting: "What brings you to my kitchen? Are you here to appreciate fine cuisine?",
+        cooking:
+          "Cooking is an art form. Every meal is an opportunity to create something magnificent.",
+        after_feeding:
+          "Ah, now THAT is exquisite! You have good taste. A fine meal is one of life's greatest pleasures.",
+      },
+      ...options,
+    });
+  }
+}
+
+export { NPC, NamedNPC, UnnamedNPC, Innkeeper, Merchant, Gardener, Guard, Chef };

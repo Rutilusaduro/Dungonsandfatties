@@ -473,6 +473,191 @@ class SpellLibrary {
           'Create Water followed by this spell creates unlimited magical ice cream'
         )
     );
+
+    // LEVEL 1 (continued)
+
+    // Suggestion - make an NPC eat food
+    this.registerSpell(
+      new Spell('Suggestion', {
+        level: 1,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Instantaneous',
+        description: 'Gently persuade a creature to eat food',
+        weightGainTheme:
+          'Magically encourage an NPC to consume food. The more willing they are naturally, the easier the spell. They gain weight from eating and appreciate your generosity.',
+        tags: ['enchantment', 'feeding', 'social'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addOption(
+          new SpellOption(
+            'Gentle Persuasion',
+            'Kindly suggest they eat something nearby',
+            (caster, target, context) => {
+              if (!target) return { type: 'error', description: 'No target selected' };
+
+              // Check willingness (if NPC)
+              const willingness = target.willingness || 50;
+              const success = willingness > 30; // Moderate willingness needed
+
+              if (!success) {
+                return {
+                  type: 'persuasion_failed',
+                  description: `${target.name} politely declines. She doesn't seem interested in eating right now.`,
+                };
+              }
+
+              // Success - they eat and gain weight
+              const weightGain = 5;
+              if (target.gainWeight) {
+                target.gainWeight(weightGain);
+              } else if (target.currentWeight !== undefined) {
+                target.currentWeight += weightGain;
+              }
+
+              // Build reputation
+              if (target.modifyReputation) {
+                target.modifyReputation(10);
+              }
+
+              return {
+                type: 'feeding_success',
+                weightGain: weightGain,
+                description: `${target.name} smiles and eats some food. She gains ${weightGain} lbs and seems pleased with your generosity.`,
+              };
+            }
+          )
+        )
+        .addEffect(
+          new SpellEffect('Persuasion', 'Suggest eating to target', (caster, target) => ({
+            type: 'suggestion',
+            description: `${target.name} seems momentarily tempted by the suggestion...`,
+          }))
+        )
+    );
+
+    // Detect Cravings - reveal food preferences
+    this.registerSpell(
+      new Spell('Detect Cravings', {
+        level: 1,
+        school: 'Divination',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Instantaneous',
+        description: 'Sense what foods an NPC craves',
+        weightGainTheme:
+          'Magically perceive what foods an NPC loves, likes, and dislikes. Use this knowledge to encourage feeding.',
+        tags: ['divination', 'knowledge', 'feeding'],
+      })
+        .addValidTarget('npc')
+        .addValidTarget('creature')
+        .addEffect(
+          new SpellEffect('Craving Detection', 'Reveal food preferences', (caster, target) => {
+            if (!target) return { type: 'error', description: 'No target' };
+
+            const loves = target.foodLoves || [];
+            const likes = target.foodLikes || [];
+            const dislikes = target.foodDislikes || [];
+
+            let description = `You sense ${target.name}'s cravings:\n`;
+            if (loves.length > 0) {
+              description += `💜 LOVES: ${loves.join(', ')}\n`;
+            }
+            if (likes.length > 0) {
+              description += `💚 LIKES: ${likes.join(', ')}\n`;
+            }
+            if (dislikes.length > 0) {
+              description += `❌ DISLIKES: ${dislikes.join(', ')}`;
+            }
+
+            // Mark that we've revealed their cravings
+            if (target.cravinessRevealed !== undefined) {
+              target.cravinessRevealed = true;
+            }
+
+            return {
+              type: 'knowledge_gained',
+              description: description,
+              loves: loves,
+              likes: likes,
+              dislikes: dislikes,
+            };
+          })
+        )
+    );
+
+    // Conjure Food - create food items to place
+    this.registerSpell(
+      new Spell('Conjure Food', {
+        level: 2,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Permanent',
+        description: 'Conjure food items to place in the world',
+        weightGainTheme:
+          'Magically create delicious food items. Choose the type to match an NPC\'s preferences for maximum effectiveness.',
+        tags: ['conjuration', 'food', 'creation'],
+      })
+        .addValidTarget('object')
+        .addOption(
+          new SpellOption('Conjure Pastries', 'Create sweet pastries', (caster, target) => ({
+            type: 'food_conjured',
+            food: 'Pastry',
+            calories: 250,
+            description: 'Golden pastries materialize in a shimmer of magic!',
+          }))
+        )
+        .addOption(
+          new SpellOption('Conjure Meat', 'Create hearty meat portions', (caster, target) => ({
+            type: 'food_conjured',
+            food: 'Meat',
+            calories: 300,
+            description: 'Savory meat portions appear with an appetizing aroma!',
+          }))
+        )
+        .addOption(
+          new SpellOption('Conjure Bread', 'Create fresh bread', (caster, target) => ({
+            type: 'food_conjured',
+            food: 'Bread',
+            calories: 150,
+            description: 'Warm, fresh bread materializes, still steaming!',
+          }))
+        )
+        .addOption(
+          new SpellOption('Conjure Cream', 'Create rich cream', (caster, target) => ({
+            type: 'food_conjured',
+            food: 'Cream',
+            calories: 200,
+            description: 'A generous dollop of rich, creamy substance appears!',
+          }))
+        )
+        .addOption(
+          new SpellOption('Conjure Pudding', 'Create smooth pudding', (caster, target) => ({
+            type: 'food_conjured',
+            food: 'Pudding',
+            calories: 180,
+            description: 'A bowl of smooth, delicious pudding appears!',
+          }))
+        )
+        .addOption(
+          new SpellOption('Conjure Ice Cream', 'Create magical ice cream', (caster, target) => ({
+            type: 'food_conjured',
+            food: 'IceCream',
+            calories: 220,
+            magical: true,
+            description: 'A scoop of magical ice cream materializes, never to melt!',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Food Creation', 'Conjure food items', (caster, target) => ({
+            type: 'food_created',
+            description: 'Magical food shimmers into existence!',
+          }))
+        )
+    );
   }
 }
 
