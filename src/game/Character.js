@@ -4,6 +4,8 @@
  * D&D-based with weight gain mechanics
  */
 
+import ActiveConditions from './conditions/ActiveConditions.js';
+
 class Character {
   constructor(name, options = {}) {
     this.name = name;
@@ -41,6 +43,18 @@ class Character {
 
     // Equipment and inventory refs
     this.equippedItems = [];
+
+    // Spell status + conditions (so the player can also be a narration subject)
+    this.restrainedBy = null;
+    this.suspensionState = null;
+    this.isFullness = false;
+    this.lastWeightGain = 0;
+    this.conditions = new ActiveConditions();
+  }
+
+  // Engine context input ({ subject }) — see engine.js deriveFor().
+  _createContext(extra = {}) {
+    return { subject: this, ...extra };
   }
 
   calculateMaxHealth() {

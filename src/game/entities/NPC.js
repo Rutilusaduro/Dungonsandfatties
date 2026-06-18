@@ -4,6 +4,7 @@
  */
 
 import { getTextEngine } from '../../textEngine/index.js';
+import ActiveConditions from '../conditions/ActiveConditions.js';
 
 class NPC {
   constructor(name, options = {}) {
@@ -11,6 +12,7 @@ class NPC {
     this.role = options.role || 'Traveler'; // 'Merchant', 'Guard', 'Innkeeper', etc.
     this.description = options.description || '';
     this.personality = options.personality || 'neutral'; // 'friendly', 'suspicious', 'greedy', 'noble', etc.
+    this.persona = options.persona || null; // stable persona key for text-engine gating ('bella', etc.)
     this.gender = 'female'; // All NPCs are female
 
     // Stats similar to characters
@@ -65,6 +67,7 @@ class NPC {
     this.restrainedBy = null;  // 'hold_person', 'confection_snare', etc.
     this.lastWeightGain = 0;   // Most recent weight gain amount (for reaction scaling)
     this.spellAffects = [];    // Active spell effects on this NPC
+    this.conditions = new ActiveConditions(); // Lingering spell conditions (text-engine dims)
   }
 
   // Get dialogue with context awareness
@@ -80,7 +83,8 @@ class NPC {
     // Weight reaction appendix — only if we just gained weight this interaction
     const weightChange = this.currentWeight - this.previousWeight;
     if (weightChange > 0 && !context.skipWeightReaction) {
-      const reaction = engine.render('npc.reaction.weight_gain', { ...ctx, lastWeightGain: weightChange });
+      this.lastWeightGain = weightChange;
+      const reaction = engine.render('npc.reaction.weight_gain', this._createContext());
       if (reaction) dialogue += `\n${reaction}`;
     }
 
@@ -207,25 +211,13 @@ class NPC {
     };
   }
 
-  // Create context for text engine
-  _createContext() {
-    return {
-      stage: this._deriveWeightStage(),
-      corruption: 0,
-      bodyType: 'default',
-      reputation: this.playerReputation,
-      willingness: this.willingness,
-      hungerTier: 0,
-      fullness: this.isFullness ? 1 : 0,
-      season: 'spring',
-      mood: this.personality,
-      studentId: this.id,
-      // Status dimensions
-      isRestrained: this.restrainedBy ? 1 : 0,
-      restrainedBy: this.restrainedBy || 'none',
-      suspensionState: this.suspensionState || 'none',
-      lastWeightGain: this.lastWeightGain || 0,
-    };
+  // Create context for text engine. Returns the engine's createContext input
+  // shape ({ subject }) so all selector dimensions (weight stage, size class,
+  // restraint/suspension/burial/mind-control, hunger, fullness, reputation,
+  // willingness) are derived in one place — engine.js deriveFor() — and
+  // {subject.*} slots resolve to this NPC.
+  _createContext(extra = {}) {
+    return { subject: this, ...extra };
   }
 
   // Derive weight stage (0-11) from current weight
@@ -273,6 +265,7 @@ class Innkeeper extends NamedNPC {
   constructor(name = 'Barkeep Bella', options = {}) {
     super(name, {
       role: 'Innkeeper',
+      persona: 'bella',
       personality: 'friendly',
       description: 'A warm tavern keeper with a cheerful disposition',
       baseWeight: 220,
@@ -289,6 +282,7 @@ class Merchant extends NamedNPC {
   constructor(name = 'Silvia the Merchant', options = {}) {
     super(name, {
       role: 'Merchant',
+      persona: 'silvia',
       personality: 'shrewd',
       description: 'A clever merchant with keen eye for opportunity and fine goods',
       baseWeight: 180,
@@ -305,6 +299,7 @@ class Gardener extends NamedNPC {
   constructor(name = 'Gardener Gregg', options = {}) {
     super(name, {
       role: 'Gardener',
+      persona: 'gregg',
       personality: 'peaceful',
       description: 'A serene gardener who tends the plants with care and patience',
       baseWeight: 210,
@@ -321,6 +316,7 @@ class Guard extends NamedNPC {
   constructor(name = 'Captain Cassandra', options = {}) {
     super(name, {
       role: 'Guard Captain',
+      persona: 'cassandra',
       personality: 'stern',
       description: 'A vigilant guard captain keeping watch with unwavering dedication',
       maxHealth: 35,
@@ -346,6 +342,7 @@ class Chef extends NamedNPC {
   constructor(name = 'Chef Gertrude', options = {}) {
     super(name, {
       role: 'Chef',
+      persona: 'gertrude',
       personality: 'commanding',
       description: 'A skilled chef who runs a tight but delicious kitchen',
       baseWeight: 260,

@@ -3,6 +3,8 @@
  * Generic and specific creatures that inhabit zones
  */
 
+import ActiveConditions from '../conditions/ActiveConditions.js';
+
 class Creature {
   constructor(name, options = {}) {
     this.name = name;
@@ -41,6 +43,18 @@ class Creature {
 
     // Unique ID
     this.id = options.id || Math.random().toString(36).substr(2, 9);
+
+    // Spell status (mirrors NPC so the text engine can narrate creatures too)
+    this.restrainedBy = null;
+    this.suspensionState = null;
+    this.isFullness = false;
+    this.lastWeightGain = 0;
+    this.conditions = new ActiveConditions();
+  }
+
+  // Engine context input ({ subject }) — see engine.js deriveFor().
+  _createContext(extra = {}) {
+    return { subject: this, ...extra };
   }
 
   // Feed the creature
