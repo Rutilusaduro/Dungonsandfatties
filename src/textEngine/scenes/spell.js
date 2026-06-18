@@ -198,15 +198,15 @@ export function registerSpellModules(engine) {
   engine.registerModule('spell.scene.confection_snare.ceiling_suspension', [
     {
       when: { stage: { min: 7 } },
-      text: 'The licorice vines surge upward—but they find their limit. They wrap around the target\'s wrists and haul upward with tremendous force, but her weight is too great. The candy ropes creak, stretch, snap taut—and then *tear*. She doesn\'t rise. The vines are not strong enough to lift her. They crumble to sugar fragments at her feet. The spell has failed under the weight of her gravity.',
+      text: 'Thick licorice vines lash from the ceiling, coiling around the target\'s chest, waist, and ankles before snapping taut. They haul upward with tremendous force, hoisting her horizontally into the air—suspended facing downward like a person laid flat but held ten feet up. But her weight is too great. The candy ropes creak, stretch, groan with the strain—and then *tear*. She crashes down, the vines crumbling to sugar fragments beneath her. The spell has failed under the weight of her gravity.',
     },
     {
       when: { stage: { min: 4, max: 6 } },
-      text: 'Licorice vines shoot from the ground, coil around the target\'s wrists, and *pull*—hoisting her upward with surprising force. She rises, feet leaving the floor, dangling from candy ropes anchored to the ceiling beams. She kicks and writhes but the vines hold, creaking but intact. Strands fray slightly under the strain. She swings helplessly, suspended, completely at your mercy.',
+      text: 'Licorice vines shoot from the ceiling with precision, wrapping firmly around the target\'s chest, waist, and ankles. With a sudden jerk, they haul her upward—not vertical, but *horizontal*, suspended facing downward like she\'s laying flat in the air, held by the candy bonds anchored to the ceiling beams. She gasps and struggles but the vines hold strong, creaking slightly but intact. She\'s suspended helplessly, completely at your mercy, her body stretched out horizontally in the air.',
     },
     {
       when: { stage: { max: 3 } },
-      text: 'Licorice vines erupt and catch the target\'s wrists in a single fluid motion, then haul her skyward. She rises fast, gasping as her feet leave the ground. The ropes anchor to the ceiling and hold firm—she hangs suspended, swinging slightly, unable to find purchase. The candy smells sickly sweet this close to her face. She tries to pull free and only swings.',
+      text: 'Licorice vines erupt from the ceiling and catch the target\'s chest, waist, and ankles in one fluid motion, snapping tight before hauling her skyward—but not upright. Instead, she\'s pulled into a horizontal suspension, facing downward, her body stretched out as if laying flat but held in the air by candy bonds. The vines anchor her firmly. She gasps at the sudden elevation, suspended helplessly in an utterly vulnerable position, unable to escape.',
     },
   ]);
 
@@ -284,6 +284,40 @@ export function registerSpellModules(engine) {
     {
       when: { stage: { max: 1 } },
       text: 'She gains a noticeable amount of weight, her figure softening slightly.',
+      weight: 2,
+    },
+  ]);
+
+  // Weight gain while suspended from ceiling
+  engine.registerPool('spell.weight_gain.suspended', [
+    {
+      when: { stage: { min: 10 } },
+      text: 'Her already-massive form balloons further, her belly and sides expanding downward with tremendous force, the licorice bonds creaking dangerously under the mounting strain. She sways heavily in her suspension, the bonds pulling tight as gravity reasserts itself.',
+      weight: 2,
+    },
+    {
+      when: { stage: { min: 8, max: 9 } },
+      text: 'Her body swells enormously, expanding in all directions as she hangs suspended. Her belly presses hard downward against the licorice bonds, the vines groaning audibly with the new weight. She hangs lower, pulled by her own growing mass.',
+      weight: 2,
+    },
+    {
+      when: { stage: { min: 6, max: 7 } },
+      text: 'Her form expands visibly while suspended, her belly swelling downward and pressing heavily against the candy bonds. The licorice creaks and strains. She sways with the shift in her weight, suspended lower than before.',
+      weight: 2,
+    },
+    {
+      when: { stage: { min: 4, max: 5 } },
+      text: 'She gains weight while hanging suspended, her expanding belly drooping downward and pressing against the candy bonds. The licorice strains with the added mass, and she sinks slightly lower in her suspension.',
+      weight: 2,
+    },
+    {
+      when: { stage: { min: 2, max: 3 } },
+      text: 'Her belly rounds and expands noticeably even as she hangs. Her growing weight pulls downward against the licorice bonds, which creak softly in protest.',
+      weight: 2,
+    },
+    {
+      when: { stage: { max: 1 } },
+      text: 'Her body softens and fills out while suspended, her belly descending slightly as the added weight tests the bonds.',
       weight: 2,
     },
   ]);

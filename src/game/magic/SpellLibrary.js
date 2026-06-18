@@ -708,6 +708,21 @@ class SpellLibrary {
             description: 'Incredibly rich and decadent foods explode from the earth in abundance!',
           }))
         )
+        .addOption(
+          (() => {
+            const opt = new SpellOption('Bury', 'Bury a living target in food', (caster, target, context) => ({
+              type: 'food_eruption',
+              radiusMax: 10,
+              foodItems: 20,
+              caloriesPerItem: 400,
+              consumptionRate: 0.7,
+              resistanceModifier: -80,
+              description: 'Food erupts directly around the target, burying them completely!',
+            }));
+            opt.requiresLivingTarget = true;
+            return opt;
+          })()
+        )
         .addEffect(
           new SpellEffect('Earth Eruption', 'Food erupts from ground', (caster, target, context, selectedOption) => {
             const option = selectedOption || {

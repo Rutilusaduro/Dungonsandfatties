@@ -9,6 +9,7 @@ import Character from '../game/Character';
 import TextEngine from '../engine/TextEngine';
 import SpellLibrary from '../game/magic/SpellLibrary';
 import SpellNarrator from '../game/magic/SpellNarrator';
+import { getTextEngine } from '../textEngine/index.js';
 import World from '../game/world/World';
 
 const Game = () => {
@@ -76,8 +77,19 @@ const Game = () => {
       // NPC reactions (weight gain + restraint status)
       if (target && target._createContext) {
         if (totalWeightGain > 0) {
-          const weightReaction = SpellNarrator.triggerNPCReactions(target, 'weight_gain', totalWeightGain);
-          if (weightReaction) textEngine.addText(weightReaction);
+          // Check if target is suspended — render special suspended weight gain scene
+          if (target.suspensionState === 'ceiling') {
+            const engine = getTextEngine();
+            const ctx = target._createContext();
+            const suspendedScene = engine.render('spell.weight_gain.suspended', ctx);
+            if (suspendedScene) {
+              textEngine.addText(suspendedScene);
+            }
+          } else {
+            // Normal weight gain reaction
+            const weightReaction = SpellNarrator.triggerNPCReactions(target, 'weight_gain', totalWeightGain);
+            if (weightReaction) textEngine.addText(weightReaction);
+          }
         }
 
         // Apply restraint state to NPC so examine/dialogue reflects it

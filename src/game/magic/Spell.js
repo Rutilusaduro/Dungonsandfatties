@@ -120,6 +120,10 @@ class Spell {
       if (opt.requiresObjectType && target && target.type !== opt.requiresObjectType) {
         return false;
       }
+      // requiresLivingTarget: only show for NPCs or creatures
+      if (opt.requiresLivingTarget && (!target || (!target.role && !target.personality && !target.behavior))) {
+        return false;
+      }
       return true;
     });
   }
