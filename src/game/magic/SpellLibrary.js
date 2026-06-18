@@ -1,4 +1,4 @@
-import { Spell, SpellEffect } from './Spell';
+import { Spell, SpellEffect, SpellOption } from './Spell';
 
 /**
  * Spell Library
@@ -61,7 +61,7 @@ class SpellLibrary {
 
     // LEVEL 1
 
-    // Enlarge/Reduce - adapted for weight gain
+    // Enlarge Person - adapted for weight gain
     this.registerSpell(
       new Spell('Enlarge Person', {
         level: 1,
@@ -72,16 +72,21 @@ class SpellLibrary {
         description: 'One creature doubles in size',
         weightGainTheme:
           'Target grows larger - the spell adds weight, muscle, and presence. They feel heavier, stronger, more imposing.',
-        tags: ['transformation', 'size', 'weight-gain-adjacent'],
+        tags: ['transformation', 'size', 'weight-gain'],
       })
+        .addValidTarget('creature')
+        .addValidTarget('npc')
         .addEffect(
-          new SpellEffect('Size Increase', 'Target grows to twice their size', (caster, target) => ({
-            type: 'size_change',
-            multiplier: 2,
-            healthBonus: Math.floor(target.maxHealth * 0.5),
-            weightGain: target.baseWeight * 0.5,
-            description: `${target.name} swells to twice their normal size!`,
-          }))
+          new SpellEffect('Size Increase', 'Target grows to twice their size', (caster, target) => {
+            const weightGain = target.baseWeight * 0.5;
+            return {
+              type: 'size_change',
+              multiplier: 2,
+              healthBonus: Math.floor(target.maxHealth * 0.5),
+              weightChange: weightGain,
+              description: `${target.name} swells to twice their normal size, gaining ${Math.floor(weightGain)} lbs!`,
+            };
+          })
         )
         .addInteraction(
           'Reduce Person',
@@ -117,7 +122,7 @@ class SpellLibrary {
         )
     );
 
-    // Shape Earth - manipulate earth
+    // Shape Earth - manipulate earth and stone with options
     this.registerSpell(
       new Spell('Shape Earth', {
         level: 1,
@@ -130,19 +135,88 @@ class SpellLibrary {
           'Create feeding areas, basins for liquids, seats of stone for comfort. Build structures that encourage indulgence.',
         tags: ['environmental', 'creation', 'shaping'],
       })
-        .addEnvironmentalEffect('earth', 'Reshape earth', (obj, caster, context) => ({
-          type: 'reshaped',
-          previousForm: obj.form,
-          newForm: 'Magically shaped stone',
-          description: `${obj.name} has been magically reshaped by ${caster.name}`,
-        }))
+        .addValidTarget('object')
+        .addOption(
+          new SpellOption('Create Basin', 'Shape into a basin for holding liquids',
+            (caster, target, context) => {
+              if (target && target.properties) {
+                target.properties.capacity = 100;
+                target.properties.canHoldLiquid = true;
+              }
+              return {
+                type: 'object_transformation',
+                newForm: 'stone basin',
+                description: `The earth/stone reshapes into a perfect basin for holding liquids!`,
+              };
+            }
+          )
+        )
+        .addOption(
+          new SpellOption('Create Seat', 'Shape into a comfortable stone seat',
+            (caster, target, context) => ({
+              type: 'object_transformation',
+              newForm: 'comfortable stone seat',
+              description: `The earth rises and shapes into a comfortable seat for dining!`,
+            })
+          )
+        )
+        .addOption(
+          new SpellOption('Create Pedestal', 'Shape into a tall pedestal or table',
+            (caster, target, context) => {
+              if (target && target.properties) {
+                target.properties.capacity = 50;
+                target.properties.maxFoodItems = 8;
+              }
+              return {
+                type: 'object_transformation',
+                newForm: 'stone pedestal table',
+                description: `The earth rises into a perfect stone table for displaying food!`,
+                foodCapacity: 8,
+              };
+            }
+          )
+        )
+        .addOption(
+          new SpellOption('Bury Target', 'Bury a living target under stone',
+            (caster, target, context) => {
+              // This only works on creatures/NPCs, not objects
+              if (target && (target.behavior !== undefined || target.role)) {
+                return {
+                  type: 'entrapment',
+                  description: `${target.name} is rapidly buried under hardened earth!`,
+                  trapped: true,
+                };
+              }
+              return {
+                type: 'error',
+                description: 'This form only works on living creatures!',
+              };
+            }
+          )
+        )
+        .addEnvironmentalEffect('earth', 'Reshape earth', (obj, caster, context, selectedOption) => {
+          if (selectedOption) {
+            return {
+              type: 'reshaped',
+              previousForm: obj.form,
+              newForm: selectedOption.name,
+              description: `${obj.name} has been shaped into a ${selectedOption.name}!`,
+            };
+          }
+          return {
+            type: 'reshaped',
+            previousForm: obj.form,
+            newForm: 'Magically shaped stone',
+            description: `${obj.name} has been magically reshaped`,
+          };
+        })
         .addInteraction(
           'Create Water',
           'Combined with Create Water to make a stone basin filled with liquid'
         )
     );
 
-    // Shape Wood - manipulate wood
+    // Shape Wood - manipulate wood with options
     this.registerSpell(
       new Spell('Shape Wood', {
         level: 1,
@@ -155,12 +229,65 @@ class SpellLibrary {
           'Create wooden chairs, tables, restraints, or feeding stations. Shape wood into tools of indulgence.',
         tags: ['environmental', 'creation', 'shaping'],
       })
-        .addEnvironmentalEffect('wood', 'Reshape wood', (obj, caster, context) => ({
-          type: 'reshaped',
-          previousForm: obj.form,
-          newForm: 'Magically shaped wood',
-          description: `${obj.name} has been magically reshaped by ${caster.name}`,
-        }))
+        .addValidTarget('object')
+        .addOption(
+          new SpellOption('Enlarge & Reinforce', 'Make the table larger and more sturdy to hold more food',
+            (caster, target, context) => {
+              if (target && target.properties) {
+                target.properties.capacity = (target.properties.capacity || 1) * 1.5;
+                target.properties.maxFoodItems = (target.properties.maxFoodItems || 5) + 5;
+              }
+              return {
+                type: 'object_enhancement',
+                description: `${target ? target.name : 'The wood'} grows larger and more sturdy!`,
+                foodCapacity: target?.properties?.maxFoodItems || 10,
+              };
+            }
+          )
+        )
+        .addOption(
+          new SpellOption('Create Manacles', 'Shape the wood into restraints',
+            (caster, target, context) => ({
+              type: 'object_transformation',
+              newForm: 'wooden manacles',
+              description: `The wood transforms into sturdy restraints!`,
+            })
+          )
+        )
+        .addOption(
+          new SpellOption('Create Chair', 'Shape into a comfortable feeding chair',
+            (caster, target, context) => ({
+              type: 'object_transformation',
+              newForm: 'comfortable wooden chair',
+              description: `The wood reshapes into a sturdy chair, perfect for sitting and eating!`,
+            })
+          )
+        )
+        .addOption(
+          new SpellOption('Create Feeding Trough', 'Shape into a trough for animals',
+            (caster, target, context) => ({
+              type: 'object_transformation',
+              newForm: 'wooden feeding trough',
+              description: `The wood becomes a large trough, perfect for feeding creatures!`,
+            })
+          )
+        )
+        .addEnvironmentalEffect('wood', 'Reshape wood', (obj, caster, context, selectedOption) => {
+          if (selectedOption) {
+            return {
+              type: 'reshaped',
+              previousForm: obj.form,
+              newForm: selectedOption.name,
+              description: `${obj.name} has been shaped into a ${selectedOption.name}!`,
+            };
+          }
+          return {
+            type: 'reshaped',
+            previousForm: obj.form,
+            newForm: 'Magically shaped wood',
+            description: `${obj.name} has been magically reshaped`,
+          };
+        })
         .addInteraction(
           'Shape Earth',
           'Together create elaborate structures combining stone and wood'

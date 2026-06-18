@@ -3,6 +3,7 @@ import { useState } from 'react';
 const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone }) => {
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [selectedTarget, setSelectedTarget] = useState(null);
+  const [selectedOption, setSelectedOption] = useState(null);
   const [castResult, setCastResult] = useState(null);
 
   const spells = spellLibrary ? spellLibrary.getAllSpells() : [];
@@ -10,7 +11,41 @@ const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone 
   const handleSpellSelect = (spell) => {
     setSelectedSpell(spell);
     setSelectedTarget(null);
+    setSelectedOption(null);
     setCastResult(null);
+  };
+
+  // Get valid targets for the selected spell
+  const getValidTargets = () => {
+    if (!selectedSpell) return [];
+
+    const zone = currentZone;
+    if (!zone) return [];
+
+    const validTargets = [];
+
+    // Check objects
+    zone.getEnvironmentalObjects().forEach(obj => {
+      if (selectedSpell.canTargetEntity(obj)) {
+        validTargets.push(obj);
+      }
+    });
+
+    // Check creatures
+    zone.getCreatures().forEach(creature => {
+      if (selectedSpell.canTargetEntity(creature)) {
+        validTargets.push(creature);
+      }
+    });
+
+    // Check NPCs
+    zone.getNPCs().forEach(npc => {
+      if (selectedSpell.canTargetEntity(npc)) {
+        validTargets.push(npc);
+      }
+    });
+
+    return validTargets;
   };
 
   const handleCast = () => {
@@ -23,6 +58,7 @@ const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone 
       spell: selectedSpell,
       target: selectedTarget,
       zone: currentZone,
+      selectedOption: selectedOption,
     });
 
     // Show temporary success message
@@ -34,9 +70,15 @@ const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone 
     setTimeout(() => {
       setSelectedSpell(null);
       setSelectedTarget(null);
+      setSelectedOption(null);
       setCastResult(null);
     }, 2000);
   };
+
+  const validTargets = getValidTargets();
+  const availableOptions = selectedSpell && selectedTarget
+    ? selectedSpell.getAvailableOptions(null, selectedTarget, { zone: currentZone })
+    : selectedSpell?.options || [];
 
   return (
     <div style={styles.container}>
@@ -110,25 +152,31 @@ const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone 
             )}
           </div>
 
-          {/* Target Selection */}
-          {availableTargets && availableTargets.length > 0 && (
+          {/* Target Selection - only show valid targets */}
+          {validTargets.length > 0 && (
             <div style={styles.targetSection}>
-              <p style={styles.label}>Select Target:</p>
+              <p style={styles.label}>Valid Targets:</p>
               <div style={styles.targetList}>
                 <button
-                  onClick={() => setSelectedTarget(null)}
+                  onClick={() => {
+                    setSelectedTarget(null);
+                    setSelectedOption(null);
+                  }}
                   style={{
                     ...styles.targetButton,
                     backgroundColor:
                       selectedTarget === null ? '#5a8a3a' : '#4a6a2a',
                   }}
                 >
-                  Self/Area
+                  Area/Self
                 </button>
-                {availableTargets.map((target, idx) => (
+                {validTargets.map((target, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setSelectedTarget(target)}
+                    onClick={() => {
+                      setSelectedTarget(target);
+                      setSelectedOption(null);
+                    }}
                     style={{
                       ...styles.targetButton,
                       backgroundColor:
@@ -136,6 +184,34 @@ const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone 
                     }}
                   >
                     {target.name}
+                    {target.type === 'wood' || target.type === 'earth' ? ' (object)' : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Spell Options */}
+          {availableOptions.length > 0 && (
+            <div style={styles.optionSection}>
+              <p style={styles.label}>How to Cast:</p>
+              <div style={styles.optionList}>
+                {availableOptions.map((option, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedOption(option)}
+                    style={{
+                      ...styles.optionButton,
+                      backgroundColor:
+                        selectedOption === option ? '#5a8a3a' : '#3a5a2a',
+                      borderLeft:
+                        selectedOption === option
+                          ? '4px solid #4CAF50'
+                          : '4px solid #3a5a2a',
+                    }}
+                  >
+                    <div style={styles.optionName}>{option.name}</div>
+                    <div style={styles.optionDesc}>{option.description}</div>
                   </button>
                 ))}
               </div>
@@ -143,9 +219,23 @@ const SpellCaster = ({ spellLibrary, availableTargets, onCastSpell, currentZone 
           )}
 
           {/* Cast Button */}
-          <button onClick={handleCast} style={styles.castButton}>
+          <button
+            onClick={handleCast}
+            style={{
+              ...styles.castButton,
+              opacity: validTargets.length === 0 && selectedSpell.validTargets.length > 0 ? 0.5 : 1,
+              cursor: validTargets.length === 0 && selectedSpell.validTargets.length > 0 ? 'not-allowed' : 'pointer',
+            }}
+            disabled={validTargets.length === 0 && selectedSpell.validTargets.length > 0}
+          >
             Cast Spell
           </button>
+
+          {validTargets.length === 0 && selectedSpell.validTargets.length > 0 && (
+            <p style={styles.noValidTargets}>
+              ⚠️ No valid targets in this zone
+            </p>
+          )}
         </div>
       )}
 
@@ -280,6 +370,33 @@ const styles = {
     transition: 'background-color 0.2s',
     fontSize: '12px',
   },
+  optionSection: {
+    marginBottom: '10px',
+  },
+  optionList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  optionButton: {
+    padding: '8px 10px',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '3px',
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'all 0.2s',
+    fontSize: '11px',
+  },
+  optionName: {
+    fontWeight: 'bold',
+    marginBottom: '2px',
+    fontSize: '12px',
+  },
+  optionDesc: {
+    fontSize: '10px',
+    color: '#bbb',
+  },
   castButton: {
     width: '100%',
     padding: '12px',
@@ -291,6 +408,15 @@ const styles = {
     fontSize: '13px',
     fontWeight: 'bold',
     transition: 'background-color 0.2s',
+  },
+  noValidTargets: {
+    marginTop: '10px',
+    padding: '8px',
+    backgroundColor: '#3a2a2a',
+    color: '#ff9800',
+    fontSize: '11px',
+    borderRadius: '3px',
+    textAlign: 'center',
   },
   resultMessage: {
     marginTop: '10px',

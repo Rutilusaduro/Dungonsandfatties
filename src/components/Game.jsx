@@ -43,7 +43,7 @@ const Game = () => {
     setGameStarted(true);
   };
 
-  const handleCastSpell = ({ spell, target, zone }) => {
+  const handleCastSpell = ({ spell, target, zone, selectedOption }) => {
     if (!spell || !zone) return;
 
     const caster = gameState.getPlayer();
@@ -57,13 +57,17 @@ const Game = () => {
       previousSpells: [], // Track spell history for interactions
     };
 
-    // Cast the spell
-    const result = spell.cast(caster, target, context);
+    // Cast the spell with the selected option
+    const result = spell.cast(caster, target, context, selectedOption);
 
     // Add narrative to text display
     textEngine.clearBuffer();
     if (result.success) {
-      textEngine.addText(`✨ ${caster.name} casts ${spell.name}!`);
+      let castText = `✨ ${caster.name} casts ${spell.name}!`;
+      if (result.optionUsed) {
+        castText += ` (${result.optionUsed})`;
+      }
+      textEngine.addText(castText);
 
       if (result.weightGainFlavor) {
         textEngine.addText(result.weightGainFlavor);

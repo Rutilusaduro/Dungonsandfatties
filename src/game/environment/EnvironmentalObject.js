@@ -21,7 +21,7 @@ class EnvironmentalObject {
 
   // Get information about the object
   getInfo() {
-    return {
+    const info = {
       id: this.id,
       name: this.name,
       type: this.type,
@@ -35,6 +35,13 @@ class EnvironmentalObject {
       },
       affectedBy: this.affectedBy,
     };
+
+    // Add properties if they exist
+    if (this.properties && Object.keys(this.properties).length > 0) {
+      info.properties = this.properties;
+    }
+
+    return info;
   }
 
   // Take damage or change state
