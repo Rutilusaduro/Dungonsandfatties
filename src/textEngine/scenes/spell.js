@@ -7,6 +7,211 @@
 export function registerSpellModules(engine) {
 
   // ─────────────────────────────────────────────
+  // PRESTIDIGITATION (Level 0)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.prestidigitation', [
+    {
+      when: {},
+      text: [
+        'A flicker of minor magic dances from your fingertips — a tiny spark, a passing scent of warm bread, a cooling breeze across a heated plate. The effect is small. But everything starts somewhere.',
+        'Your fingers trace a brief gesture and magic obliges: a moment of sensory indulgence, conjured from nothing. A hint of sugar on the air. A warmth where there was none.',
+        'The spell is minor — a cantrip, a trick — but the effect lands perfectly. The air carries a sudden sweetness, just enough to make whoever is nearby think very hard about food.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // ENLARGE PERSON (Level 1)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.enlarge_person', [
+    {
+      when: { isRestrained: 1 },
+      text: 'The enlargement spell pulses through the immobilized target. Her body responds with a surge — clothes pulling tight, seams straining, her frame swelling dramatically larger in every direction. She cannot step back. Cannot retreat. Cannot do anything but grow, held in place as she expands into the space around her. The restraints creak and strain against her new size. Her eyes are wide with something between panic and awe.',
+    },
+    {
+      when: { stage: { min: 6 } },
+      text: 'Magic rolls through {subject.name}\'s already-considerable form like a tide. She grows — and grows — surging outward and upward in a cascade of expanding flesh. Her clothing surrenders first, seams splitting one after another as she rises to fill the room. She is enormous. She is *more* enormous. The floor groans under the redistribution of weight. She looks down at herself with wide eyes.',
+    },
+    {
+      when: { stage: { min: 3, max: 5 } },
+      text: 'The spell takes hold and {subject.name}\'s body surges. She gasps as she rises — taller, broader, her curves becoming something more than curves. Her clothing strains against the growth, buttons pulling at the stitching, fabric stretching across softness that was not there a moment ago. When the spell settles, she is noticeably larger in every dimension. She looks down at herself in stunned silence.',
+    },
+    {
+      when: { stage: { max: 2 } },
+      text: 'Transmutation magic ripples through {subject.name} and she simply *grows*. The change is swift and undeniable — she rises a foot, broadens across the shoulders and hips, her slight frame swelling into something softer and more substantial. Her clothes pull tight, then tighter. She looks down at herself slowly, blinking, as if she does not quite recognize what she is looking at.',
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // REDUCE PERSON (Level 1)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.reduce_person', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The reduction magic hits {subject.name} and she *contracts* — rapidly, visibly, her substantial frame collapsing inward like a sail losing its wind. She drops in height, narrows across the hips, her presence diminishing as the spell does its work. Her clothes hang loose where moments ago they strained. She looks smaller. She looks stunned. She looks, for the first time in a long while, almost slight.',
+    },
+    {
+      when: {},
+      text: 'The spell settles over {subject.name} and she shrinks — not dramatically, but unmistakably. A few inches of height, a narrowing at the shoulders and waist. Her clothing loses its tension and droops around a suddenly smaller frame. She holds her own hands up and stares at them as if checking whether they still belong to her.',
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // SHAPE EARTH (Level 1)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.shape_earth', [
+    {
+      when: {},
+      text: [
+        'You press your will into the earth and it *obeys*. Stone and soil flow like clay, reshaping with a grinding sound into the form you envision. When the magic settles, something new stands where rough stone once was — functional, smooth-edged, and perfectly proportioned.',
+        'The ground trembles softly as transmutation magic flows from your hands into the earth. Soil and stone yield to your intent, pressing and folding until the new form is complete. The magic leaves it cool to the touch, clean-edged, and ready.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // SHAPE WOOD (Level 1)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.shape_wood', [
+    {
+      when: {},
+      text: [
+        'You lay your hands on the wood and magic flows through the grain. The timber creaks and shifts — not breaking, but *bending* — reforming itself under your intent. When the spell releases, the wood holds its new shape as firmly as if it had always grown that way.',
+        'The wood moves under your spell like something alive — grain flowing, joints reshaping, the whole form yielding to the magic. It settles into its new shape with a final, satisfied creak.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // CREATE WATER (Level 1)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.create_water', [
+    {
+      when: {},
+      text: [
+        'You shape the conjuration and water *appears* — cold, clean, and utterly without explanation. It fills whatever vessel awaits it with a gentle rush, catching the light in ripples. Perfectly fresh. Perfectly real.',
+        'The spell completes and liquid materializes from nothing, pouring gently downward in a clean, steady stream. It collects without spilling, bright and cold and inexplicably satisfying to look at.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // OOZING ABUNDANCE (Level 2)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.oozing_abundance', [
+    {
+      when: { stage: { min: 5 } },
+      text: 'The arrow of condensed nutrition streaks through the air and *splashes* across {subject.name}\'s broad form with a thick, wet impact. The ooze spreads immediately — coating her skin, her clothing, flowing into every curve — rich and warm and impossibly caloric. Her body absorbs it faster than she can register. She looks down at herself in dazed confusion as the warmth spreads through her.',
+    },
+    {
+      when: {},
+      text: 'A streak of shimmering, thick ooze arcs from your hand and strikes {subject.name} with a wet smack. It clings immediately, coating her in a layer of dense, sweet-smelling nutritive slick. She tries to wipe it away but it is already soaking in, warm and heavy and thoroughly coating whatever it touches.',
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // FEAST OF SHADOWS (Level 2)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.feast_of_shadows', [
+    {
+      when: { willingness: { min: 60 } },
+      text: 'The illusory feast materializes in front of {subject.name} with startling vividness — roasted meats steaming, pastries gleaming, the whole spread radiating warmth and a scent that is almost aggressively real. She stares for only a moment before reaching out. The food responds to her touch. It *tastes* like food. For every purpose that matters to her body, it *is* food.',
+    },
+    {
+      when: {},
+      text: 'Phantom food shimmers into existence — a full spread, gleaming with illusory perfection. It looks real. It smells real. When {subject.name} reaches out and touches it, it feels real. The illusion is so thorough that her body responds as though every bite were genuine, digesting what was never truly there.',
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // MORPH MASS (Level 2)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.morph_mass', [
+    {
+      when: { stage: { min: 5 } },
+      text: 'The dark transmutation pulses outward from your hands and finds {subject.name}\'s considerable form. She feels it immediately — a pull, a pressure, the air and stone and matter around her drawn inward and *absorbed*. Her body takes on weight that was not hers. Density shifts through her like a tide coming in. She is, abruptly and undeniably, heavier.',
+    },
+    {
+      when: {},
+      text: 'Matter answers the dark compulsion in your spell. It flows — stone dust, earth, the molecular weight of the air itself — drawn inward through {subject.name}\'s skin as though her body were a drain. She staggers slightly as the new weight settles into her, a look of bewilderment crossing her face.',
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // GREASE (Level 1)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.grease', [
+    {
+      when: {},
+      text: [
+        'A sheen of thick, slippery grease erupts across the target area — translucent, glistening, and deeply unfriendly to anyone trying to keep their footing. The smell is rich, almost edible. Whatever surface it coats becomes immediately treacherous.',
+        'The spell deposits a generous layer of conjured grease with a sound like something very wet landing very hard. It coats everything in the area in a smooth, slick film that catches the light and resists every attempt to stand on it.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // DELIGHTFUL TRANSMUTATION (Level 2)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.delightful_transmutation', [
+    {
+      when: {},
+      text: [
+        'The transmutation spell ripples through the liquid and water becomes something else entirely. The change is visible — a shimmer, a subtle thickening, a shift in color from clear to rich — and the smell arrives a moment later. Creamy, sweet, impossibly indulgent. Whatever was plain water a moment ago is now something significantly more caloric.',
+        'You direct the spell and the water answers. Its molecular structure reorders with a shimmer, the liquid thickening and sweetening as the magic takes hold. It sets into a lush, creamy form that holds its shape even in the open air. It does not melt. It does not diminish. It simply waits, perfect and patient, to be consumed.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // SUGGESTION (Level 1)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.suggestion', [
+    {
+      when: { willingness: { min: 70 } },
+      text: 'The enchantment is almost unnecessary — {subject.name} was already looking at the food. The spell just... clarifies things. Her resistance softens. Her hesitation dissolves. She reaches forward with the calm certainty of someone doing exactly what she wanted to do anyway, and begins to eat.',
+    },
+    {
+      when: { willingness: { min: 40, max: 69 } },
+      text: 'The suggestion settles over {subject.name} like a comfortable warmth. She blinks once — and some tension leaves her face. Whatever reluctance she carried a moment ago now seems distant and unimportant. She looks at the food. She considers. She reaches out.',
+    },
+    {
+      when: {},
+      text: 'The enchantment reaches {subject.name} and finds its purchase. A subtle shift — her brow unfurrows, her posture loosens, the set of her mouth becomes more agreeable. She does not look controlled. She looks persuaded. There is a difference, and she would insist upon it, even now.',
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // DETECT CRAVINGS (Level 1)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.detect_cravings', [
+    {
+      when: {},
+      text: [
+        'Your divination reaches out and finds {subject.name}\'s appetite like a compass finding north. The information arrives not as words but as impressions — textures, smells, the ghost of flavors she has not had in years and desperately wants. You understand what she wants, precisely and completely.',
+        'The spell extends your senses past the visible and into something deeper. {subject.name}\'s cravings register like warmth — specific, undeniable, deeply personal. You know, with the certainty of magic, exactly what she wants to eat.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // CONJURE FOOD (Level 2)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.conjure_food', [
+    {
+      when: { stage: { min: 5 } },
+      text: 'The conjuration completes and food simply *arrives* — rich, generous portions that seem scaled to the appetite of someone who genuinely needs a serious meal. Plates of roasted meat, towers of pastry, bowls of cream. The smell radiates outward in a warm wave. It is more than enough. It is exactly right.',
+    },
+    {
+      when: {},
+      text: [
+        'Food materializes from a point of shimmering air — plate after plate of warm, appetizing portions appearing in sequence. Each one lands with a gentle certainty, as if it had always been waiting to exist here, in this exact moment.',
+        'The conjuration answers your spell and food *appears*. Not dramatically — no flash of light, no fanfare — just presence where there was absence before. Warm, real, and perfectly suited to the moment.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
   // ERUPTING EARTH
   // ─────────────────────────────────────────────
   engine.registerModule('spell.scene.erupting_earth', [
