@@ -15,32 +15,61 @@ export class SpellNarrator {
     try {
       const engine = getTextEngine();
       const spellKey = spell.name.toLowerCase().replace(/ /g, '_');
-      const ctx = SpellNarrator._createSpellContext(target);
+      const optionKey = selectedOption ? selectedOption.name.toLowerCase().replace(/ /g, '_') : null;
+
+      // Whether the target already carried a spell condition BEFORE this cast
+      // (Game.jsx applies new conditions after narration), so the interaction
+      // layer reacts to prior state rather than the condition we just applied.
+      const hadPriorCondition = SpellNarrator._hasCondition(target);
+
+      const ctx = SpellNarrator._spellCtx(target, caster, {
+        spell: spellKey,
+        option: optionKey,
+        recentSpells: (target && target.spellAffects) ? [...target.spellAffects] : [],
+        lastWeightGain: target ? (target.lastWeightGain || 0) : 0,
+      });
 
       let scene = '';
 
       // Confection Snare: option-specific sub-modules
-      if (spell.name === 'Confection Snare' && selectedOption) {
-        const optionKey = selectedOption.name.toLowerCase().replace(/ /g, '_');
-        const moduleKey = `spell.scene.confection_snare.${optionKey}`;
-        scene = engine.render(moduleKey, ctx);
+      if (spell.name === 'Confection Snare' && optionKey) {
+        scene = engine.render(`spell.scene.confection_snare.${optionKey}`, ctx);
       }
 
       // Fall back to generic spell.scene.X
-      if (!scene) {
-        scene = engine.render(`spell.scene.${spellKey}`, ctx);
-      }
+      if (!scene) scene = engine.render(`spell.scene.${spellKey}`, ctx);
 
       // Last resort: spell description
-      if (!scene) {
-        scene = spell.description;
+      if (!scene) scene = spell.description;
+
+      // Interaction layer: spell cast on an already-conditioned target
+      // (restrained / suspended / paralyzed / buried / mind-controlled / stuffed).
+      let interaction = '';
+      if (hadPriorCondition) {
+        interaction = engine.render('spell.on_conditioned', ctx) || '';
       }
 
       const optionLabel = selectedOption ? ` (${selectedOption.name})` : '';
-      return `You cast ${spell.name}${optionLabel}. ${scene}`;
+      const tail = interaction ? ` ${interaction}` : '';
+      return `You cast ${spell.name}${optionLabel}. ${scene}${tail}`;
     } catch (error) {
       return `You cast ${spell.name}.`;
     }
+  }
+
+  /** True if the target currently carries any lingering spell condition. */
+  static _hasCondition(target) {
+    if (!target) return false;
+    if (target.conditions && typeof target.conditions.size === 'number' && target.conditions.size > 0) return true;
+    return !!target.restrainedBy || !!target.isFullness;
+  }
+
+  /** Build an engine context targeting `target` with `caster` as the reference. */
+  static _spellCtx(target, caster = null, globals = {}) {
+    if (target && target._createContext) {
+      return target._createContext({ ref: caster || null, globals });
+    }
+    return { subject: target || null, ref: caster || null, globals };
   }
 
   /**

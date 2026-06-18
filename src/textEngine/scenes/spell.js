@@ -324,6 +324,28 @@ export function registerSpellModules(engine) {
 
 
   // ─────────────────────────────────────────────
+  // ON-CONDITIONED — any spell cast on a target already under a prior
+  // condition. Pool, weighted by specificity; weaves in {body.desc} so the
+  // size class shows through (a restrained thin girl vs a restrained SSBBW).
+  // ─────────────────────────────────────────────
+  engine.registerPool('spell.on_conditioned', [
+    { when: { suspended: 1 },
+      text: 'Suspended and helpless — {body.desc} — she can do nothing but receive it.', weight: 3 },
+    { when: { restrainedBy: 'hold_person' },
+      text: 'Still paralyzed where she stands — {body.desc} — she cannot resist so much as a flinch.', weight: 3 },
+    { when: { restraintMaterial: 'candy' },
+      text: 'Still bound in licorice — {body.desc} — the sweet candy holds her fast through all of it.', weight: 3 },
+    { when: { buried: 1 },
+      text: 'Already half-buried — {body.desc} — she is in no position to escape any more of it.', weight: 3 },
+    { when: { mindControlled: 1 },
+      text: 'Mind fogged and pliant — {body.desc} — she welcomes every bit of it with a dreamy smile.', weight: 3 },
+    { when: { ravenous: 1 },
+      text: 'Ravenous beyond reason, she practically lunges into it, desperate for more.', weight: 2 },
+    { when: { fullness: 1 },
+      text: 'Already stuffed to bursting, she can only whimper as still more is forced upon her.', weight: 2 },
+  ]);
+
+  // ─────────────────────────────────────────────
   // SPELL INTERACTIONS — Combined effect narration
   // ─────────────────────────────────────────────
 

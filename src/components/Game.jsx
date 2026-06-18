@@ -10,7 +10,43 @@ import TextEngine from '../engine/TextEngine';
 import SpellLibrary from '../game/magic/SpellLibrary';
 import SpellNarrator from '../game/magic/SpellNarrator';
 import { getTextEngine } from '../textEngine/index.js';
+import { RESTRAINT_MATERIAL } from '../game/conditions/ActiveConditions.js';
 import World from '../game/world/World';
+
+// Persist lingering spell conditions onto a target so the text engine narrates
+// them afterward (examine, dialogue, body.desc) and future spells can react.
+function applySpellConditions(spell, target, selectedOption) {
+  if (!target) return;
+  const spellKey = spell.name.toLowerCase().replace(/ /g, '_');
+  const optionName = selectedOption?.name || '';
+  const tags = spell.tags || [];
+
+  // Recent-spell memory (drives combo / on-conditioned narration).
+  if (!Array.isArray(target.spellAffects)) target.spellAffects = [];
+  target.spellAffects.push(spellKey);
+  if (target.spellAffects.length > 6) target.spellAffects.shift();
+
+  if (tags.includes('restraint') || tags.includes('paralysis')) {
+    target.restrainedBy = spellKey;
+    const suspension = optionName === 'Ceiling Suspension' ? 'ceiling' : null;
+    if (suspension) target.suspensionState = suspension;
+    const material = RESTRAINT_MATERIAL[spellKey] || 'magic';
+    target.conditions?.add('restrained', { source: spellKey, material, suspension });
+  }
+  if (spellKey === 'erupting_earth' && optionName === 'Bury') {
+    target.conditions?.add('buried', {});
+  }
+  if (spellKey === 'rapid_digestion') {
+    target.isFullness = true;
+    target.conditions?.add('satiated', {});
+  }
+  if (spellKey === 'polymorph') {
+    target.conditions?.add('enlarged', {});
+  }
+  if (spellKey === 'ravenous_expansion') {
+    target.conditions?.add('ravenous', {});
+  }
+}
 
 const Game = () => {
   const [gameState] = useState(() => new GameState());
@@ -92,16 +128,15 @@ const Game = () => {
           }
         }
 
-        // Apply restraint state to NPC so examine/dialogue reflects it
+        // Persist lingering spell conditions so examine / dialogue / body.desc
+        // and future spell interactions reflect them.
+        applySpellConditions(spell, target, selectedOption);
+
+        // Restraint spells get an immediate panic reaction.
         const isRestraintSpell = spell.tags && (
           spell.tags.includes('restraint') || spell.tags.includes('paralysis')
         );
         if (isRestraintSpell) {
-          const spellKey = spell.name.toLowerCase().replace(/ /g, '_');
-          target.restrainedBy = spellKey;
-          if (selectedOption && selectedOption.name === 'Ceiling Suspension') {
-            target.suspensionState = 'ceiling';
-          }
           const restraintReaction = SpellNarrator.triggerNPCReactions(target, 'restrained');
           if (restraintReaction) textEngine.addText(restraintReaction);
         }
