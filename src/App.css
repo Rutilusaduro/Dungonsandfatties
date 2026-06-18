@@ -1,0 +1,22 @@
+/* Game UI Styling */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  font-family: Georgia, serif;
+}
+
+h1, h2, h3 {
+  font-family: Georgia, serif;
+}
+
+code {
+  background-color: #2a2a2a;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
