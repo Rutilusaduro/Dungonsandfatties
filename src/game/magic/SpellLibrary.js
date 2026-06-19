@@ -1817,10 +1817,10 @@ class SpellLibrary {
             share: 0.25,
           }))
         )
-        .addInteraction('Suggestion', 'Bonded creatures can influence each other's food choices')
-        .addInteraction('Erupting Earth', 'Bonded creatures share the burden of burial')
-        .addInteraction('Confection Snare', 'Bonded creatures can be restrained together')
-        .addInteraction('Ravenous Expansion', 'Bonded creatures amplify each other's hunger')
+        .addInteraction('Suggestion', "Bonded creatures can influence each other's food choices")
+        .addInteraction('Erupting Earth', "Bonded creatures share the burden of burial")
+        .addInteraction('Confection Snare', "Bonded creatures can be restrained together")
+        .addInteraction('Ravenous Expansion', "Bonded creatures amplify each other's hunger")
     );
 
     // Covetous Siphon - drain weight from one entity to another
@@ -1887,7 +1887,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Instantaneous',
-        description: 'A target creature manifests a dragon\'s gullet and can devour another creature whole, gaining its living-calorie value.',
+        description: "A target creature manifests a dragon's gullet and can devour another creature whole, gaining its living-calorie value.",
         weightGainTheme: 'The ancient hunger of dragons awakens in mortal flesh.',
         validTargets: ['npc', 'creature'],
         requiresSecondaryTarget: true,
