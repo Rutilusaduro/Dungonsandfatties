@@ -1,13 +1,27 @@
 import { useState } from 'react';
 
-const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
+const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) => {
+  const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'scene', 'you'
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [selectedSecondaryTarget, setSelectedSecondaryTarget] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [castResult, setCastResult] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSchool, setSelectedSchool] = useState(null);
 
   const spells = spellLibrary ? spellLibrary.getAllSpells() : [];
+
+  // School filtering
+  const schools = [...new Set(spells.map(s => s.school))];
+  const filteredSpells = spells.filter(spell => {
+    const matchesSearch = spell.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSchool = !selectedSchool || spell.school === selectedSchool;
+    return matchesSearch && matchesSchool;
+  });
+
+  // Get favorite spells (recently cast)
+  const recentSpells = [];
 
   const handleSpellSelect = (spell) => {
     setSelectedSpell(spell);
@@ -27,21 +41,21 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
     const validTargets = [];
 
     // Check objects
-    zone.getEnvironmentalObjects().forEach(obj => {
+    zone.getEnvironmentalObjects?.().forEach(obj => {
       if (selectedSpell.canTargetEntity(obj)) {
         validTargets.push(obj);
       }
     });
 
     // Check creatures
-    zone.getCreatures().forEach(creature => {
+    zone.getCreatures?.().forEach(creature => {
       if (selectedSpell.canTargetEntity(creature)) {
         validTargets.push(creature);
       }
     });
 
     // Check NPCs
-    zone.getNPCs().forEach(npc => {
+    zone.getNPCs?.().forEach(npc => {
       if (selectedSpell.canTargetEntity(npc)) {
         validTargets.push(npc);
       }
@@ -62,35 +76,32 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
     const zone = currentZone;
     if (!zone) return [];
 
-    // For spells that require secondary target, we need a primary target first
-    // For optional secondary targets, they can work without primary target (for area spells)
     if (selectedSpell.requiresSecondaryTarget && !selectedTarget) {
       return [];
     }
 
     const validSecondaryTargets = [];
 
-    // Determine which entities to check based on secondaryTargetType
     if (secondaryType === 'creature' || secondaryType === 'entity') {
-      const creatures = zone.getCreatures ? zone.getCreatures() : [];
+      const creatures = zone.getCreatures?.() || [];
       creatures.forEach(creature => {
-        if (selectedTarget && creature === selectedTarget) return; // Skip if same as primary
+        if (selectedTarget && creature === selectedTarget) return;
         validSecondaryTargets.push(creature);
       });
     }
 
     if (secondaryType === 'npc' || secondaryType === 'entity') {
-      const npcs = zone.getNPCs ? zone.getNPCs() : [];
+      const npcs = zone.getNPCs?.() || [];
       npcs.forEach(npc => {
-        if (selectedTarget && npc === selectedTarget) return; // Skip if same as primary
+        if (selectedTarget && npc === selectedTarget) return;
         validSecondaryTargets.push(npc);
       });
     }
 
     if (secondaryType === 'entity') {
-      const objects = zone.getEnvironmentalObjects ? zone.getEnvironmentalObjects() : [];
+      const objects = zone.getEnvironmentalObjects?.() || [];
       objects.forEach(obj => {
-        if (selectedTarget && obj === selectedTarget) return; // Skip if same as primary
+        if (selectedTarget && obj === selectedTarget) return;
         validSecondaryTargets.push(obj);
       });
     }
@@ -112,7 +123,6 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
       selectedOption: selectedOption,
     });
 
-    // Show temporary success message
     setCastResult({
       success: true,
       message: `Cast ${selectedSpell.name}!`,
@@ -138,228 +148,317 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
     <div style={styles.container}>
       <h3 style={styles.title}>⚡ Magic</h3>
 
-      {/* Spell Selection */}
-      <div style={styles.section}>
-        <p style={styles.label}>Select Spell:</p>
-        <div style={styles.spellList}>
-          {spells.length > 0 ? (
-            spells.map(spell => (
-              <button
-                key={spell.name}
-                onClick={() => handleSpellSelect(spell)}
-                style={{
-                  ...styles.spellButton,
-                  backgroundColor:
-                    selectedSpell?.name === spell.name ? '#6B4423' : '#4a3728',
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#6B4423';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor =
-                    selectedSpell?.name === spell.name ? '#6B4423' : '#4a3728';
-                }}
-              >
-                <div style={styles.spellName}>{spell.name}</div>
-                <div style={styles.spellLevel}>Lvl {spell.level}</div>
-              </button>
-            ))
-          ) : (
-            <p style={styles.noSpells}>No spells available</p>
-          )}
-        </div>
+      {/* Tab Navigation */}
+      <div style={styles.tabNav}>
+        <button
+          onClick={() => setActiveTab('cast')}
+          style={{
+            ...styles.tabButton,
+            backgroundColor: activeTab === 'cast' ? '#6B4423' : '#3a2a1a',
+            color: activeTab === 'cast' ? '#ffd700' : '#999',
+            borderBottom: activeTab === 'cast' ? '3px solid #ffd700' : 'none',
+          }}
+        >
+          Cast
+        </button>
+        <button
+          onClick={() => setActiveTab('scene')}
+          style={{
+            ...styles.tabButton,
+            backgroundColor: activeTab === 'scene' ? '#1a3a1a' : '#3a2a1a',
+            color: activeTab === 'scene' ? '#5a8a3a' : '#999',
+            borderBottom: activeTab === 'scene' ? '3px solid #5a8a3a' : 'none',
+          }}
+        >
+          Scene
+        </button>
+        <button
+          onClick={() => setActiveTab('you')}
+          style={{
+            ...styles.tabButton,
+            backgroundColor: activeTab === 'you' ? '#3a1a2a' : '#3a2a1a',
+            color: activeTab === 'you' ? '#b19cd9' : '#999',
+            borderBottom: activeTab === 'you' ? '3px solid #b19cd9' : 'none',
+          }}
+        >
+          You
+        </button>
       </div>
 
-      {/* Spell Details */}
-      {selectedSpell && (
-        <div style={styles.section}>
-          <div style={styles.spellDetails}>
-            <h4 style={styles.detailTitle}>{selectedSpell.name}</h4>
-            <p style={styles.detailText}>
-              <strong>School:</strong> {selectedSpell.school}
-            </p>
-            <p style={styles.detailText}>
-              <strong>Level:</strong> {selectedSpell.level}
-            </p>
-            <p style={styles.detailText}>
-              <strong>Range:</strong> {selectedSpell.range}
-            </p>
-            <p style={styles.detailText}>{selectedSpell.description}</p>
+      {/* Cast Tab */}
+      {activeTab === 'cast' && (
+        <div style={styles.tabContent}>
+          {/* Search Bar */}
+          <input
+            type="text"
+            placeholder="Search spells..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={styles.searchInput}
+          />
 
-            {selectedSpell.weightGainTheme && (
-              <p style={styles.themeText}>
-                <em>✨ {selectedSpell.weightGainTheme}</em>
-              </p>
-            )}
-
-            {hasZoneAffinity && (
-              <p style={styles.affinityText}>
-                This zone resonates with {selectedSpell.name}.
-              </p>
-            )}
-
-            {selectedSpell.interactsWith.length > 0 && (
-              <div style={styles.interactions}>
-                <p style={styles.interactionLabel}>Synergizes with:</p>
-                <ul style={styles.interactionList}>
-                  {selectedSpell.interactsWith.map(inter => (
-                    <li key={inter.spellName} style={styles.interactionItem}>
-                      {inter.spellName}: {inter.description}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          {/* School Tabs */}
+          <div style={styles.schoolTabs}>
+            <button
+              onClick={() => setSelectedSchool(null)}
+              style={{
+                ...styles.schoolTab,
+                backgroundColor: !selectedSchool ? '#6B4423' : '#4a3728',
+              }}
+            >
+              All
+            </button>
+            {schools.map(school => (
+              <button
+                key={school}
+                onClick={() => setSelectedSchool(school)}
+                style={{
+                  ...styles.schoolTab,
+                  backgroundColor: selectedSchool === school ? '#6B4423' : '#4a3728',
+                }}
+              >
+                {school.slice(0, 4)}
+              </button>
+            ))}
           </div>
 
-          {/* Target Selection - only show valid targets */}
-          {validTargets.length > 0 && (
-            <div style={styles.targetSection}>
-              <p style={styles.label}>Valid Targets:</p>
-              <div style={styles.targetList}>
-                <button
-                  onClick={() => {
-                    setSelectedTarget(null);
-                    setSelectedSecondaryTarget(null);
-                    setSelectedOption(null);
-                  }}
-                  style={{
-                    ...styles.targetButton,
-                    backgroundColor:
-                      selectedTarget === null ? '#5a8a3a' : '#4a6a2a',
-                  }}
-                >
-                  Area/Self
-                </button>
-                {validTargets.map((target, idx) => (
+          {/* Spell List */}
+          <div style={styles.section}>
+            <p style={styles.label}>Spells:</p>
+            <div style={styles.spellList}>
+              {filteredSpells.length > 0 ? (
+                filteredSpells.map(spell => (
                   <button
-                    key={idx}
-                    onClick={() => {
-                      setSelectedTarget(target);
-                      setSelectedSecondaryTarget(null);
-                      setSelectedOption(null);
-                    }}
+                    key={spell.name}
+                    onClick={() => handleSpellSelect(spell)}
                     style={{
-                      ...styles.targetButton,
+                      ...styles.spellButton,
                       backgroundColor:
-                        selectedTarget === target ? '#5a8a3a' : '#4a6a2a',
+                        selectedSpell?.name === spell.name ? '#6B4423' : '#4a3728',
                     }}
                   >
-                    {target.name}
-                    {target.type === 'wood' || target.type === 'earth' ? ' (object)' : ''}
-                    {target.isAffectedBy?.(selectedSpell.name) ? ' - receptive' : ''}
+                    <div style={styles.spellName}>{spell.name}</div>
+                    <div style={styles.spellLevel}>Lvl {spell.level}</div>
                   </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Secondary Target Selection */}
-          {(selectedSpell.requiresSecondaryTarget || validSecondaryTargets.length > 0) && (
-            <div style={styles.secondaryTargetSection}>
-              <p style={styles.secondaryTargetLabel}>
-                ⚠️ Secondary Target
-                {selectedSpell.requiresSecondaryTarget && ' (Required)'}
-              </p>
-              <p style={styles.secondaryTargetDesc}>
-                {selectedSpell.secondaryTargetType === 'creature' && 'This spell will affect a creature'}
-                {selectedSpell.secondaryTargetType === 'npc' && 'This spell will affect an NPC'}
-                {selectedSpell.secondaryTargetType === 'entity' && 'This spell will affect another entity'}
-              </p>
-              {validSecondaryTargets.length > 0 ? (
-                <div style={styles.targetList}>
-                  {!selectedSpell.requiresSecondaryTarget && (
-                    <button
-                      onClick={() => setSelectedSecondaryTarget(null)}
-                      style={{
-                        ...styles.targetButton,
-                        backgroundColor:
-                          selectedSecondaryTarget === null ? '#5a8a3a' : '#4a6a2a',
-                      }}
-                    >
-                      None / Self
-                    </button>
-                  )}
-                  {validSecondaryTargets.map((target, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedSecondaryTarget(target)}
-                      style={{
-                        ...styles.targetButton,
-                        backgroundColor:
-                          selectedSecondaryTarget === target ? '#5a8a3a' : '#4a6a2a',
-                      }}
-                    >
-                      {target.name}
-                      {target.currentWeight && ` (${target.currentWeight} lbs)`}
-                    </button>
-                  ))}
-                </div>
+                ))
               ) : (
-                <p style={styles.noValidTargets}>
-                  ⚠️ No valid secondary targets in this zone
-                </p>
+                <p style={styles.noSpells}>No spells found</p>
               )}
             </div>
-          )}
+          </div>
 
-          {/* Spell Options */}
-          {availableOptions.length > 0 && (
-            <div style={styles.optionSection}>
-              <p style={styles.label}>How to Cast:</p>
-              <div style={styles.optionList}>
-                {availableOptions.map((option, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedOption(option)}
-                    style={{
-                      ...styles.optionButton,
-                      backgroundColor:
-                        selectedOption === option ? '#5a8a3a' : '#3a5a2a',
-                      borderLeft:
-                        selectedOption === option
-                          ? '4px solid #4CAF50'
-                          : '4px solid #3a5a2a',
-                    }}
-                  >
-                    <div style={styles.optionName}>{option.name}</div>
-                    <div style={styles.optionDesc}>{option.description}</div>
-                  </button>
-                ))}
+          {/* Spell Details */}
+          {selectedSpell && (
+            <div style={styles.section}>
+              <div style={styles.spellDetails}>
+                <h4 style={styles.detailTitle}>{selectedSpell.name}</h4>
+                <p style={styles.detailText}>
+                  <strong>School:</strong> {selectedSpell.school}
+                </p>
+                <p style={styles.detailText}>
+                  <strong>Level:</strong> {selectedSpell.level}
+                </p>
+                <p style={styles.detailText}>{selectedSpell.description}</p>
+
+                {selectedSpell.weightGainTheme && (
+                  <p style={styles.themeText}>
+                    <em>✨ {selectedSpell.weightGainTheme}</em>
+                  </p>
+                )}
+
+                {hasZoneAffinity && (
+                  <p style={styles.affinityText}>
+                    Zone resonates with this spell.
+                  </p>
+                )}
               </div>
+
+              {/* Target Selection */}
+              {validTargets.length > 0 && (
+                <div style={styles.targetSection}>
+                  <p style={styles.label}>Primary Target:</p>
+                  <div style={styles.targetList}>
+                    <button
+                      onClick={() => {
+                        setSelectedTarget(null);
+                        setSelectedSecondaryTarget(null);
+                        setSelectedOption(null);
+                      }}
+                      style={{
+                        ...styles.targetButton,
+                        backgroundColor:
+                          selectedTarget === null ? '#5a8a3a' : '#4a6a2a',
+                      }}
+                    >
+                      Area/Self
+                    </button>
+                    {validTargets.map((target, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setSelectedTarget(target);
+                          setSelectedSecondaryTarget(null);
+                          setSelectedOption(null);
+                        }}
+                        style={{
+                          ...styles.targetButton,
+                          backgroundColor:
+                            selectedTarget === target ? '#5a8a3a' : '#4a6a2a',
+                        }}
+                      >
+                        {target.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Secondary Target Selection */}
+              {(selectedSpell.requiresSecondaryTarget || validSecondaryTargets.length > 0) && (
+                <div style={styles.secondaryTargetSection}>
+                  <p style={styles.secondaryTargetLabel}>
+                    Secondary Target
+                    {selectedSpell.requiresSecondaryTarget && ' (Required)'}
+                  </p>
+                  {validSecondaryTargets.length > 0 ? (
+                    <div style={styles.targetList}>
+                      {!selectedSpell.requiresSecondaryTarget && (
+                        <button
+                          onClick={() => setSelectedSecondaryTarget(null)}
+                          style={{
+                            ...styles.targetButton,
+                            backgroundColor:
+                              selectedSecondaryTarget === null ? '#5a8a3a' : '#4a6a2a',
+                          }}
+                        >
+                          None
+                        </button>
+                      )}
+                      {validSecondaryTargets.map((target, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedSecondaryTarget(target)}
+                          style={{
+                            ...styles.targetButton,
+                            backgroundColor:
+                              selectedSecondaryTarget === target ? '#5a8a3a' : '#4a6a2a',
+                          }}
+                        >
+                          {target.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={styles.noValidTargets}>No valid targets</p>
+                  )}
+                </div>
+              )}
+
+              {/* Spell Options */}
+              {availableOptions.length > 0 && (
+                <div style={styles.optionSection}>
+                  <p style={styles.label}>How to Cast:</p>
+                  <div style={styles.optionList}>
+                    {availableOptions.map((option, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedOption(option)}
+                        style={{
+                          ...styles.optionButton,
+                          backgroundColor:
+                            selectedOption === option ? '#5a8a3a' : '#3a5a2a',
+                        }}
+                      >
+                        <div style={styles.optionName}>{option.name}</div>
+                        <div style={styles.optionDesc}>{option.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Cast Button */}
+              <button
+                onClick={handleCast}
+                style={{
+                  ...styles.castButton,
+                  opacity: validTargets.length === 0 && selectedSpell.validTargets.length > 0 ? 0.5 : 1,
+                }}
+                disabled={validTargets.length === 0 && selectedSpell.validTargets.length > 0}
+              >
+                Cast Spell
+              </button>
+
+              {castResult && (
+                <div
+                  style={{
+                    ...styles.resultMessage,
+                    color: castResult.success ? '#4CAF50' : '#f44336',
+                  }}
+                >
+                  {castResult.message}
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Cast Button */}
-          <button
-            onClick={handleCast}
-            style={{
-              ...styles.castButton,
-              opacity: validTargets.length === 0 && selectedSpell.validTargets.length > 0 ? 0.5 : 1,
-              cursor: validTargets.length === 0 && selectedSpell.validTargets.length > 0 ? 'not-allowed' : 'pointer',
-            }}
-            disabled={validTargets.length === 0 && selectedSpell.validTargets.length > 0}
-          >
-            Cast Spell
-          </button>
-
-          {validTargets.length === 0 && selectedSpell.validTargets.length > 0 && (
-            <p style={styles.noValidTargets}>
-              ⚠️ No valid targets in this zone
-            </p>
           )}
         </div>
       )}
 
-      {/* Cast Result */}
-      {castResult && (
-        <div
-          style={{
-            ...styles.resultMessage,
-            color: castResult.success ? '#4CAF50' : '#f44336',
-          }}
-        >
-          {castResult.message}
+      {/* Scene Tab */}
+      {activeTab === 'scene' && (
+        <div style={styles.tabContent}>
+          <p style={styles.sceneNote}>Scene information displays in the main log.</p>
+        </div>
+      )}
+
+      {/* You Tab */}
+      {activeTab === 'you' && (
+        <div style={styles.tabContent}>
+          {playerStats ? (
+            <div style={styles.statsPanel}>
+              <div style={styles.statGroup}>
+                <p style={styles.statLabel}>Weight</p>
+                <p style={styles.statValue}>
+                  {playerStats.currentWeight} / {playerStats.baseWeight} lbs
+                </p>
+                <div style={styles.statBar}>
+                  <div
+                    style={{
+                      ...styles.statBarFill,
+                      width: `${Math.min(100, (playerStats.currentWeight / (playerStats.baseWeight * 1.5)) * 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={styles.statGroup}>
+                <p style={styles.statLabel}>Gravity</p>
+                <p style={styles.statValue}>{playerStats.gravity?.toFixed(1) || '0.0'}</p>
+              </div>
+
+              <div style={styles.statGroup}>
+                <p style={styles.statLabel}>Nutrition</p>
+                <p style={styles.statValue}>
+                  {playerStats.caloriesEatenToday || 0} cal today
+                </p>
+              </div>
+
+              {playerStats.conditions && Object.keys(playerStats.conditions).length > 0 && (
+                <div style={styles.statGroup}>
+                  <p style={styles.statLabel}>Conditions</p>
+                  <ul style={styles.conditionList}>
+                    {Object.entries(playerStats.conditions).map(([key, val]) => (
+                      <li key={key} style={styles.conditionItem}>
+                        {key}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p style={styles.sceneNote}>No player stats available</p>
+          )}
         </div>
       )}
     </div>
@@ -372,6 +471,10 @@ const styles = {
     padding: '15px',
     borderRadius: '4px',
     fontSize: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    maxHeight: '100%',
   },
   title: {
     margin: '0 0 15px 0',
@@ -379,6 +482,55 @@ const styles = {
     color: '#ffd700',
     borderBottom: '2px solid #8B4513',
     paddingBottom: '10px',
+  },
+  tabNav: {
+    display: 'flex',
+    gap: '0',
+    marginBottom: '15px',
+    borderBottom: '2px solid #333',
+  },
+  tabButton: {
+    flex: 1,
+    padding: '10px 8px',
+    backgroundColor: '#3a2a1a',
+    color: '#999',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    transition: 'all 0.2s',
+  },
+  tabContent: {
+    flex: 1,
+    overflowY: 'auto',
+    paddingRight: '8px',
+  },
+  searchInput: {
+    width: '100%',
+    padding: '8px',
+    marginBottom: '10px',
+    backgroundColor: '#2a2a2a',
+    color: '#fff',
+    border: '1px solid #444',
+    borderRadius: '3px',
+    fontSize: '12px',
+  },
+  schoolTabs: {
+    display: 'flex',
+    gap: '4px',
+    marginBottom: '10px',
+    overflowX: 'auto',
+  },
+  schoolTab: {
+    padding: '6px 10px',
+    backgroundColor: '#4a3728',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '3px',
+    cursor: 'pointer',
+    fontSize: '11px',
+    whiteSpace: 'nowrap',
+    transition: 'background-color 0.2s',
   },
   section: {
     marginBottom: '15px',
@@ -452,25 +604,6 @@ const styles = {
     fontSize: '11px',
     color: '#bfe6b8',
   },
-  interactions: {
-    marginTop: '10px',
-    paddingTop: '10px',
-    borderTop: '1px solid #444',
-  },
-  interactionLabel: {
-    margin: '0 0 5px 0',
-    fontSize: '11px',
-    color: '#888',
-  },
-  interactionList: {
-    margin: '0',
-    paddingLeft: '15px',
-    fontSize: '10px',
-    color: '#999',
-  },
-  interactionItem: {
-    margin: '2px 0',
-  },
   targetSection: {
     marginBottom: '10px',
   },
@@ -487,17 +620,11 @@ const styles = {
     borderLeft: '3px solid #ff9800',
   },
   secondaryTargetLabel: {
-    margin: '0 0 5px 0',
+    margin: '0 0 8px 0',
     fontSize: '11px',
     color: '#ff9800',
     textTransform: 'uppercase',
     fontWeight: 'bold',
-  },
-  secondaryTargetDesc: {
-    margin: '0 0 8px 0',
-    fontSize: '10px',
-    color: '#999',
-    fontStyle: 'italic',
   },
   targetButton: {
     padding: '8px 10px',
@@ -565,6 +692,54 @@ const styles = {
     borderRadius: '3px',
     textAlign: 'center',
     fontSize: '12px',
+  },
+  sceneNote: {
+    color: '#888',
+    fontStyle: 'italic',
+    fontSize: '12px',
+  },
+  statsPanel: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px',
+  },
+  statGroup: {
+    backgroundColor: '#2a2a2a',
+    padding: '10px',
+    borderRadius: '3px',
+  },
+  statLabel: {
+    margin: '0 0 5px 0',
+    fontSize: '11px',
+    color: '#aaa',
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    margin: '0 0 8px 0',
+    fontSize: '14px',
+    color: '#ffd700',
+    fontWeight: 'bold',
+  },
+  statBar: {
+    width: '100%',
+    height: '8px',
+    backgroundColor: '#1a1a1a',
+    borderRadius: '4px',
+    overflow: 'hidden',
+  },
+  statBarFill: {
+    height: '100%',
+    backgroundColor: '#8B4513',
+    transition: 'width 0.3s',
+  },
+  conditionList: {
+    margin: '0',
+    paddingLeft: '15px',
+    fontSize: '11px',
+  },
+  conditionItem: {
+    margin: '4px 0',
+    color: '#ccc',
   },
 };
 

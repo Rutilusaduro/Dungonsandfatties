@@ -316,6 +316,13 @@ const Game = () => {
               availableTargets={availableTargets}
               onCastSpell={handleCastSpell}
               currentZone={currentZone}
+              playerStats={player ? {
+                currentWeight: player.currentWeight,
+                baseWeight: player.baseWeight,
+                gravity: player.gravity,
+                caloriesEatenToday: player.caloriesEatenToday,
+                conditions: player.conditions?.active || {},
+              } : null}
             />
           </div>
         </aside>
