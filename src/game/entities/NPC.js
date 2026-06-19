@@ -13,6 +13,7 @@ import {
   processLongRestNutrition,
   recordCalorieConsumption,
 } from '../mechanics/NutritionSystem.js';
+import { getSizeClass } from '../mechanics/WeightStages.js';
 
 class NPC {
   constructor(name, options = {}) {
@@ -258,7 +259,7 @@ class NPC {
   // willingness) are derived in one place — engine.js deriveFor() — and
   // {subject.*} slots resolve to this NPC.
   _createContext(extra = {}) {
-    return { subject: this, ...extra };
+    return { subject: this, sizeClass: getSizeClass(this), ...extra };
   }
 
   // Derive weight stage (0-11) from current weight

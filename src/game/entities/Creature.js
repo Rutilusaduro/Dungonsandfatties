@@ -12,6 +12,7 @@ import {
   processLongRestNutrition,
   recordCalorieConsumption,
 } from '../mechanics/NutritionSystem.js';
+import { getSizeClass } from '../mechanics/WeightStages.js';
 
 class Creature {
   constructor(name, options = {}) {
@@ -71,7 +72,7 @@ class Creature {
 
   // Engine context input ({ subject }) — see engine.js deriveFor().
   _createContext(extra = {}) {
-    return { subject: this, ...extra };
+    return { subject: this, sizeClass: getSizeClass(this), ...extra };
   }
 
   // Feed the creature
