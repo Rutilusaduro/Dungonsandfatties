@@ -69,6 +69,11 @@ const CALORIE_ONLY_EFFECT_TYPES = new Set([
   'stomach_expansion',
   'digestion_acceleration',
   'digestion',
+  'sympathetic_bond',
+  'weight_siphon',
+  'dragon_gullet',
+  'devour_whole',
+  'zone_aura',
 ]);
 
 const FOOD_CREATION_EFFECT_TYPES = new Set([
@@ -219,9 +224,9 @@ class SpellResolver {
     return modifiers;
   }
 
-  static cast({ spell, caster, target, zone, selectedOption }) {
+  static cast({ spell, caster, target, secondaryTarget, zone, selectedOption }) {
     const context = SpellResolver.buildContext({ zone, target, spell });
-    const result = spell.cast(caster, target, context, selectedOption);
+    const result = spell.cast(caster, target, context, selectedOption, secondaryTarget);
 
     if (!result.success) return { result, context, createdFoods: [], appliedModifiers: [] };
 
@@ -229,7 +234,9 @@ class SpellResolver {
       result,
       context,
       spell,
+      caster,
       target,
+      secondaryTarget,
       zone,
       selectedOption,
     });
@@ -248,7 +255,7 @@ class SpellResolver {
     };
   }
 
-  static applyResultToWorld({ result, context, spell, target, zone, selectedOption }) {
+  static applyResultToWorld({ result, context, spell, caster, target, secondaryTarget, zone, selectedOption }) {
     const createdFoods = [];
     const effects = [...(result.effects || []), ...(result.environmentalChanges || [])];
 
@@ -258,6 +265,11 @@ class SpellResolver {
       SpellResolver.applySuggestionEating({ effect, result, target, zone });
       SpellResolver.applyWorldCreationEffect({ effect, result, target, zone, createdFoods });
       SpellResolver.applyForcedFeedingEffect({ effect, result, target, zone });
+      SpellResolver.applyBondEffect({ effect, caster, target, result });
+      SpellResolver.applySiphonEffect({ effect, caster, target, result });
+      SpellResolver.applyDragonGullet({ effect, target, result });
+      SpellResolver.applyDevourWhole({ effect, target, secondaryTarget, zone, result });
+      SpellResolver.applyZoneAura({ effect, zone, result });
       const foods = SpellResolver.foodsFromEffect(effect, spell, selectedOption);
 
       for (const food of foods) {
@@ -716,6 +728,138 @@ class SpellResolver {
       'spell.interaction.confection_snare.world_food',
       'Confection bindings draw on nearby prepared food.',
     );
+  }
+
+  static applyBondEffect({ effect, caster, target, result }) {
+    if (effect.type !== 'sympathetic_bond' || !target || !caster) return;
+
+    if (!target.bondedTo) target.bondedTo = {};
+    if (!caster.bondedTo) caster.bondedTo = {};
+
+    target.bondedTo[caster.id] = { share: effect.share || 0.25 };
+    caster.bondedTo[target.id] = { share: effect.share || 0.25 };
+
+    result.effects.push({
+      type: 'bond_created',
+      targetId: target.id,
+      casterId: caster.id,
+      share: effect.share,
+      description: `${target.name} and ${caster.name} are now bonded. They will share ${Math.round((effect.share || 0.25) * 100)}% of each other's calorie intake at rest.`,
+    });
+
+    result.environmentalChanges.push({
+      type: 'sympathetic_bond',
+      description: `A sympathetic bond forms between ${target.name} and ${caster.name}.`,
+    });
+  }
+
+  static applySiphonEffect({ effect, caster, target, result }) {
+    if (effect.type !== 'weight_siphon' || !target) return;
+
+    const destination = effect.destination || caster;
+    if (!destination) return;
+
+    const amount = effect.drainAccumulated
+      ? (target.weightGainAccumulated || 0)
+      : (effect.amount || 0);
+
+    if (amount <= 0) {
+      result.environmentalChanges.push({
+        type: 'weight_siphon_no_transfer',
+        description: `${target.name} has no weight to transfer.`,
+      });
+      return;
+    }
+
+    const lossResult = applyBodyWeightChange(target, -amount);
+    const gainResult = applyBodyWeightChange(destination, amount);
+
+    if (lossResult && gainResult) {
+      result.effects.push({
+        type: 'weight_transferred',
+        sourceId: target.id,
+        destinationId: destination.id,
+        amount,
+        description: `${amount} lbs transferred from ${target.name} to ${destination.name}.`,
+      });
+
+      result.environmentalChanges.push({
+        type: 'weight_siphon',
+        description: `${target.name} loses ${amount} lbs (now ${target.currentWeight} lbs). ${destination.name} gains ${amount} lbs (now ${destination.currentWeight} lbs).`,
+      });
+    }
+  }
+
+  static applyDragonGullet({ effect, target, result }) {
+    if (effect.type !== 'dragon_gullet' || !target) return;
+
+    target.stomachCapacityMultiplier = Math.max(
+      target.stomachCapacityMultiplier || 1,
+      effect.capacityMultiplier || 3,
+    );
+
+    if (target.hungerLevel !== undefined) {
+      target.hungerLevel = Math.min(100, target.hungerLevel + 25);
+    }
+
+    target.conditions?.add?.('ravenous', { intensity: 2 });
+
+    result.environmentalChanges.push({
+      type: 'dragon_gullet',
+      description: `${target.name}'s jaw opens impossibly wide. A dragon's gullet manifests, ravenous and ready.`,
+    });
+  }
+
+  static applyDevourWhole({ effect, target, secondaryTarget, zone, result }) {
+    if (effect.type !== 'devour_whole' || !target || !secondaryTarget || !zone) return;
+
+    const calories = calculateLivingCalories(secondaryTarget);
+
+    zone.removeCreature?.(secondaryTarget.id);
+
+    const intake = SpellResolver.addCalories(
+      target,
+      calories,
+      `${secondaryTarget.name} (Draconic Consumption)`,
+      result,
+      true,
+    );
+
+    result.effects.push({
+      type: 'creature_devoured',
+      preyId: secondaryTarget.id,
+      preyName: secondaryTarget.name,
+      preyWeight: secondaryTarget.currentWeight,
+      calories,
+      description: `${target.name} devours ${secondaryTarget.name} whole, consuming ${calories} calories.`,
+    });
+
+    result.environmentalChanges.push({
+      type: 'devour_whole',
+      description: `${secondaryTarget.name} is consumed by ${target.name}'s draconic hunger. The beast is no longer in the zone.`,
+    });
+  }
+
+  static applyZoneAura({ effect, zone, result }) {
+    if (effect.type !== 'zone_aura' || !zone) return;
+
+    zone.aura = {
+      calories: effect.calories || 0,
+      preservesFood: effect.preservesFood || false,
+      castAt: Date.now(),
+    };
+
+    if (effect.preservesFood) {
+      const foods = zone.getFoods?.() || [];
+      foods.forEach(food => {
+        food.freshness = 100;
+      });
+    }
+
+    result.environmentalChanges.push({
+      type: 'zone_aura',
+      description: `An aura of ${effect.calories} calories suffuses the zone. Every occupant will gain these calories at rest.`,
+    });
   }
 
   static chooseFoodForTarget(target, foods) {

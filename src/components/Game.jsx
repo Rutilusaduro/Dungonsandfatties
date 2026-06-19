@@ -12,6 +12,7 @@ import SpellNarrator from '../game/magic/SpellNarrator';
 import SpellResolver from '../game/magic/SpellResolver';
 import { getTextEngine } from '../textEngine/index.js';
 import { RESTRAINT_MATERIAL } from '../game/conditions/ActiveConditions.js';
+import { applyPreRestSharing } from '../game/mechanics/NutritionSystem.js';
 import World from '../game/world/World';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
@@ -86,13 +87,13 @@ const Game = () => {
     setGameStarted(true);
   };
 
-  const handleCastSpell = ({ spell, target, zone, selectedOption }) => {
+  const handleCastSpell = ({ spell, target, secondaryTarget, zone, selectedOption }) => {
     if (!spell || !zone) return;
 
     const caster = gameState.getPlayer();
     if (!caster) return;
 
-    const { result } = SpellResolver.cast({ spell, caster, target, zone, selectedOption });
+    const { result } = SpellResolver.cast({ spell, caster, target, secondaryTarget, zone, selectedOption });
 
     textEngine.clearBuffer();
 
@@ -213,6 +214,10 @@ const Game = () => {
 
     textEngine.clearBuffer();
     textEngine.addText('You take a long rest. The day\'s meals and magic settle into lasting changes.');
+
+    // Apply pre-rest sharing (bonds and auras) before processing individual rests
+    const sharingNotes = applyPreRestSharing(restTargets, currentZone);
+    sharingNotes.forEach(note => textEngine.addText(note));
 
     const summaries = restTargets
       .map(entity => ({ entity, result: entity.processLongRestNutrition?.() }))

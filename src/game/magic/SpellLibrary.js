@@ -1,4 +1,5 @@
 import { Spell, SpellEffect, SpellOption } from './Spell.js';
+import { calculateLivingCalories } from '../mechanics/NutritionSystem.js';
 
 /**
  * Spell Library
@@ -1767,6 +1768,203 @@ class SpellLibrary {
           'Float',
           'Appraisal can judge whether floor tethering or weightlessness matters'
         )
+    );
+
+    // Sympathetic Bond - create calorie-sharing link between two entities
+    this.registerSpell(
+      new Spell('Sympathetic Bond', {
+        level: 3,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Until dispelled',
+        description: 'Form a mystical bond between two creatures, causing them to share a portion of their calorie intake at rest.',
+        weightGainTheme: 'Two hearts beat as one, and their appetites entangle.',
+        validTargets: ['npc', 'creature'],
+        requiresSecondaryTarget: true,
+        secondaryTargetType: 'npc',
+        tags: ['enchantment', 'feeding', 'bond'],
+      })
+        .addOption(
+          new SpellOption('Faint Echo', 'Share 25% of calorie intake', (caster, target, context) => ({
+            type: 'sympathetic_bond',
+            targetId: target.id,
+            secondaryId: context.secondaryTarget?.id,
+            share: 0.25,
+          }))
+        )
+        .addOption(
+          new SpellOption('Shared Indulgence', 'Share 40% of calorie intake', (caster, target, context) => ({
+            type: 'sympathetic_bond',
+            targetId: target.id,
+            secondaryId: context.secondaryTarget?.id,
+            share: 0.4,
+          }))
+        )
+        .addOption(
+          new SpellOption('Gluttonous Communion', 'Share 60% of calorie intake', (caster, target, context) => ({
+            type: 'sympathetic_bond',
+            targetId: target.id,
+            secondaryId: context.secondaryTarget?.id,
+            share: 0.6,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Bond Formation', 'Create sympathetic link', (caster, target, context) => ({
+            type: 'sympathetic_bond',
+            targetId: target.id,
+            secondaryId: context.secondaryTarget?.id,
+            share: 0.25,
+          }))
+        )
+        .addInteraction('Suggestion', 'Bonded creatures can influence each other's food choices')
+        .addInteraction('Erupting Earth', 'Bonded creatures share the burden of burial')
+        .addInteraction('Confection Snare', 'Bonded creatures can be restrained together')
+        .addInteraction('Ravenous Expansion', 'Bonded creatures amplify each other's hunger')
+    );
+
+    // Covetous Siphon - drain weight from one entity to another
+    this.registerSpell(
+      new Spell('Covetous Siphon', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous',
+        description: 'Drain weight from one creature and transfer it to another. The weight is drawn from current body weight.',
+        weightGainTheme: 'Envious desire manifests as flesh migrating between bodies.',
+        validTargets: ['npc', 'creature'],
+        requiresSecondaryTarget: false,
+        secondaryTargetType: 'entity',
+        tags: ['transmutation', 'weight-gain', 'size'],
+      })
+        .addOption(
+          new SpellOption('Skim', 'Transfer 20 lbs', (caster, target, context) => ({
+            type: 'weight_siphon',
+            sourceId: target.id,
+            destination: context.secondaryTarget || caster,
+            amount: 20,
+            drainAccumulated: false,
+          }))
+        )
+        .addOption(
+          new SpellOption('Drain', 'Transfer 50 lbs', (caster, target, context) => ({
+            type: 'weight_siphon',
+            sourceId: target.id,
+            destination: context.secondaryTarget || caster,
+            amount: 50,
+            drainAccumulated: false,
+          }))
+        )
+        .addOption(
+          new SpellOption('Ravenous Theft', 'Transfer all accumulated weight gain', (caster, target, context) => ({
+            type: 'weight_siphon',
+            sourceId: target.id,
+            destination: context.secondaryTarget || caster,
+            drainAccumulated: true,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Weight Transfer', 'Siphon weight', (caster, target, context) => ({
+            type: 'weight_siphon',
+            sourceId: target.id,
+            destination: context.secondaryTarget || caster,
+            amount: 20,
+            drainAccumulated: false,
+          }))
+        )
+        .addInteraction('Reduce Person', 'Siphoned targets shrink further')
+        .addInteraction('Enlarge Person', 'Siphon destination benefits from additional mass')
+        .addInteraction('Rapid Digestion', 'Siphoned entities digest quickly')
+        .addInteraction('Enhance Gravity', 'Siphon destination becomes heavier')
+    );
+
+    // Draconic Hunger - summon a dragon's gullet and devour creatures
+    this.registerSpell(
+      new Spell('Draconic Hunger', {
+        level: 4,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous',
+        description: 'A target creature manifests a dragon\'s gullet and can devour another creature whole, gaining its living-calorie value.',
+        weightGainTheme: 'The ancient hunger of dragons awakens in mortal flesh.',
+        validTargets: ['npc', 'creature'],
+        requiresSecondaryTarget: true,
+        secondaryTargetType: 'creature',
+        tags: ['transmutation', 'hunger', 'capacity', 'conversion'],
+      })
+        .addOption(
+          new SpellOption('Gluttonous Maw', 'Expand stomach capacity (buff only)', (caster, target, context) => ({
+            type: 'dragon_gullet',
+            capacityMultiplier: 3,
+          }))
+        )
+        .addOption(
+          new SpellOption('Devour the Herd', 'Consume the secondary target creature', (caster, target, context) => ({
+            type: 'devour_whole',
+            creatureId: context.secondaryTarget?.id,
+            creatureName: context.secondaryTarget?.name,
+            calories: context.secondaryTarget ? calculateLivingCalories(context.secondaryTarget) : 0,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Dragon Manifestation', 'Manifest draconic hunger', (caster, target, context) => ({
+            type: 'dragon_gullet',
+            capacityMultiplier: 3,
+          }))
+        )
+        .addInteraction('Summon Cattle', 'Summoned cattle become prey for draconic hunger')
+        .addInteraction('Ravenous Expansion', 'Draconic hunger pairs with existing ravenous state')
+        .addInteraction('Flesh to Food', 'Devoured creatures are processed differently')
+        .addInteraction('Polymorph', 'Draconic forms gain additional appetite')
+    );
+
+    // Ambrosial Aura - zone-wide calorie aura for long rest
+    this.registerSpell(
+      new Spell('Ambrosial Aura', {
+        level: 3,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Until long rest',
+        description: 'An aura of magical nourishment fills the zone. Every occupant gains additional calories at the next long rest.',
+        weightGainTheme: 'The air itself becomes rich with the essence of feast and plenty.',
+        validTargets: [],
+        requiresSecondaryTarget: false,
+        secondaryTargetType: 'none',
+        tags: ['conjuration', 'food', 'zone', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Sweet Haze', '1200 calories per occupant', (caster, target, context) => ({
+            type: 'zone_aura',
+            calories: 1200,
+            preservesFood: true,
+          }))
+        )
+        .addOption(
+          new SpellOption('Cloying Mist', '2400 calories per occupant', (caster, target, context) => ({
+            type: 'zone_aura',
+            calories: 2400,
+            preservesFood: true,
+          }))
+        )
+        .addOption(
+          new SpellOption('Decadent Fog', '4000 calories per occupant', (caster, target, context) => ({
+            type: 'zone_aura',
+            calories: 4000,
+            preservesFood: true,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Aura Creation', 'Create ambient calorie aura', (caster, target, context) => ({
+            type: 'zone_aura',
+            calories: 2400,
+            preservesFood: true,
+          }))
+        )
+        .addInteraction('Plant Growth', 'Aura enhances magical plant growth')
+        .addInteraction('Create Food and Water', 'Aura stacks with conjured food')
     );
   }
 }

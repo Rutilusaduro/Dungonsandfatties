@@ -56,6 +56,10 @@ class Spell {
 
     // Tags for spell categories
     this.tags = options.tags || [];
+
+    // Secondary target support for spells that affect multiple entities
+    this.requiresSecondaryTarget = options.requiresSecondaryTarget || false;
+    this.secondaryTargetType = options.secondaryTargetType || 'none'; // 'creature', 'npc', 'entity', 'none'
   }
 
   addEffect(effect) {
@@ -133,7 +137,7 @@ class Spell {
     return true;
   }
 
-  cast(caster, target, context = {}, selectedOption = null) {
+  cast(caster, target, context = {}, selectedOption = null, secondaryTarget = null) {
     if (!this.canCast(caster)) {
       return {
         success: false,
@@ -153,6 +157,7 @@ class Spell {
       spell: this.name,
       caster: caster.name,
       target: target ? target.name : 'area',
+      secondaryTarget: secondaryTarget ? secondaryTarget.name : null,
       effects: [],
       environmentalChanges: [],
       interactions: [],
@@ -162,12 +167,12 @@ class Spell {
 
     // Apply selected option if available
     if (selectedOption && this.options.includes(selectedOption)) {
-      const optionResult = selectedOption.apply(caster, target, context);
+      const optionResult = selectedOption.apply(caster, target, { ...context, secondaryTarget });
       results.effects.push(optionResult);
     } else {
       // Apply default spell effects
       for (const effect of this.effects) {
-        const result = effect.apply(caster, target, context);
+        const result = effect.apply(caster, target, { ...context, secondaryTarget });
         results.effects.push(result);
       }
     }

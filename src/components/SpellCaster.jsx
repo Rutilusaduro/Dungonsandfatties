@@ -3,6 +3,7 @@ import { useState } from 'react';
 const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [selectedTarget, setSelectedTarget] = useState(null);
+  const [selectedSecondaryTarget, setSelectedSecondaryTarget] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [castResult, setCastResult] = useState(null);
 
@@ -11,6 +12,7 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
   const handleSpellSelect = (spell) => {
     setSelectedSpell(spell);
     setSelectedTarget(null);
+    setSelectedSecondaryTarget(null);
     setSelectedOption(null);
     setCastResult(null);
   };
@@ -48,6 +50,50 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
     return validTargets;
   };
 
+  // Get valid secondary targets based on spell type and primary target
+  const getValidSecondaryTargets = () => {
+    if (!selectedSpell || !selectedSpell.secondaryTargetType || selectedSpell.secondaryTargetType === 'none') {
+      return [];
+    }
+
+    if (!selectedTarget && !selectedSpell.requiresSecondaryTarget) {
+      return [];
+    }
+
+    const zone = currentZone;
+    if (!zone) return [];
+
+    const validSecondaryTargets = [];
+    const secondaryType = selectedSpell.secondaryTargetType;
+
+    // Determine which entities to check based on secondaryTargetType
+    if (secondaryType === 'creature' || secondaryType === 'entity') {
+      zone.getCreatures().forEach(creature => {
+        if (creature !== selectedTarget) {
+          validSecondaryTargets.push(creature);
+        }
+      });
+    }
+
+    if (secondaryType === 'npc' || secondaryType === 'entity') {
+      zone.getNPCs().forEach(npc => {
+        if (npc !== selectedTarget) {
+          validSecondaryTargets.push(npc);
+        }
+      });
+    }
+
+    if (secondaryType === 'entity') {
+      zone.getEnvironmentalObjects().forEach(obj => {
+        if (obj !== selectedTarget) {
+          validSecondaryTargets.push(obj);
+        }
+      });
+    }
+
+    return validSecondaryTargets;
+  };
+
   const handleCast = () => {
     if (!selectedSpell) {
       setCastResult({ success: false, message: 'No spell selected' });
@@ -57,6 +103,7 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
     onCastSpell({
       spell: selectedSpell,
       target: selectedTarget,
+      secondaryTarget: selectedSecondaryTarget,
       zone: currentZone,
       selectedOption: selectedOption,
     });
@@ -70,12 +117,14 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
     setTimeout(() => {
       setSelectedSpell(null);
       setSelectedTarget(null);
+      setSelectedSecondaryTarget(null);
       setSelectedOption(null);
       setCastResult(null);
     }, 2000);
   };
 
   const validTargets = getValidTargets();
+  const validSecondaryTargets = getValidSecondaryTargets();
   const availableOptions = selectedSpell && selectedTarget
     ? selectedSpell.getAvailableOptions(null, selectedTarget, { zone: currentZone })
     : selectedSpell?.options || [];
@@ -167,6 +216,7 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
                 <button
                   onClick={() => {
                     setSelectedTarget(null);
+                    setSelectedSecondaryTarget(null);
                     setSelectedOption(null);
                   }}
                   style={{
@@ -182,6 +232,7 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
                     key={idx}
                     onClick={() => {
                       setSelectedTarget(target);
+                      setSelectedSecondaryTarget(null);
                       setSelectedOption(null);
                     }}
                     style={{
@@ -196,6 +247,55 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Secondary Target Selection */}
+          {(selectedSpell.requiresSecondaryTarget || validSecondaryTargets.length > 0) && (
+            <div style={styles.secondaryTargetSection}>
+              <p style={styles.secondaryTargetLabel}>
+                ⚠️ Secondary Target
+                {selectedSpell.requiresSecondaryTarget && ' (Required)'}
+              </p>
+              <p style={styles.secondaryTargetDesc}>
+                {selectedSpell.secondaryTargetType === 'creature' && 'This spell will affect a creature'}
+                {selectedSpell.secondaryTargetType === 'npc' && 'This spell will affect an NPC'}
+                {selectedSpell.secondaryTargetType === 'entity' && 'This spell will affect another entity'}
+              </p>
+              {validSecondaryTargets.length > 0 ? (
+                <div style={styles.targetList}>
+                  {!selectedSpell.requiresSecondaryTarget && (
+                    <button
+                      onClick={() => setSelectedSecondaryTarget(null)}
+                      style={{
+                        ...styles.targetButton,
+                        backgroundColor:
+                          selectedSecondaryTarget === null ? '#5a8a3a' : '#4a6a2a',
+                      }}
+                    >
+                      None / Self
+                    </button>
+                  )}
+                  {validSecondaryTargets.map((target, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedSecondaryTarget(target)}
+                      style={{
+                        ...styles.targetButton,
+                        backgroundColor:
+                          selectedSecondaryTarget === target ? '#5a8a3a' : '#4a6a2a',
+                      }}
+                    >
+                      {target.name}
+                      {target.currentWeight && ` (${target.currentWeight} lbs)`}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p style={styles.noValidTargets}>
+                  ⚠️ No valid secondary targets in this zone
+                </p>
+              )}
             </div>
           )}
 
@@ -374,6 +474,26 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '6px',
+  },
+  secondaryTargetSection: {
+    marginBottom: '10px',
+    padding: '8px',
+    backgroundColor: '#252525',
+    borderRadius: '3px',
+    borderLeft: '3px solid #ff9800',
+  },
+  secondaryTargetLabel: {
+    margin: '0 0 5px 0',
+    fontSize: '11px',
+    color: '#ff9800',
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+  },
+  secondaryTargetDesc: {
+    margin: '0 0 8px 0',
+    fontSize: '10px',
+    color: '#999',
+    fontStyle: 'italic',
   },
   targetButton: {
     padding: '8px 10px',

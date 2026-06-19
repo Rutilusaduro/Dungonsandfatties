@@ -1098,6 +1098,189 @@ export function registerSpellModules(engine) {
     },
   ]);
 
+  // ─────────────────────────────────────────────
+  // SYMPATHETIC BOND (Level 3)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.sympathetic_bond', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'A thread of shimmering magic ties {subject.name} and her bonded partner together. The spell sinks deep — past flesh, past reason, into the bones themselves. When one eats, the other will know it. When one grows heavy, the other will feel the echoing weight. They are entangled now, in a way that no distance can undo.',
+    },
+    {
+      when: { stage: { min: 3, max: 5 } },
+      text: 'Enchantment magic weaves between {subject.name} and her partner, binding their appetites into one. A glowing thread loops between them, visible only as a faint shimmer in the air. What she consumes, her bonded will share the burden — or the pleasure — of. The connection settles into place with a soft, strange warmth.',
+    },
+    {
+      when: {},
+      text: [
+        'A sympathetic bond forms between {subject.name} and her partner, magic drawing their fates closer. They are no longer quite separate — not fully merged, but no longer wholly alone in their hunger.',
+        'The spell binds {subject.name} and her partner together at a level deeper than flesh. When she eats, her bonded will taste the echo of it at rest. When she grows, her bonded grows with her. They are part of each other now.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // COVETOUS SIPHON (Level 3)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.covetous_siphon', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The siphon magic reaches into {subject.name} and *pulls*. Visible ripples of translocation flow across her skin — flesh and softness migrating away, drawn toward another body by pure envious desire. She shrinks perceptibly, contours shifting, weight abandoning her for a new home. The magic is hungry and precise, and she can do nothing but watch as her own body conspires against her.',
+    },
+    {
+      when: { stage: { min: 3, max: 5 } },
+      text: 'The transmutation magic takes hold and {subject.name} feels *lighter*. Not weightless — just lighter. Curves that defined her body soften and migrate, drawn away by the covetous spell. She looks down and watches as her own flesh decides to belong elsewhere. The sensation is surreal, almost indecent, and when it ends, she has simply become less.',
+    },
+    {
+      when: {},
+      text: [
+        'Transmutation magic reaches into {subject.name} and siphons away weight in a slow, cruel drain. Her body protests silently as curves soften and fade, stolen by the spell\'s hungry intent. She is lighter when the magic settles, and somehow both relieved and bereft.',
+        'The covetous siphon pulls weight from {subject.name} into another, magic making the transfer seem almost natural. What she had, the spell covets, and what the spell wants, the spell takes.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // DRACONIC HUNGER (Level 4)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.draconic_hunger', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The draconic hunger unfolds inside {subject.name} like wings opening for the first time. Her jaw *stretches*, impossibly wide, revealing a gullet that should not exist in a mortal frame. The hunger that fills her is ancient and total and *ravenous*. She is no longer entirely herself — something scaled and terrible and hungry has moved in behind her eyes. The magic does not transform her body, but it transforms what she *is* in a way that no enlargement spell ever could.',
+    },
+    {
+      when: { stage: { min: 3, max: 5 } },
+      text: '{subject.name}\'s jaw opens wider than it should be able to. Draconic hunger awakens inside her, ancient and demanding, and suddenly she understands what it means to want the way a dragon wants. Her stomach expands, capacity blooming, and an appetite that was never hers before suddenly *is*. She is ravenous in a way she has never been. The hunger is terrifying. The hunger is exhilarating.',
+    },
+    {
+      when: {},
+      text: [
+        'A dragon\'s hunger settles into {subject.name}\'s bones. Her appetite sharpens and deepens, becoming something far older than her mortal form. She feels the change — not her body growing, but her *appetite* growing, boundless and terrible and magnificent.',
+        'The draconic hunger takes root inside {subject.name} and she is suddenly, completely *ravenous*. The hunger is not new to her frame — it is ancient, draconic, and utterly inexorable.',
+      ],
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // AMBROSIAL AURA (Level 3)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.ambrosial_aura', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The air itself becomes indecent. An aura of pure nourishment settles into every corner of the zone — invisible but utterly perceptible. The scent of feasts that have never been prepared. The taste of foods that do not exist. The promise of satiation beyond measure. Every occupant feels it, a constant, gentle pressure toward indulgence. The magic is subtle, patient, and utterly inescapable. By tomorrow\'s rest, every occupant will have benefited from the abundance the spell provides.',
+    },
+    {
+      when: { stage: { min: 3, max: 5 } },
+      text: 'A shimmering aura of magical nourishment spreads through the zone. The air becomes rich with the scent of plenty — freshly baked bread, roasted meats, sweet cream — none of it real, all of it deeply persuasive to appetite. Every occupant feels suddenly less hungry and more *ready* to eat. By the time rest comes, everyone will have gained from the zone\'s abundance.',
+    },
+    {
+      when: {},
+      text: [
+        'The spell settles and the zone becomes subtly, indefinably richer. An aura of calories — pure magical nourishment — spreads like warmth through the air. Every occupant will benefit from it at rest, as if they have been feasting all along.',
+        'Conjuration magic fills the zone with the essence of feast and plenty. The aura is not food — nothing to eat, nothing to hold — but its effects are real: every occupant will gain the benefit of the zone\'s nourishment at their next rest.',
+      ],
+    },
+  ]);
+
+  // Interactions for the new spells
+  engine.registerModule('spell.interaction.sympathetic_bond.suggestion', [
+    {
+      when: {},
+      text: 'The sympathetic bond makes suggestion even more resonant — {subject.name} and her bonded partner nearly choose in unison. The suggestion feels less like magic and more like an obvious desire they both happened to have.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.sympathetic_bond.erupting_earth', [
+    {
+      when: {},
+      text: 'The bond means that when {subject.name} is buried, her bonded partner feels the weight and pressure as if it were happening to her as well. The sympathetic connection deepens into shared suffering.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.sympathetic_bond.confection_snare', [
+    {
+      when: {},
+      text: 'The bindings ensnare {subject.name} and through the sympathetic bond, her partner feels the tightness as well. They are restrained together, even though only one is truly bound.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.sympathetic_bond.ravenous_expansion', [
+    {
+      when: {},
+      text: 'The hunger expands through {subject.name} and immediately echoes to her bonded partner. Both are ravenous now, and both will be ravenous at rest.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.covetous_siphon.reduce_person', [
+    {
+      when: {},
+      text: 'The reduction magic combines with the siphon\'s theft. {subject.name} loses not just weight, but presence — she becomes smaller in every measurable way.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.covetous_siphon.enlarge_person', [
+    {
+      when: {},
+      text: 'The stolen weight finds its way to the destination, who swells with both magic and newfound mass. The enlargement is doubly effective when paired with a siphon.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.covetous_siphon.rapid_digestion', [
+    {
+      when: {},
+      text: 'The siphoned weight is pulled from {subject.name} just as her digestion accelerates. The magic compounds — she loses mass even as she has nowhere to put what she consumes.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.covetous_siphon.enhance_gravity', [
+    {
+      when: {},
+      text: 'The destination becomes exponentially heavier. Stolen weight combines with enhanced gravity to push the recipient down with terrible force.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.draconic_hunger.summon_cattle', [
+    {
+      when: {},
+      text: 'The summoned cattle arrive just as the draconic hunger awakens. They are prey now, and {subject.name} is the predator. The hunger is immediate. The hunger is overwhelming.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.draconic_hunger.ravenous_expansion', [
+    {
+      when: {},
+      text: 'The draconic hunger combines with the ravenous state and {subject.name}\'s appetite becomes almost unmanageable. She is not just hungry — she is a dragon, and dragons do not stop eating.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.draconic_hunger.flesh_to_food', [
+    {
+      when: {},
+      text: 'The devoured creature is transmuted into food that {subject.name} can consume in ways the draconic spell makes possible. The magic combines — dragon and alchemist working in terrible harmony.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.draconic_hunger.polymorph', [
+    {
+      when: {},
+      text: 'The draconic form\'s appetite is legendary, and the polymorph spell gives {subject.name} all of it. The hunger is immediate and total, and the beast-form is delighted to oblige.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ambrosial_aura.plant_growth', [
+    {
+      when: {},
+      text: 'The aura enhances the growth, and the plants that erupt are more abundant, more nourishing, and more magically rich than they would be alone.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ambrosial_aura.create_food_and_water', [
+    {
+      when: {},
+      text: 'The conjured food arrives into a zone already thick with magical nourishment. The aura and the conjured feast stack, making the zone\'s caloric abundance almost overwhelming.',
+    },
+  ]);
+
 }
 
 export default registerSpellModules;

@@ -111,3 +111,40 @@ export function calculateLivingCalories(entity, options = {}) {
   const caloriesPerPound = options.caloriesPerPound ?? entity?.caloriesPerPound ?? 900;
   return Math.max(1, Math.floor(currentWeight * edibleYieldRatio * caloriesPerPound));
 }
+
+export function applyPreRestSharing(restTargets, zone) {
+  const notes = [];
+
+  const snapshot = new Map();
+  restTargets.forEach(entity => {
+    snapshot.set(entity.id, Math.max(0, Math.floor(entity.caloriesEatenToday || 0)));
+  });
+
+  // Process sympathetic bonds
+  restTargets.forEach(entity => {
+    if (!entity.bondedTo || typeof entity.bondedTo !== 'object') return;
+
+    Object.entries(entity.bondedTo).forEach(([partnerId, bondData]) => {
+      const partner = restTargets.find(e => e.id === partnerId);
+      if (!partner) return;
+
+      const partnerSnapshot = snapshot.get(partnerId) || 0;
+      const shareAmount = Math.floor(partnerSnapshot * (bondData.share || 0.25));
+
+      if (shareAmount > 0) {
+        recordCalorieConsumption(entity, shareAmount, 'Sympathetic Bond', { kind: 'bond' });
+        notes.push(`${entity.name} receives ${shareAmount} calories from bonded ${partner.name}.`);
+      }
+    });
+  });
+
+  // Process zone aura
+  if (zone?.aura?.calories && zone.aura.calories > 0) {
+    restTargets.forEach(entity => {
+      recordCalorieConsumption(entity, zone.aura.calories, 'Ambrosial Aura', { kind: 'aura' });
+      notes.push(`${entity.name} absorbs ${zone.aura.calories} calories from the zone's aura.`);
+    });
+  }
+
+  return notes;
+}
