@@ -52,42 +52,46 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone }) => {
 
   // Get valid secondary targets based on spell type and primary target
   const getValidSecondaryTargets = () => {
-    if (!selectedSpell || !selectedSpell.secondaryTargetType || selectedSpell.secondaryTargetType === 'none') {
-      return [];
-    }
+    if (!selectedSpell) return [];
 
-    if (!selectedTarget && !selectedSpell.requiresSecondaryTarget) {
+    const secondaryType = selectedSpell?.secondaryTargetType;
+    if (!secondaryType || secondaryType === 'none') {
       return [];
     }
 
     const zone = currentZone;
     if (!zone) return [];
 
+    // For spells that require secondary target, we need a primary target first
+    // For optional secondary targets, they can work without primary target (for area spells)
+    if (selectedSpell.requiresSecondaryTarget && !selectedTarget) {
+      return [];
+    }
+
     const validSecondaryTargets = [];
-    const secondaryType = selectedSpell.secondaryTargetType;
 
     // Determine which entities to check based on secondaryTargetType
     if (secondaryType === 'creature' || secondaryType === 'entity') {
-      zone.getCreatures().forEach(creature => {
-        if (creature !== selectedTarget) {
-          validSecondaryTargets.push(creature);
-        }
+      const creatures = zone.getCreatures ? zone.getCreatures() : [];
+      creatures.forEach(creature => {
+        if (selectedTarget && creature === selectedTarget) return; // Skip if same as primary
+        validSecondaryTargets.push(creature);
       });
     }
 
     if (secondaryType === 'npc' || secondaryType === 'entity') {
-      zone.getNPCs().forEach(npc => {
-        if (npc !== selectedTarget) {
-          validSecondaryTargets.push(npc);
-        }
+      const npcs = zone.getNPCs ? zone.getNPCs() : [];
+      npcs.forEach(npc => {
+        if (selectedTarget && npc === selectedTarget) return; // Skip if same as primary
+        validSecondaryTargets.push(npc);
       });
     }
 
     if (secondaryType === 'entity') {
-      zone.getEnvironmentalObjects().forEach(obj => {
-        if (obj !== selectedTarget) {
-          validSecondaryTargets.push(obj);
-        }
+      const objects = zone.getEnvironmentalObjects ? zone.getEnvironmentalObjects() : [];
+      objects.forEach(obj => {
+        if (selectedTarget && obj === selectedTarget) return; // Skip if same as primary
+        validSecondaryTargets.push(obj);
       });
     }
 
