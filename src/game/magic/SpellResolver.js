@@ -60,6 +60,8 @@ const SPELL_KEY_TO_NAME = {
   imbue_life: 'Imbue Life',
   feast_exile: 'Feast Exile',
   sphere_of_influence: 'Sphere of Influence',
+  gust_of_wind: 'Gust of Wind',
+  wall_of_force: 'Wall of Force',
 };
 
 const gravity = new GravityCalculator();

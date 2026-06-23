@@ -43,6 +43,7 @@ export const RESTRAINT_MATERIAL = {
   buried: 'earth',
   vineweave_restraint: 'vines',
   grease: 'slick',
+  wall_of_force: 'force',
 };
 
 class ActiveConditions {

@@ -1112,6 +1112,58 @@ const TABLE = [
     description: 'A conjured banquet and a roomful of ravenous mouths — the feast vanishes and they crave the next.',
   },
 
+  // ── Gust of Wind (scatter food / coatings) ────────────────────────────────
+  {
+    id: 'gust_of_wind+oozing_abundance',
+    trigger: 'Gust of Wind',
+    requires: { recentSpell: 'Oozing Abundance' },
+    symmetric: false,
+    text: 'spell.interaction.oozing_abundance.gust_of_wind',
+    description: 'The wind flings the airborne ooze wide, spattering calorie-rich sludge across everyone at once.',
+  },
+  {
+    id: 'gust_of_wind+grease',
+    trigger: 'Gust of Wind',
+    requires: { recentSpell: 'Grease' },
+    symmetric: false,
+    text: 'spell.interaction.grease.gust_of_wind',
+    description: 'The gale lifts the grease into a mist, coating the whole area and everyone in it in a slick film.',
+  },
+  {
+    id: 'gust_of_wind+ambrosial_aura',
+    trigger: 'Gust of Wind',
+    requires: { recentSpell: 'Ambrosial Aura' },
+    symmetric: false,
+    text: 'spell.interaction.ambrosial_aura.gust_of_wind',
+    description: 'The wind carries the feast-thick aura everywhere, leading every nose in the room toward food.',
+  },
+
+  // ── Wall of Force (pen them in; also sets restrained -> immobility combos) ─
+  {
+    id: 'wall_of_force+sphere_of_influence',
+    trigger: 'Wall of Force',
+    requires: { recentSpell: 'Sphere of Influence' },
+    symmetric: false,
+    text: 'spell.interaction.sphere_of_influence.wall_of_force',
+    description: 'The ravenous crowd is penned in with the food and each other — nothing to do but eat.',
+  },
+  {
+    id: 'wall_of_force+conjure_food',
+    trigger: 'Wall of Force',
+    requires: { recentSpell: 'Conjure Food' },
+    symmetric: false,
+    text: 'spell.interaction.conjure_food.wall_of_force',
+    description: 'Just her and the conjured feast, walled in together, with no exit and no reason to stop.',
+  },
+  {
+    id: 'wall_of_force+create_food_and_water',
+    trigger: 'Wall of Force',
+    requires: { recentSpell: 'Create Food and Water' },
+    symmetric: false,
+    text: 'spell.interaction.create_food_and_water.wall_of_force',
+    description: 'A whole banquet walled in with her and no one else, and all the time in the world to finish it.',
+  },
+
 ];
 
 // ─── Match engine ─────────────────────────────────────────────────────────────

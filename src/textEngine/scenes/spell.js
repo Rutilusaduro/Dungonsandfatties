@@ -1659,6 +1659,54 @@ export function registerSpellModules(engine) {
     { when: {}, text: 'A conjured banquet sits ready just as obsessive hunger seizes the room. The feast does not last long — a dozen ravenous mouths fall on it together, and the magic only makes them want the next course faster.' },
   ]);
 
+  // ─── Gust of Wind (scatter; heavy stand firm) ───
+  engine.registerModule('spell.scene.gust_of_wind', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The gale tears through the room — and breaks around {subject.name} like surf around a boulder. She is far too heavy now for any wind to move; she simply stands, unbothered, as everything lighter than her goes tumbling.',
+    },
+    {
+      when: { stage: { max: 2 } },
+      text: 'A blast of wind howls out and catches {subject.name} square, shoving her back a staggering step. Light as she still is, she has nothing to anchor her against it.',
+    },
+    {
+      when: {},
+      text: 'Wind sweeps the area, flinging loose food and coatings in every direction and shoving at anyone not heavy enough to hold their ground.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.oozing_abundance.gust_of_wind', [
+    { when: {}, text: 'The wind catches the nutritive ooze still in the air and flings it wide, spattering thick, calorie-rich sludge across everyone in the room at once.' },
+  ]);
+  engine.registerModule('spell.interaction.grease.gust_of_wind', [
+    { when: {}, text: 'The gale sweeps the conjured grease off the floor and into a glistening mist, coating the whole area — and everyone standing in it — in a slick, rich film.' },
+  ]);
+  engine.registerModule('spell.interaction.ambrosial_aura.gust_of_wind', [
+    { when: {}, text: 'The wind takes the feast-thick aura and carries it everywhere, the smell of endless abundance filling every corner until every nose in the room is leading its owner toward food.' },
+  ]);
+
+  // ─── Wall of Force (impassable pen) ───
+  engine.registerModule('spell.scene.wall_of_force', [
+    {
+      when: { stage: { min: 7 } },
+      text: 'The wall snaps into being around {subject.name}, and the irony is plain: she could not have left this spot if she tried. Now she truly cannot. Penned and enormous, she has nowhere to go and nothing to do but be fed.',
+    },
+    {
+      when: {},
+      text: 'An invisible barrier seals shut around {subject.name} with no seam and no give. She presses against it, finds it utterly solid, and slowly understands that she is not getting out until you decide she does.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.sphere_of_influence.wall_of_force', [
+    { when: {}, text: 'You raise the wall around a room already mad with hunger. Now the ravenous crowd is penned in with the food and with each other — nowhere to go, nothing to do but eat until the barrier drops.' },
+  ]);
+  engine.registerModule('spell.interaction.conjure_food.wall_of_force', [
+    { when: {}, text: 'The conjured food is sealed inside the pen along with {subject.name}. Just her and the feast, walled in together, with no exit and no reason to stop.' },
+  ]);
+  engine.registerModule('spell.interaction.create_food_and_water.wall_of_force', [
+    { when: {}, text: 'A whole banquet, walled in with {subject.name} and no one else. The force booth holds her in with more food than she could finish in a day, and all the time in the world to try.' },
+  ]);
+
 }
 
 export default registerSpellModules;

@@ -2269,6 +2269,80 @@ class SpellLibrary {
           }))
         )
     );
+
+    // Gust of Wind - a line of strong wind that scatters food, coatings, and the unrooted
+    this.registerSpell(
+      new Spell('Gust of Wind', {
+        level: 2,
+        school: 'Evocation',
+        castingTime: '1 action',
+        range: 'Self (60-foot line)',
+        duration: 'Concentration, up to 1 minute',
+        description: 'A blast of wind that scatters loose matter and shoves the unrooted — though the heavy stand firm.',
+        weightGainTheme:
+          'The gale flings food, grease, and ooze across the room and pushes light targets back; anyone heavy enough simply plants themselves and lets it break around them.',
+        validTargets: ['creature', 'npc', 'object'],
+        tags: ['evocation', 'wind', 'environmental'],
+      })
+        .addOption(
+          new SpellOption('Scatter Feast', 'Fling loose food and coatings across the area', (caster, target) => ({
+            type: 'gust',
+            mode: 'scatter',
+            description: 'Wind flings food and coatings across the room.',
+          }))
+        )
+        .addOption(
+          new SpellOption('Shove', 'Push a target back — if they are light enough to move', (caster, target) => ({
+            type: 'gust',
+            mode: 'shove',
+            description: `${target ? target.name : 'The target'} is shoved by the gale — or stands firm if heavy enough.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Gale', 'A blast of wind sweeps the area', () => ({
+            type: 'gust',
+            mode: 'scatter',
+            description: 'A blast of wind sweeps through.',
+          }))
+        )
+    );
+
+    // Wall of Force - an impassable barrier; pens a target so it cannot flee the feeding
+    this.registerSpell(
+      new Spell('Wall of Force', {
+        level: 5,
+        school: 'Evocation',
+        castingTime: '1 action',
+        range: '120 feet',
+        duration: 'Concentration, up to 10 minutes',
+        description: 'Shape an invisible, impassable wall — a pen a target cannot leave, no matter how it tries.',
+        weightGainTheme:
+          'A seamless barrier of force boxes the target in. There is no squeezing out, no pushing through; she can only sit in the pen and accept whatever is brought to her.',
+        validTargets: ['creature', 'npc', 'area'],
+        tags: ['evocation', 'restraint', 'containment'],
+      })
+        .addOption(
+          new SpellOption('Pen', 'Box a single target in a force enclosure', (caster, target) => ({
+            type: 'wall_of_force',
+            mode: 'pen',
+            description: `${target ? target.name : 'The target'} is sealed inside an impassable force pen.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Feeding Booth', 'Seal a target in with their food and nothing else', (caster, target) => ({
+            type: 'wall_of_force',
+            mode: 'booth',
+            description: `${target ? target.name : 'The target'} is sealed into a force booth with the feast.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Barrier', 'Raise an impassable wall of force', (caster, target) => ({
+            type: 'wall_of_force',
+            mode: 'pen',
+            description: 'An impassable wall of force snaps into being.',
+          }))
+        )
+    );
   }
 }
 
