@@ -1966,6 +1966,610 @@ class SpellLibrary {
         .addInteraction('Plant Growth', 'Aura enhances magical plant growth')
         .addInteraction('Create Food and Water', 'Aura stacks with conjured food')
     );
+
+    // ═══════════════════════════════════════════════════════════════
+    // P3.4 — THEMED SPELLS (immobility / stuffing / feeder / growth)
+    // ═══════════════════════════════════════════════════════════════
+
+    // Rooting Glut (immobility) - anchor a target in place under its own weight
+    this.registerSpell(
+      new Spell('Rooting Glut', {
+        level: 2,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Concentration, up to 1 minute',
+        description: 'Bind a target to the ground beneath its own gathering weight.',
+        weightGainTheme:
+          'The target settles where it stands, anchored and softening, too heavy and too rooted to rise.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'immobility', 'weight-gain'],
+      })
+        .addOption(
+          new SpellOption('Settle', 'Anchor lightly; the target can still shift', (caster, target) => ({
+            type: 'rooting',
+            tether: 'light',
+            weightGainPerRound: 6,
+            description: `${target.name} settles heavily in place.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Take Root', 'Anchor fully; the target cannot rise', (caster, target) => ({
+            type: 'rooting',
+            tether: 'full',
+            weightGainPerRound: 12,
+            description: `${target.name} takes root, too heavy and too anchored to stand.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Anchoring', 'Root the target in place', (caster, target) => ({
+            type: 'rooting',
+            tether: 'full',
+            weightGainPerRound: 12,
+            description: `${target.name} is rooted in place beneath gathering weight.`,
+          }))
+        )
+    );
+
+    // Bottomless Gullet (stuffing) - raise a target's capacity before satiation
+    this.registerSpell(
+      new Spell('Bottomless Gullet', {
+        level: 2,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: 'Touch',
+        duration: '10 minutes',
+        description: 'Expand how much a target can take in before it feels full.',
+        weightGainTheme:
+          'Fullness retreats. A feast that should have ended becomes a marathon, every limit pushed further back.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'stuffing', 'capacity', 'weight-gain'],
+      })
+        .addOption(
+          new SpellOption('Widen', 'Double capacity before fullness', (caster, target) => ({
+            type: 'capacity',
+            capacityMultiplier: 2,
+            description: `${target.name}'s capacity widens; fullness feels far away.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Hollow', 'Quadruple capacity; fullness barely registers', (caster, target) => ({
+            type: 'capacity',
+            capacityMultiplier: 4,
+            description: `${target.name} becomes a near-bottomless gullet.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Capacity', 'Expand stomach capacity', (caster, target) => ({
+            type: 'capacity',
+            capacityMultiplier: 2,
+            description: `${target.name} can take far more before feeling full.`,
+          }))
+        )
+    );
+
+    // Feeder's Devotion (feeder) - turn feeding into welcome care, raising willingness
+    this.registerSpell(
+      new Spell("Feeder's Devotion", {
+        level: 1,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: '1 hour',
+        description: 'Make every offered bite land as care, raising a target\'s willingness to be fed.',
+        weightGainTheme:
+          'Feeding stops feeling like coercion and starts feeling like devotion. The target leans into it, wanting the next bite.',
+        validTargets: ['creature', 'npc'],
+        tags: ['enchantment', 'feeder', 'relationship', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Warmth', 'Raise willingness by 20', (caster, target) => {
+            if (target && target.willingness !== undefined) {
+              target.willingness = Math.min(100, target.willingness + 20);
+            }
+            return {
+              type: 'devotion',
+              willingnessGain: 20,
+              description: `${target.name} warms to the feeding, leaning in for more.`,
+            };
+          })
+        )
+        .addOption(
+          new SpellOption('Adoration', 'Raise willingness by 40', (caster, target) => {
+            if (target && target.willingness !== undefined) {
+              target.willingness = Math.min(100, target.willingness + 40);
+            }
+            return {
+              type: 'devotion',
+              willingnessGain: 40,
+              description: `${target.name} adores being fed, wanting nothing else.`,
+            };
+          })
+        )
+        .addEffect(
+          new SpellEffect('Devotion', 'Raise willingness to be fed', (caster, target) => {
+            if (target && target.willingness !== undefined) {
+              target.willingness = Math.min(100, target.willingness + 20);
+            }
+            return {
+              type: 'devotion',
+              willingnessGain: 20,
+              description: `${target.name} welcomes the feeding.`,
+            };
+          })
+        )
+    );
+
+    // Swelling Tide (magical growth) - slow runaway growth that builds over a feast
+    this.registerSpell(
+      new Spell('Swelling Tide', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 minute',
+        description: 'Start a slow, mounting swell that compounds as the target keeps eating.',
+        weightGainTheme:
+          'Growth arrives like a tide — slow at first, then mounting, each wave of indulgence swelling the target a little further than the last.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'growth', 'weight-gain'],
+      })
+        .addOption(
+          new SpellOption('Rising', 'Gentle mounting swell', (caster, target) => ({
+            type: 'swelling_tide',
+            weightGainPerRound: 8,
+            compounding: true,
+            description: `${target.name} begins to swell in slow, mounting waves.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Surge', 'Steep runaway swell', (caster, target) => ({
+            type: 'swelling_tide',
+            weightGainPerRound: 18,
+            compounding: true,
+            description: `${target.name} surges outward, each wave larger than the last.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Tide', 'Begin a mounting swell', (caster, target) => ({
+            type: 'swelling_tide',
+            weightGainPerRound: 8,
+            compounding: true,
+            description: `${target.name} swells in mounting waves.`,
+          }))
+        )
+    );
+
+    // Imbue Life - animate inert matter: coatings feed themselves in, stone rises as golems
+    this.registerSpell(
+      new Spell('Imbue Life', {
+        level: 4,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 minute',
+        description: 'Breathe crude life into inert matter — a coating that feeds itself in, or stone that rises to serve.',
+        weightGainTheme:
+          'Animated ooze creeps over its host and pours itself into her mouth; shaped stone stands up as a patient little feeder.',
+        validTargets: ['creature', 'npc', 'object'],
+        tags: ['transmutation', 'animation', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Animate Coating', 'Bring a target\'s ooze coating to life so it feeds itself in', (caster, target) => ({
+            type: 'animate_coating',
+            potency: 1,
+            description: `The coating on ${target.name} stirs and begins to feed itself into her.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Gorging Coating', 'A stronger animation; the coating pours in greedily', (caster, target) => ({
+            type: 'animate_coating',
+            potency: 2,
+            description: `The coating on ${target.name} surges to life and pours itself down her throat.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Stone Golem', 'Animate nearby stone into one small feeder golem', () => ({
+            type: 'animate_golem',
+            count: 1,
+            baseWeight: 200,
+            description: 'A small stone golem grinds upright, ready to feed whoever it is pointed at.',
+          }))
+        )
+        .addOption(
+          new SpellOption('Golem Trio', 'Animate three small feeder golems', () => ({
+            type: 'animate_golem',
+            count: 3,
+            baseWeight: 180,
+            description: 'Three squat stone golems rise from the rubble.',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Animation', 'Animate a coating to feed itself in', (caster, target) => ({
+            type: 'animate_coating',
+            potency: 1,
+            description: `Inert matter around ${target.name} stirs with crude life.`,
+          }))
+        )
+    );
+
+    // Feast Exile - banish a creature to a pocket realm of endless banquets
+    this.registerSpell(
+      new Spell('Feast Exile', {
+        level: 4,
+        school: 'Abjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: '1-2 long rests',
+        description: 'Banish a creature to a pocket realm of endless banquets; it returns temporarily engorged, softer, and curvier.',
+        weightGainTheme:
+          'The target vanishes into a realm with no floor to its appetite, gorging across days that pass in a blink, and returns swollen with temporary, jiggling softness that slowly settles — leaving a little behind for good.',
+        validTargets: ['creature', 'npc'],
+        tags: ['abjuration', 'banishment', 'weight-gain', 'temporary'],
+      })
+        .addOption(
+          new SpellOption('Brief Exile', 'One rest away; returns pleasantly swollen', (caster, target) => ({
+            type: 'feast_exile',
+            rests: 1,
+            gorgePerRest: 120,
+            description: `${target.name} blinks out toward the feast realm.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Deep Exile', 'Two rests away; returns enormously engorged', (caster, target) => ({
+            type: 'feast_exile',
+            rests: 2,
+            gorgePerRest: 140,
+            description: `${target.name} is banished deep into the endless banquet.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Banishment', 'Send the target to the feast realm', (caster, target) => ({
+            type: 'feast_exile',
+            rests: 2,
+            gorgePerRest: 140,
+            description: `${target.name} vanishes into a realm of endless feasting.`,
+          }))
+        )
+    );
+
+    // Sphere of Influence - area enchantment: everyone present becomes obsessively hungry
+    this.registerSpell(
+      new Spell('Sphere of Influence', {
+        level: 5,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: 'Self (30-foot radius)',
+        duration: 'Concentration, up to 10 minutes',
+        description: 'Fill the area with obsessive hunger; every creature, monster, and critter present eats continuously.',
+        weightGainTheme:
+          'A sphere of compulsive appetite settles over the whole room. Friend, beast, and bystander alike are seized by a gnawing, single-minded hunger and will not stop eating while it holds.',
+        validTargets: [], // area spell — targets the zone, not one entity
+        tags: ['enchantment', 'area', 'hunger-compulsion', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Gnawing Hunger', 'Everyone present becomes ravenously hungry', () => ({
+            type: 'mass_hunger',
+            intensity: 1,
+            description: 'A gnawing hunger grips everyone in the area.',
+          }))
+        )
+        .addOption(
+          new SpellOption('Insatiable Frenzy', 'Everyone present is driven to obsessive gorging', () => ({
+            type: 'mass_hunger',
+            intensity: 2,
+            description: 'An insatiable frenzy seizes the whole room.',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Compulsion', 'Fill the area with hunger', () => ({
+            type: 'mass_hunger',
+            intensity: 1,
+            description: 'Obsessive hunger fills the area.',
+          }))
+        )
+    );
+
+    // Gust of Wind - a line of strong wind that scatters food, coatings, and the unrooted
+    this.registerSpell(
+      new Spell('Gust of Wind', {
+        level: 2,
+        school: 'Evocation',
+        castingTime: '1 action',
+        range: 'Self (60-foot line)',
+        duration: 'Concentration, up to 1 minute',
+        description: 'A blast of wind that scatters loose matter and shoves the unrooted — though the heavy stand firm.',
+        weightGainTheme:
+          'The gale flings food, grease, and ooze across the room and pushes light targets back; anyone heavy enough simply plants themselves and lets it break around them.',
+        validTargets: ['creature', 'npc', 'object'],
+        tags: ['evocation', 'wind', 'environmental'],
+      })
+        .addOption(
+          new SpellOption('Scatter Feast', 'Fling loose food and coatings across the area', (caster, target) => ({
+            type: 'gust',
+            mode: 'scatter',
+            description: 'Wind flings food and coatings across the room.',
+          }))
+        )
+        .addOption(
+          new SpellOption('Shove', 'Push a target back — if they are light enough to move', (caster, target) => ({
+            type: 'gust',
+            mode: 'shove',
+            description: `${target ? target.name : 'The target'} is shoved by the gale — or stands firm if heavy enough.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Gale', 'A blast of wind sweeps the area', () => ({
+            type: 'gust',
+            mode: 'scatter',
+            description: 'A blast of wind sweeps through.',
+          }))
+        )
+    );
+
+    // Wall of Force - an impassable barrier; pens a target so it cannot flee the feeding
+    this.registerSpell(
+      new Spell('Wall of Force', {
+        level: 5,
+        school: 'Evocation',
+        castingTime: '1 action',
+        range: '120 feet',
+        duration: 'Concentration, up to 10 minutes',
+        description: 'Shape an invisible, impassable wall — a pen a target cannot leave, no matter how it tries.',
+        weightGainTheme:
+          'A seamless barrier of force boxes the target in. There is no squeezing out, no pushing through; she can only sit in the pen and accept whatever is brought to her.',
+        validTargets: ['creature', 'npc', 'area'],
+        tags: ['evocation', 'restraint', 'containment'],
+      })
+        .addOption(
+          new SpellOption('Pen', 'Box a single target in a force enclosure', (caster, target) => ({
+            type: 'wall_of_force',
+            mode: 'pen',
+            description: `${target ? target.name : 'The target'} is sealed inside an impassable force pen.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Feeding Booth', 'Seal a target in with their food and nothing else', (caster, target) => ({
+            type: 'wall_of_force',
+            mode: 'booth',
+            description: `${target ? target.name : 'The target'} is sealed into a force booth with the feast.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Barrier', 'Raise an impassable wall of force', (caster, target) => ({
+            type: 'wall_of_force',
+            mode: 'pen',
+            description: 'An impassable wall of force snaps into being.',
+          }))
+        )
+    );
+
+    // Web - sticky strands that ensnare; immobility utility (reuses 'restrained')
+    this.registerSpell(
+      new Spell('Web', {
+        level: 2,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 hour',
+        description: 'Fill an area with thick, clinging webbing that ensnares whatever it touches.',
+        weightGainTheme:
+          'Sticky strands wrap a target fast, holding her in place for whatever feeding comes next — and the more of her there is, the more thoroughly the webbing has to hold.',
+        validTargets: ['creature', 'npc', 'area'],
+        tags: ['conjuration', 'restraint', 'containment'],
+      })
+        .addOption(
+          new SpellOption('Ensnare', 'Bind a single target in webbing', (caster, target) => ({
+            type: 'web',
+            mode: 'single',
+            description: `${target ? target.name : 'The target'} is wrapped fast in clinging webbing.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Web the Area', 'Fill the whole area with webbing', () => ({
+            type: 'web',
+            mode: 'area',
+            description: 'Thick webbing fills the area.',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Ensnarement', 'Bind the target in webbing', (caster, target) => ({
+            type: 'web',
+            mode: 'single',
+            description: `${target ? target.name : 'The target'} is caught in the web.`,
+          }))
+        )
+    );
+
+    // Mage Hand - a spectral hand that brings food to a target's mouth at range
+    this.registerSpell(
+      new Spell('Mage Hand', {
+        level: 0,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: '1 minute',
+        description: 'A spectral hand that fetches, carries, and — pointedly — brings food to a waiting mouth.',
+        weightGainTheme:
+          'The conjured hand makes feeding effortless: it ferries morsel after morsel to a target\'s lips so she never has to lift a finger, only open and swallow.',
+        validTargets: ['creature', 'npc', 'object'],
+        tags: ['conjuration', 'utility', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Bring Food', 'Ferry nearby food to the target\'s mouth', (caster, target) => ({
+            type: 'mage_hand',
+            mode: 'feed',
+            description: `The spectral hand carries food to ${target ? target.name : 'the target'}'s mouth.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Spectral Hand', 'Conjure a helping hand', () => ({
+            type: 'mage_hand',
+            mode: 'feed',
+            description: 'A spectral hand appears, ready to ferry food.',
+          }))
+        )
+    );
+
+    // Command - a one-word compulsion; "Eat!" forces a target to obey
+    this.registerSpell(
+      new Spell('Command', {
+        level: 1,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: '1 round',
+        description: 'A single word of power the target must obey — most usefully, "Eat."',
+        weightGainTheme:
+          'One commanding word overrides hesitation entirely. "Eat," you say, and the target must — reaching for the nearest food and obeying whether she meant to or not.',
+        validTargets: ['creature', 'npc'],
+        tags: ['enchantment', 'compulsion', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Eat!', 'Force the target to take a mouthful', (caster, target) => ({
+            type: 'command',
+            word: 'eat',
+            description: `${target ? target.name : 'The target'} is compelled to eat.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Gorge!', 'Force the target into a frantic mouthful after mouthful', (caster, target) => ({
+            type: 'command',
+            word: 'gorge',
+            description: `${target ? target.name : 'The target'} is compelled to gorge.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Compulsion', 'Issue a one-word command', (caster, target) => ({
+            type: 'command',
+            word: 'eat',
+            description: `${target ? target.name : 'The target'} must obey.`,
+          }))
+        )
+    );
+
+    // Sleep - magical slumber; a sleeper is helpless to passive feeding
+    this.registerSpell(
+      new Spell('Sleep', {
+        level: 1,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: '90 feet',
+        duration: '1 minute',
+        description: 'Sink a target into magical sleep, helpless and pliant to whatever is brought to her lips.',
+        weightGainTheme:
+          'A sleeping target offers no resistance at all. She can still swallow what is placed in her mouth, and she does — drifting through dreams of feasting while her body is fed.',
+        validTargets: ['creature', 'npc'],
+        tags: ['enchantment', 'sleep', 'helpless'],
+      })
+        .addOption(
+          new SpellOption('Drowse', 'Ease a single target into sleep', (caster, target) => ({
+            type: 'sleep',
+            intensity: 1,
+            description: `${target ? target.name : 'The target'} sinks into a soft, heavy sleep.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Deep Slumber', 'Drop a target into a profound sleep', (caster, target) => ({
+            type: 'sleep',
+            intensity: 2,
+            description: `${target ? target.name : 'The target'} falls into a deep, unwakeable slumber.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Slumber', 'Send the target to sleep', (caster, target) => ({
+            type: 'sleep',
+            intensity: 1,
+            description: `${target ? target.name : 'The target'} drifts off to sleep.`,
+          }))
+        )
+    );
+
+    // Malleable Flesh - transmute the body soft and pliant so it keeps more from every meal
+    this.registerSpell(
+      new Spell('Malleable Flesh', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: 'Touch',
+        duration: 'Until next long rest',
+        description: 'Transmute a target\'s body soft and yielding, so it banks far more weight from whatever it eats.',
+        weightGainTheme:
+          'The flesh turns pliant and receptive, every curve a little softer and quicker to take on weight. Whatever she eats before her next rest settles deeper and stays.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'body', 'weight-gain'],
+      })
+        .addOption(
+          new SpellOption('Soften', 'Body keeps 50% more from the next rest', (caster, target) => {
+            if (target) target.calorieRetentionMultiplier = Math.max(target.calorieRetentionMultiplier || 1, 1.5);
+            return {
+              type: 'malleable_flesh',
+              retention: 1.5,
+              description: `${target ? target.name : 'The target'}'s flesh softens and grows receptive.`,
+            };
+          })
+        )
+        .addOption(
+          new SpellOption('Render', 'Body keeps double from the next rest', (caster, target) => {
+            if (target) target.calorieRetentionMultiplier = Math.max(target.calorieRetentionMultiplier || 1, 2);
+            return {
+              type: 'malleable_flesh',
+              retention: 2,
+              description: `${target ? target.name : 'The target'} turns lavishly soft and pliant.`,
+            };
+          })
+        )
+        .addEffect(
+          new SpellEffect('Softening', 'Make the flesh pliant', (caster, target) => {
+            if (target) target.calorieRetentionMultiplier = Math.max(target.calorieRetentionMultiplier || 1, 1.5);
+            return {
+              type: 'malleable_flesh',
+              retention: 1.5,
+              description: `${target ? target.name : 'The target'}'s body softens.`,
+            };
+          })
+        )
+    );
+
+    // Sylvan Bounty - druidic; grow a living, self-replenishing food source in the zone
+    this.registerSpell(
+      new Spell('Sylvan Bounty', {
+        level: 3,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: '1 hour',
+        description: 'Call forth a living thicket heavy with fruit that keeps producing more as it is picked.',
+        weightGainTheme:
+          'Vines and boughs erupt from the ground, sagging with ripe, sweet, calorie-dense fruit — and the more is eaten, the more swells back to replace it.',
+        validTargets: [], // druidic area spell — fills the zone
+        tags: ['conjuration', 'druid', 'food-source', 'nature'],
+      })
+        .addOption(
+          new SpellOption('Berry Thicket', 'Grow a modest, renewing thicket', () => ({
+            type: 'sylvan_bounty',
+            servings: 8,
+            caloriesPerServing: 240,
+            description: 'A thicket heavy with renewing berries rises from the ground.',
+          }))
+        )
+        .addOption(
+          new SpellOption('Orchard Burst', 'Grow a lavish, renewing orchard', () => ({
+            type: 'sylvan_bounty',
+            servings: 16,
+            caloriesPerServing: 320,
+            description: 'A whole orchard bursts into being, boughs sagging with fruit.',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Bounty', 'Grow a renewing food source', () => ({
+            type: 'sylvan_bounty',
+            servings: 8,
+            caloriesPerServing: 240,
+            description: 'A renewing thicket of fruit rises from the ground.',
+          }))
+        )
+    );
   }
 }
 

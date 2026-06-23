@@ -35,10 +35,11 @@ const ZoneDisplay = ({ zone, onZoneAction, onNPCInteract }) => {
             <p style={styles.entityLabel}>NPCs:</p>
             <ul style={styles.entityList}>
               {zone.getNPCs().map(npc => (
-                <li key={npc.id} style={styles.entityItem}>
+                <li key={npc.id} style={{ ...styles.entityItem, opacity: npc.isExiled ? 0.5 : 1 }}>
                   <div style={styles.entityHeader}>
                     <div>
                       <strong>{npc.name}</strong> ({npc.role}) - {npc.personality}
+                      {npc.isExiled && <em> — away in the feast realm</em>}
                       <div style={styles.entityWeight}>
                         {npc.currentWeight} lbs
                         {npc.weightGainAccumulated > 0 && (
@@ -81,9 +82,9 @@ const ZoneDisplay = ({ zone, onZoneAction, onNPCInteract }) => {
             <p style={styles.entityLabel}>Creatures:</p>
             <ul style={styles.entityList}>
               {zone.getCreatures().map(creature => (
-                <li key={creature.id} style={styles.entityItem}>
-                  <strong>{creature.name}</strong> ({creature.type}) - Hunger:{' '}
-                  {creature.hungerLevel}%
+                <li key={creature.id} style={{ ...styles.entityItem, opacity: creature.isExiled ? 0.5 : 1 }}>
+                  <strong>{creature.name}</strong> ({creature.type})
+                  {creature.isExiled ? <em> — away in the feast realm</em> : <> - Hunger: {creature.hungerLevel}%</>}
                   <div style={styles.entityWeight}>
                     {creature.currentWeight} lbs
                     {creature.weightGainAccumulated > 0 && (

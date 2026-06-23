@@ -4,7 +4,9 @@
  */
 
 import { Food, Pastry, Bread, Meat, Cream, Pudding, IceCream } from '../items/Food.js';
-import { Cow } from '../entities/Creature.js';
+import { matchCombos } from './InteractionTable.js';
+import { Cow, Monstrosity } from '../entities/Creature.js';
+import { beginFeastExile } from '../mechanics/SwellSystem.js';
 import GravityCalculator from '../mechanics/GravitySystem.js';
 import {
   CALORIES_PER_POUND,
@@ -51,6 +53,21 @@ const SPELL_KEY_TO_NAME = {
   goodberry: 'Goodberry',
   plant_growth: 'Plant Growth',
   slow: 'Slow',
+  rooting_glut: 'Rooting Glut',
+  bottomless_gullet: 'Bottomless Gullet',
+  "feeder's_devotion": "Feeder's Devotion",
+  swelling_tide: 'Swelling Tide',
+  imbue_life: 'Imbue Life',
+  feast_exile: 'Feast Exile',
+  sphere_of_influence: 'Sphere of Influence',
+  gust_of_wind: 'Gust of Wind',
+  wall_of_force: 'Wall of Force',
+  web: 'Web',
+  mage_hand: 'Mage Hand',
+  command: 'Command',
+  sleep: 'Sleep',
+  malleable_flesh: 'Malleable Flesh',
+  sylvan_bounty: 'Sylvan Bounty',
 };
 
 const gravity = new GravityCalculator();
@@ -454,7 +471,96 @@ class SpellResolver {
   }
 
   static applyWorldCreationEffect({ effect, result, target, zone, createdFoods }) {
+    // sleep + malleable_flesh act on the target, not the zone — handle before the zone guard.
+    if (effect.type === 'sleep') {
+      if (!target) return;
+      target.conditions?.add?.('asleep', { intensity: effect.intensity || 1 });
+      result.environmentalChanges.push({
+        type: 'sleep',
+        description: `${target.name} is asleep and helpless, able only to swallow what reaches her lips.`,
+      });
+      return;
+    }
+    if (effect.type === 'malleable_flesh') {
+      if (!target) return;
+      target.conditions?.add?.('pliable', { intensity: effect.retention >= 2 ? 2 : 1 });
+      result.environmentalChanges.push({
+        type: 'malleable_flesh',
+        description: `${target.name}'s flesh is soft and receptive; she will keep far more from her next rest.`,
+      });
+      return;
+    }
+
+    // feast_exile acts on the target, not the zone — handle before the zone guard.
+    if (effect.type === 'feast_exile') {
+      if (!target) return;
+      beginFeastExile(target, { rests: effect.rests, gorgePerRest: effect.gorgePerRest });
+      result.environmentalChanges.push({
+        type: 'feast_exile',
+        description: `${target.name} vanishes into the feast realm; it will return engorged after ${effect.rests} rest${effect.rests > 1 ? 's' : ''}.`,
+      });
+      return;
+    }
+
+    // animate_coating acts on the target, not the zone — handle before the zone guard.
+    if (effect.type === 'animate_coating') {
+      const coated = target?.conditions?.has?.('ooze_coated');
+      if (!coated) {
+        result.environmentalChanges.push({
+          type: 'animate_coating',
+          description: target
+            ? `There is no coating on ${target.name} for the spell to animate.`
+            : 'There is no coating here for the spell to animate.',
+        });
+        return;
+      }
+      const thickness = target.conditions.get('ooze_coated')?.intensity || 1;
+      const calories = (effect.potency || 1) * thickness * Math.round(CALORIES_PER_POUND * 1.5);
+      SpellResolver.addCalories(target, calories, 'Imbue Life (animated coating)', result, true);
+      target.conditions.remove('ooze_coated');
+      result.environmentalChanges.push({
+        type: 'animate_coating',
+        description: `The animated coating pours itself into ${target.name} and is gone — spent entirely into her.`,
+      });
+      return;
+    }
+
     if (!zone) return;
+
+    if (effect.type === 'sylvan_bounty') {
+      const thicket = createFood('Produce', {
+        servings: effect.servings || 8,
+        caloriesPerServing: effect.caloriesPerServing || 240,
+        isMagical: true,
+        description: 'A living thicket of ripe fruit that swells back as fast as it is picked.',
+      }).enableReplication().makeAppetizing(20);
+      zone.addFood(thicket, 'Sylvan Bounty');
+      createdFoods.push(thicket);
+      result.environmentalChanges.push({
+        type: 'sylvan_bounty',
+        description: `A renewing ${effect.servings >= 16 ? 'orchard' : 'thicket'} of fruit fills the area.`,
+      });
+      return;
+    }
+
+    if (effect.type === 'mass_hunger') {
+      const intensity = effect.intensity || 1;
+      const occupants = [...(zone.getCreatures?.() || []), ...(zone.getNPCs?.() || [])];
+      let affected = 0;
+      for (const o of occupants) {
+        if (!o) continue;
+        o.conditions?.add?.('ravenous', { intensity });
+        if (typeof o.hungerLevel === 'number') o.hungerLevel = 100;
+        affected += 1;
+      }
+      result.environmentalChanges.push({
+        type: 'mass_hunger',
+        description: affected > 0
+          ? `Obsessive hunger grips ${affected} occupant${affected > 1 ? 's' : ''} of the area — every one of them driven to eat.`
+          : 'The hunger sphere settles over an empty room, waiting for someone to feel it.',
+      });
+      return;
+    }
 
     if (effect.type === 'object_to_food') {
       if (!target || !target.id || !target.material) return;
@@ -498,6 +604,37 @@ class SpellResolver {
       result.environmentalChanges.push({
         type: 'creatures_summoned',
         description: `${summoned.length} cattle appear in the area.`,
+      });
+      return;
+    }
+
+    if (effect.type === 'animate_golem') {
+      if (!zone) {
+        result.environmentalChanges.push({
+          type: 'animate_golem',
+          description: 'Without stone nearby, the animation has nothing to raise.',
+        });
+        return;
+      }
+      const count = effect.count || 1;
+      const golems = [];
+      const startCount = zone.getCreatures().length;
+      for (let i = 0; i < count; i++) {
+        const golem = new Monstrosity(`Stone Golem ${startCount + i + 1}`, {
+          type: 'construct',
+          baseWeight: effect.baseWeight || 200,
+          behavior: 'docile',
+          diet: 'omnivore',
+          hungerLevel: 0,
+          description: 'A squat little golem of animated stone, patient and tireless, built to feed.',
+        });
+        zone.addCreature(golem);
+        golems.push(golem);
+      }
+      result.summonedCreatures = [...(result.summonedCreatures || []), ...golems];
+      result.environmentalChanges.push({
+        type: 'golems_animated',
+        description: `${golems.length} stone golem${golems.length > 1 ? 's' : ''} grind upright, ready to feed.`,
       });
       return;
     }
@@ -1241,380 +1378,22 @@ class SpellResolver {
   }
 
   static applyComboEffects({ result, context, spell, target, zone, createdFoods }) {
-    const previousSpellNames = context.previousSpells.map(previous => previous.name);
+    const previousSpellNames = context.previousSpells.map(p => p.name);
+    const matches = matchCombos(spell.name, previousSpellNames, target, zone);
 
-    if (spell.name === 'Create Water' && previousSpellNames.includes('Shape Earth')) {
-      result.environmentalChanges.push({
-        type: 'combo_resource',
-        description: 'The newly shaped basin catches the conjured water, creating a usable magical reservoir.',
-      });
-    }
+    const ctx = {
+      target,
+      zone,
+      result,
+      createdFoods,
+      createFood,
+      bonusCalories: (amt, src) => SpellResolver.addBonusCalories(target, amt, src, result),
+      bonusWeight: (amt, src) => SpellResolver.addBonusWeight(target, amt, result, src),
+    };
 
-    if (
-      spell.name === 'Delightful Transmutation' &&
-      previousSpellNames.includes('Create Water') &&
-      zone
-    ) {
-      const iceCream = createFood('Ice Cream', {
-        servings: 10,
-        isMagical: true,
-        description: 'A persistent reservoir of magical ice cream created from conjured water.',
-      }).enableReplication();
-      zone.addFood(iceCream, 'Create Water + Delightful Transmutation');
-      createdFoods.push(iceCream);
-      SpellResolver.addInteraction(result,
-        'Create Water',
-        'spell.interaction.create_water.delightful_transmutation',
-        'Conjured water is converted into a persistent, self-replicating ice cream supply.',
-      );
-    }
-
-    if (spell.name === 'Suggestion' && previousSpellNames.includes('Detect Cravings')) {
-      if (target && target.willingness !== undefined) {
-        target.willingness = Math.min(100, target.willingness + 15);
-      }
-      SpellResolver.addInteraction(result,
-        'Detect Cravings',
-        'spell.interaction.detect_cravings.suggestion',
-        'Known cravings make the suggestion feel personal and welcome.',
-      );
-    }
-
-    if (spell.name === 'Conjure Food' && previousSpellNames.includes('Detect Cravings')) {
-      const preferredFood = target?.foodLoves?.[0] || target?.foodLikes?.[0];
-      if (preferredFood && zone) {
-        const food = createFood(preferredFood, {
-          isMagical: true,
-          description: `${preferredFood} shaped by divined craving.`,
-        }).makeAppetizing(25);
-        zone.addFood(food, 'Detect Cravings + Conjure Food');
-        createdFoods.push(food);
-      }
-      SpellResolver.addInteraction(result,
-        'Detect Cravings',
-        'spell.interaction.detect_cravings.conjure_food',
-        'The conjured food keys itself to the target favorite tastes.',
-      );
-    }
-
-    if (spell.name === 'Ravenous Expansion' && previousSpellNames.includes('Create Food and Water')) {
-      SpellResolver.addBonusCalories(target, 12, 'Create Food and Water + Ravenous Expansion', result);
-      SpellResolver.addInteraction(result,
-        'Create Food and Water',
-        'spell.interaction.create_food_and_water.ravenous_expansion',
-        'The prepared feast and expanded appetite form a self-reinforcing indulgence loop.',
-      );
-    }
-
-    if (spell.name === 'Haste' && previousSpellNames.includes('Ravenous Expansion')) {
-      SpellResolver.addBonusCalories(target, 18, 'Ravenous Expansion + Haste', result);
-      SpellResolver.addInteraction(result,
-        'Ravenous Expansion',
-        'spell.interaction.ravenous_expansion.haste',
-        'Expanded capacity and accelerated eating combine into rapid overindulgence.',
-      );
-    }
-
-    if (spell.name === 'Rapid Digestion' && previousSpellNames.includes('Ravenous Expansion')) {
-      SpellResolver.addBonusCalories(target, 20, 'Ravenous Expansion + Rapid Digestion', result);
-      SpellResolver.addInteraction(result,
-        'Ravenous Expansion',
-        'spell.interaction.ravenous_expansion.rapid_digestion',
-        'New hunger and accelerated digestion convert recent indulgence into permanent softness.',
-      );
-    }
-
-    if (spell.name === 'Oozing Abundance' && previousSpellNames.includes('Enlarge Person')) {
-      SpellResolver.addBonusCalories(target, 10, 'Enlarge Person + Oozing Abundance', result);
-      target?.conditions?.add?.('ooze_coated', { source: 'oozing_abundance', intensity: 2 });
-      SpellResolver.addInteraction(result,
-        'Enlarge Person',
-        'spell.interaction.enlarge_person.oozing_abundance',
-        'The enlarged body gives the nutritive ooze more surface to coat and feed.',
-      );
-    }
-
-    if (spell.name === 'Grease' && previousSpellNames.includes('Enlarge Person')) {
-      SpellResolver.addInteraction(result,
-        'Enlarge Person',
-        'spell.interaction.enlarge_person.grease',
-        'Grease catches the light across the enlarged target, emphasizing every softened curve.',
-      );
-    }
-
-    if (spell.name === 'Duplication' && previousSpellNames.includes('Delightful Transmutation')) {
-      const existingIceCream = zone?.getFoods?.().find(food => food.name === 'Ice Cream');
-      if (existingIceCream && zone) {
-        const duplicate = createFood('Ice Cream', {
-          servings: existingIceCream.servings,
-          caloriesPerServing: existingIceCream.caloriesPerServing,
-          isMagical: true,
-          description: 'A doubled copy of the transmuted magical ice cream.',
-        }).enableReplication();
-        zone.addFood(duplicate, 'Delightful Transmutation + Duplication');
-        createdFoods.push(duplicate);
-      }
-      SpellResolver.addInteraction(result,
-        'Delightful Transmutation',
-        'spell.interaction.delightful_transmutation.duplication',
-        'The magical dessert doubles into an escalating supply.',
-      );
-    }
-
-    if (spell.name === 'Feast of Shadows' && previousSpellNames.includes('Prestidigitation')) {
-      SpellResolver.addBonusCalories(target, 5, 'Prestidigitation + Feast of Shadows', result);
-      SpellResolver.addInteraction(result,
-        'Prestidigitation',
-        'spell.interaction.prestidigitation.feast_of_shadows',
-        'Minor sensory magic makes the illusion taste and smell dangerously convincing.',
-      );
-    }
-
-    if (spell.name === 'Confection Snare' && previousSpellNames.includes('Grease')) {
-      SpellResolver.addInteraction(result,
-        'Grease',
-        'spell.interaction.grease.confection_snare',
-        'Sticky candy and glossy grease merge into a slick, sweet restraint.',
-      );
-    }
-
-    if (spell.name === 'Enlarge Person' && previousSpellNames.includes('Suggestion')) {
-      SpellResolver.addBonusWeight(target, 8, result, 'Suggestion + Enlarge Person');
-      SpellResolver.addInteraction(result,
-        'Suggestion',
-        'spell.interaction.suggestion.enlarge_person',
-        'A willing indulgent mindset makes the growth feel luxuriant instead of shocking.',
-      );
-    }
-
-    if (spell.name === 'Suggestion' && previousSpellNames.includes('Ravenous Expansion')) {
-      if (target && target.willingness !== undefined) {
-        target.willingness = Math.min(100, target.willingness + 20);
-      }
-      SpellResolver.addInteraction(result,
-        'Ravenous Expansion',
-        'spell.interaction.ravenous_expansion.suggestion',
-        'The target is already hungry enough that the suggestion barely needs to push.',
-      );
-    }
-
-    if (spell.name === 'Create Food and Water' && previousSpellNames.includes('Duplication')) {
-      const banquet = createFood('Food', {
-        servings: 20,
-        caloriesPerServing: 650,
-        isMagical: true,
-        description: 'A doubled banquet anchored by prior duplication magic.',
-      });
-      zone?.addFood?.(banquet, 'Duplication + Create Food and Water');
-      createdFoods.push(banquet);
-      SpellResolver.addInteraction(result,
-        'Duplication',
-        'spell.interaction.duplication.create_food_and_water',
-        'The conjured banquet inherits duplication magic and arrives already multiplied.',
-      );
-    }
-
-    if (spell.name === 'Fireball' && previousSpellNames.includes('Ravenous Expansion')) {
-      SpellResolver.addBonusCalories(target, 15, 'Ravenous Expansion + Fireball', result);
-      SpellResolver.addInteraction(result,
-        'Ravenous Expansion',
-        'spell.interaction.ravenous_expansion.fireball',
-        'The blast roasted feast lands on a target primed to crave every bite.',
-      );
-    }
-
-    if (spell.name === 'Haste' && previousSpellNames.includes('Suggestion')) {
-      SpellResolver.addInteraction(result,
-        'Suggestion',
-        'spell.interaction.suggestion.haste',
-        'A persuaded appetite becomes eager, quick, and hard to slow down.',
-      );
-    }
-
-    if (spell.name === 'Rapid Digestion' && previousSpellNames.includes('Feast of Shadows')) {
-      SpellResolver.addBonusCalories(target, 10, 'Feast of Shadows + Rapid Digestion', result);
-      SpellResolver.addInteraction(result,
-        'Feast of Shadows',
-        'spell.interaction.feast_of_shadows.rapid_digestion',
-        'Illusory indulgence becomes physically consequential as digestion magic makes the body believe.',
-      );
-    }
-
-    if (spell.name === 'Delightful Transmutation' && previousSpellNames.includes('Grease')) {
-      SpellResolver.addInteraction(result,
-        'Grease',
-        'spell.interaction.grease.delightful_transmutation',
-        'The slick conjuration sweetens into a dessert-like glaze.',
-      );
-    }
-
-    if (spell.name === 'Morph Mass' && previousSpellNames.includes('Oozing Abundance')) {
-      SpellResolver.addBonusWeight(target, 16, result, 'Oozing Abundance + Morph Mass');
-      SpellResolver.addInteraction(result,
-        'Oozing Abundance',
-        'spell.interaction.oozing_abundance.morph_mass',
-        'Nutrient-rich ooze gives the mass transmutation more material to fold inward.',
-      );
-    }
-
-    if (spell.name === 'Reduce Person' && previousSpellNames.includes('Enlarge Person')) {
-      SpellResolver.addInteraction(result,
-        'Enlarge Person',
-        'spell.interaction.enlarge_person.reduce_person',
-        'Opposed size magic rebounds, leaving the target flushed by the sudden contrast.',
-      );
-    }
-
-    if (spell.name === 'Enlarge Person' && previousSpellNames.includes('Reduce Person')) {
-      SpellResolver.addBonusWeight(target, 6, result, 'Reduce Person + Enlarge Person');
-      SpellResolver.addInteraction(result,
-        'Reduce Person',
-        'spell.interaction.reduce_person.enlarge_person',
-        'The rebound from reduction makes the new growth arrive with extra softness.',
-      );
-    }
-
-    if (spell.name === 'Telekinesis' && previousSpellNames.includes('Float')) {
-      SpellResolver.addInteraction(result,
-        'Float',
-        'spell.interaction.float.telekinesis',
-        'Reduced gravity makes telekinetic placement easier and gentler.',
-      );
-    }
-
-    if (spell.name === 'Float' && previousSpellNames.includes('Enhance Gravity')) {
-      SpellResolver.addInteraction(result,
-        'Enhance Gravity',
-        'spell.interaction.enhance_gravity.float',
-        'Float pushes back against the previous gravity enhancement.',
-      );
-    }
-
-    if (spell.name === 'Enhance Gravity' && previousSpellNames.includes('Float')) {
-      target.conditions?.remove?.('floating');
-      target.conditions?.remove?.('floor_tethered');
-      target.floatOverride = false;
-      target.isFloating = false;
-      target.floorTethered = false;
-      SpellResolver.addInteraction(result,
-        'Float',
-        'spell.interaction.float.enhance_gravity',
-        'Enhanced gravity cancels the float and drags the target back down.',
-      );
-    }
-
-    if (spell.name === 'Suggestion' && previousSpellNames.includes('Culinary Transmutation')) {
-      SpellResolver.addInteraction(result,
-        'Culinary Transmutation',
-        'spell.interaction.culinary_transmutation.suggestion',
-        'Suggestion lets the target choose from food made out of nearby objects.',
-      );
-    }
-
-    if (spell.name === 'Confection Snare' && previousSpellNames.includes('Culinary Transmutation')) {
-      SpellResolver.addInteraction(result,
-        'Culinary Transmutation',
-        'spell.interaction.culinary_transmutation.confection_snare',
-        'Confection bindings can draw transformed object-food into their feeding routine.',
-      );
-    }
-
-    if (spell.name === 'Duplication' && previousSpellNames.includes('Culinary Transmutation')) {
-      SpellResolver.addInteraction(result,
-        'Culinary Transmutation',
-        'spell.interaction.culinary_transmutation.duplication',
-        'The transformed object-food becomes a duplicating supply.',
-      );
-    }
-
-    if (spell.name === 'Flesh to Food' && previousSpellNames.includes('Summon Cattle')) {
-      SpellResolver.addInteraction(result,
-        'Summon Cattle',
-        'spell.interaction.summon_cattle.flesh_to_food',
-        'Summoned cattle become an enormous food source.',
-      );
-    }
-
-    if (spell.name === 'Ravenous Expansion' && previousSpellNames.includes('Summon Cattle')) {
-      SpellResolver.addInteraction(result,
-        'Summon Cattle',
-        'spell.interaction.summon_cattle.ravenous_expansion',
-        'Summoned cattle give the expanded appetite something large to focus on.',
-      );
-    }
-
-    if (spell.name === 'Enhance Gravity' && previousSpellNames.includes('Summon Cattle')) {
-      SpellResolver.addInteraction(result,
-        'Summon Cattle',
-        'spell.interaction.summon_cattle.enhance_gravity',
-        'Large summoned bodies become more hazardous under enhanced gravity.',
-      );
-    }
-
-    if (spell.name === 'Suggestion' && previousSpellNames.includes('Goodberry')) {
-      SpellResolver.addInteraction(result,
-        'Goodberry',
-        'spell.interaction.goodberry.suggestion',
-        'Goodberries offer a small, easy choice for a suggested target.',
-      );
-    }
-
-    if (spell.name === 'Plant Growth' && previousSpellNames.includes('Create Water')) {
-      const bonusFood = createFood('Produce', {
-        servings: 6,
-        caloriesPerServing: 280,
-        isMagical: true,
-        description: 'Extra produce grown from conjured water.',
-      });
-      zone?.addFood?.(bonusFood, 'Create Water + Plant Growth');
-      createdFoods.push(bonusFood);
-      SpellResolver.addInteraction(result,
-        'Create Water',
-        'spell.interaction.create_water.plant_growth',
-        'Conjured water increases the edible growth yield.',
-      );
-    }
-
-    if (spell.name === 'Ravenous Expansion' && previousSpellNames.includes('Plant Growth')) {
-      SpellResolver.addInteraction(result,
-        'Plant Growth',
-        'spell.interaction.plant_growth.ravenous_expansion',
-        'Fresh abundance meets an expanded appetite.',
-      );
-    }
-
-    if (spell.name === 'Suggestion' && previousSpellNames.includes('Slow')) {
-      SpellResolver.addInteraction(result,
-        'Slow',
-        'spell.interaction.slow.suggestion',
-        'Slowed metabolism makes the target chosen food settle heavier.',
-      );
-    }
-
-    if (spell.name === 'Confection Snare' && previousSpellNames.includes('Slow')) {
-      SpellResolver.addInteraction(result,
-        'Slow',
-        'spell.interaction.slow.confection_snare',
-        'Slowed movement helps the bindings control the target.',
-      );
-    }
-
-    if (spell.name === 'Haste' && previousSpellNames.includes('Slow')) {
-      target?.conditions?.remove?.('slowed');
-      if (target) target.calorieRetentionMultiplier = 1;
-      SpellResolver.addInteraction(result,
-        'Slow',
-        'spell.interaction.slow.haste',
-        'Haste disrupts the slowing field and creates metabolic whiplash.',
-      );
-    }
-
-    if (spell.name === 'Slow' && previousSpellNames.includes('Haste')) {
-      SpellResolver.addInteraction(result,
-        'Haste',
-        'spell.interaction.haste.slow',
-        'Slow counters haste and forces the pace back down.',
-      );
+    for (const { entry, partnerName } of matches) {
+      if (entry.effect) entry.effect(ctx);
+      SpellResolver.addInteraction(result, partnerName, entry.text, entry.description);
     }
   }
 

@@ -692,6 +692,13 @@ export function registerSpellModules(engine) {
     },
   ]);
 
+  engine.registerModule('spell.interaction.create_water.shape_earth', [
+    {
+      when: {},
+      text: 'The conjured water pours into the freshly shaped basin and pools there, held by the new stone walls. What was loose earth a moment ago is now a brimming reservoir — a standing supply, ready to be sweetened, thickened, or transmuted into something far richer.',
+    },
+  ]);
+
   engine.registerModule('spell.interaction.create_water.delightful_transmutation', [
     {
       when: {},
@@ -1279,6 +1286,548 @@ export function registerSpellModules(engine) {
       when: {},
       text: 'The conjured food arrives into a zone already thick with magical nourishment. The aura and the conjured feast stack, making the zone\'s caloric abundance almost overwhelming.',
     },
+  ]);
+
+  // ─── P3.2 coverage-fill interactions ─────────────────────────────
+
+  engine.registerModule('spell.interaction.arcane_appraisal.shape_wood', [
+    {
+      when: {},
+      text: 'Knowing exactly where the old chair would have failed, you shape the new wood past that limit — a seat rated for far more than she carries now, an invitation she will grow into.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.arcane_appraisal.telekinesis', [
+    {
+      when: {},
+      text: 'The appraisal already told you the bench would hold. You set {subject.name} down onto it without hesitation, and the wood takes her weight with a confident, unhurried creak.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.arcane_appraisal.shape_earth', [
+    {
+      when: {},
+      text: 'You read the ground\'s hidden tolerance first, then shape it to exceed her — a basin and seat of stone that will not crack no matter how much heavier she becomes.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.shape_earth.shape_wood', [
+    {
+      when: {},
+      text: 'Stone foundation and shaped wood rise together into a single feeding station: a low, broad seat and a table at the perfect reach, everything built so she never has to stand to eat.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.shape_wood.telekinesis', [
+    {
+      when: {},
+      text: 'The feeding chair is already shaped and waiting. You guide {subject.name} down into it, and she settles into the contoured wood as though it were made to hold exactly her — because it was.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.conjure_food.morph_mass', [
+    {
+      when: {},
+      text: 'The conjured spread becomes part of the absorption. Food and earth and matter fold inward together, packing onto {subject.name} in rich, heavy layers she can feel settling.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.polymorph.morph_mass', [
+    {
+      when: {},
+      text: 'The beast-form\'s bulk gives the mass transmutation more to work with. Surrounding matter clings to the already-massive shape, dragging it lower, broader, heavier with every breath.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.goodberry.conjure_food', [
+    {
+      when: {},
+      text: 'The conjured feast dominates the table, but the little berries sit beside it like an afterthought — and an afterthought is exactly what gets eaten absently, handful after handful, long after the main course is gone.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.detect_cravings.goodberry', [
+    {
+      when: {},
+      text: 'Knowing her cravings, you tune each berry to taste of the thing {subject.name} wants most. They vanish three and four at a time, and she barely notices her own hand returning to the bowl.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.conjure_food.prestidigitation', [
+    {
+      when: {},
+      text: 'A flick of minor magic and the conjured food warms, glistens, and releases a scent of butter and sugar into the air. It was tempting before. Now it is impossible to walk past.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.goodberry.prestidigitation', [
+    {
+      when: {},
+      text: 'The cantrip sweetens each berry and warms it on the tongue, turning a plain mouthful of nourishment into a small, moreish pleasure she keeps reaching for.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.detect_cravings.feast_of_shadows', [
+    {
+      when: {},
+      text: 'The illusion shapes itself from her own cravings. Every phantom dish is precisely what {subject.name} most wanted to eat, and her body believes every calorie of it.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.polymorph.fireball', [
+    {
+      when: {},
+      text: 'Roasted abundance rains down on the beast-form, and its already-insatiable appetite takes over. It eats without pause, without thought, swelling visibly as the seasoned feast disappears.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.fireball.flesh_to_food', [
+    {
+      when: {},
+      text: 'What the flames roasted, the transmutation completes — flesh becomes pure, rich, edible abundance, already warm, already seasoned, ready to be devoured.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ambrosial_aura.oozing_abundance', [
+    {
+      when: {},
+      text: 'The ooze-arrow flies through air already thick with nourishment. It strikes heavier, coats thicker, every drop amplified by the aura into something dense and deeply fattening.',
+    },
+  ]);
+
+  // ─── P3.3 condition-keyed interactions ───────────────────────────
+  // Fire on lasting state, not recent casts.
+
+  engine.registerModule('spell.interaction.condition.restrained.enlarge_person', [
+    {
+      when: {},
+      text: 'Held fast, {subject.name} can do nothing but grow. The spell swells her against her bonds, every new inch pressing harder into the restraints, until she fills the space she cannot leave.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.buried.enlarge_person', [
+    {
+      when: {},
+      text: 'Buried to the waist, {subject.name} begins to grow — and the growth packs the earth tighter around her, the spell wedging her ever more firmly into the ground she cannot climb out of.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.restrained.oozing_abundance', [
+    {
+      when: {},
+      text: 'She cannot dodge. The ooze-arrow strikes a target who can only take it, thick nutritive sludge spreading across skin she cannot wipe clean, feeding into her where she stands.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.satiated.telekinesis', [
+    {
+      when: {},
+      text: 'Stuffed and sluggish, she barely resists as you lift her. {subject.name} is set down onto the waiting seat with a heavy, contented settle, too full to do anything but stay.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.ravenous.feast_of_shadows', [
+    {
+      when: {},
+      text: 'Phantom food in front of real hunger. {subject.name} devours the illusion without question, and her body, convinced, settles every imagined calorie into soft reality.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.satiated.suggestion', [
+    {
+      when: {},
+      text: 'She is already full — and that is exactly when a gentle suggestion does its best work. One more bite, you murmur, and {subject.name} finds room she swore she did not have.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.enlarged.morph_mass', [
+    {
+      when: {},
+      text: 'Already swollen larger than life, {subject.name} gives the mass transmutation an enormous frame to load. Matter folds onto her by the armful, and the enlarged body drinks it in.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.ooze_coated.confection_snare', [
+    {
+      when: {},
+      text: 'The candy bindings find the ooze already slicking her and take hold instantly, sticky meeting sticky. {subject.name} is bound in a glaze of sweet and rich she cannot pull free of.',
+    },
+  ]);
+
+  // ═══════════════════════════════════════════════════════════════
+  // P3.4 — NEW THEMED SPELL SCENES (weight-stage coverage) + COMBOS
+  // ═══════════════════════════════════════════════════════════════
+
+  engine.registerModule('spell.scene.rooting_glut', [
+    {
+      when: { stage: { min: 8 } },
+      text: 'The spell reaches a body already vast, and there is simply no fighting it. {subject.name} settles where she stands with a deep, final-sounding groan, her enormous weight rooting her to the spot. She was barely mobile before. Now she is a fixture, sinking softly into her own mass.',
+    },
+    {
+      when: { stage: { min: 4, max: 7 } },
+      text: 'Magic pours down through {subject.name} and pools at her feet like setting cement. Her heavy frame anchors in place, and when she tries to shift her weight she finds she simply cannot — rooted, settled, softening further by the second.',
+    },
+    {
+      when: { stage: { max: 3 } },
+      text: 'The spell takes hold and {subject.name} feels her footing change — a sudden, gentle heaviness pinning her where she stands. She shifts, testing it, and finds her own body unwilling to move, content to stay and soften right here.',
+    },
+    {
+      when: {},
+      text: '{subject.name} is rooted in place beneath her own gathering weight, anchored and slowly settling.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.bottomless_gullet', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The spell opens something in {subject.name} that was already generous. Whatever ceiling her enormous appetite once had simply lifts away, and the hunger behind her eyes turns bottomless — she could clear a banquet table now and ask, quite sincerely, what comes next.',
+    },
+    {
+      when: { stage: { max: 5 } },
+      text: 'A warmth spreads through {subject.name}\'s middle, and with it a strange new spaciousness. The familiar limit of fullness retreats, then retreats again, until she realizes with a slow flush that she could keep going far longer than she ever has.',
+    },
+    {
+      when: {},
+      text: '{subject.name}\'s capacity widens; the point of fullness slides far out of reach.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.feeder\'s_devotion', [
+    {
+      when: { willingness: { min: 70 } },
+      text: 'The enchantment lands on a target already fond of the attention, and it blooms into something close to bliss. {subject.name} leans into the next offered bite with open, grateful want, every feeding now an act of devotion she would never think to refuse.',
+    },
+    {
+      when: {},
+      text: 'The magic softens whatever resistance {subject.name} held. Feeding stops feeling like coercion and starts feeling like care — she leans in, lips parting for the next bite before it is even offered, wanting it now in a way she did not a moment ago.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.swelling_tide', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The tide rolls into a body already monumental, and it does not so much grow her as set her in motion — a slow, mounting swell rippling outward, each wave leaving {subject.name} broader and softer than the last, with no shoreline anywhere in sight.',
+    },
+    {
+      when: { stage: { min: 3, max: 5 } },
+      text: 'It begins gently — a faint, warm pressure under the skin. Then the first wave breaks and {subject.name} swells, settles, and swells again, the growth mounting with a slow inevitability she can feel building toward something far larger.',
+    },
+    {
+      when: { stage: { max: 2 } },
+      text: 'A slow swell starts somewhere deep in {subject.name} and rises outward in patient waves. Each one rounds her a little further, soft and unhurried, the tide only beginning to come in.',
+    },
+    {
+      when: {},
+      text: 'A mounting swell rolls through {subject.name} in slow, compounding waves.',
+    },
+  ]);
+
+  // ─── Rooting Glut combos (immobility) ───
+  engine.registerModule('spell.interaction.rooting_glut.enlarge_person', [
+    { when: {}, text: 'Rooted in place, {subject.name} can only grow where she stands. The enlargement swells her outward against an anchor she cannot break, every new pound pressing her more firmly into the spot.' },
+  ]);
+  engine.registerModule('spell.interaction.rooting_glut.morph_mass', [
+    { when: {}, text: 'The anchored body is a perfect well for the mass transmutation. Matter piles onto {subject.name} where she sits rooted, and she has no way to rise out from under it.' },
+  ]);
+  engine.registerModule('spell.interaction.rooting_glut.oozing_abundance', [
+    { when: {}, text: 'She is rooted and cannot dodge. The ooze-arrow strikes home and spreads, coating a target who can only sit and take it, feeding into her where she is anchored.' },
+  ]);
+
+  // ─── Bottomless Gullet combos (stuffing) ───
+  engine.registerModule('spell.interaction.bottomless_gullet.feast_of_shadows', [
+    { when: {}, text: 'With fullness pushed out of reach, the illusory feast has nowhere to stop. {subject.name} eats and eats the phantom abundance, her bottomless capacity turning a meal into a marathon her body fully believes.' },
+  ]);
+  engine.registerModule('spell.interaction.bottomless_gullet.oozing_abundance', [
+    { when: {}, text: 'The nutritive ooze pours into a gullet with no floor. There is no fullness to slow it, no limit to reach — just rich abundance sinking endlessly into {subject.name}.' },
+  ]);
+  engine.registerModule('spell.interaction.bottomless_gullet.suggestion', [
+    { when: {}, text: 'Eat your fill, you suggest — and with her capacity made bottomless, "her fill" no longer means anything. {subject.name} simply keeps going, happily, with no end in sight.' },
+  ]);
+
+  // ─── Feeder's Devotion combos (feeder) ───
+  engine.registerModule('spell.interaction.feeder\'s_devotion.suggestion', [
+    { when: {}, text: 'Devotion and suggestion fold seamlessly together. {subject.name} does not feel pushed at all — she feels adored, and so she opens for the next bite as though it were her own dearest idea.' },
+  ]);
+  engine.registerModule('spell.interaction.feeder\'s_devotion.detect_cravings', [
+    { when: {}, text: 'Knowing her cravings and wrapped in devotion, every offering becomes irresistible. {subject.name} is fed precisely what she loves, by someone she now adores, and she melts into the feeding completely.' },
+  ]);
+  engine.registerModule('spell.interaction.feeder\'s_devotion.oozing_abundance', [
+    { when: {}, text: 'What might have startled her instead lands as care. Bathed in devotion, {subject.name} welcomes the rush of nutritive ooze, leaning into the coating rather than away from it.' },
+  ]);
+
+  // ─── Swelling Tide combos (growth) ───
+  engine.registerModule('spell.interaction.swelling_tide.enlarge_person', [
+    { when: {}, text: 'The enlargement crests on an already-rising tide. {subject.name} surges outward all at once, the sudden growth riding the mounting swell into something far larger than either spell alone.' },
+  ]);
+  engine.registerModule('spell.interaction.swelling_tide.morph_mass', [
+    { when: {}, text: 'The mass transmutation feeds the tide and the tide feeds it back. Matter folds onto {subject.name} in waves, each swell heavier than the last, the growth compounding with nowhere to crest.' },
+  ]);
+  engine.registerModule('spell.interaction.swelling_tide.ravenous_expansion', [
+    { when: {}, text: 'A rising tide of growth meets a bottomless new hunger, and the two amplify without limit. {subject.name} swells as she gorges and gorges as she swells, each wave larger than the one before.' },
+  ]);
+
+  // ─── New-spell condition interactions ───
+  engine.registerModule('spell.interaction.condition.enlarged.rooting_glut', [
+    { when: {}, text: 'Already swollen larger than life, {subject.name} is rooted in place by her own enormous mass. The anchor settles over a body that could barely move to begin with, fixing her completely.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.satiated.bottomless_gullet', [
+    { when: {}, text: 'She is stuffed to the brim — exactly the moment the spell opens her further. The fullness {subject.name} just reached dissolves, and abruptly there is room again, far more than before.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.restrained.feeder\'s_devotion', [
+    { when: {}, text: 'Bound and unable to turn away, {subject.name} feels the devotion settle over her instead of panic. She cannot leave the feeding — and now, wrapped in adoration, she finds she no longer wants to.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.ravenous.swelling_tide', [
+    { when: {}, text: 'The tide rises through a body already wild with hunger. Every ravenous bite {subject.name} takes feeds the swell, and the swell deepens the hunger, the two cresting higher and higher together.' },
+  ]);
+
+  // ─── Imbue Life (animation: coatings self-feed, stone golems) ───
+  engine.registerModule('spell.scene.imbue_life', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'Crude life shudders into the matter around {subject.name}. On a body this vast there is so much to animate — every slick of coating across her enormous form stirs at once, creeping inward of its own accord, intent on feeding her even fuller.',
+    },
+    {
+      when: { stage: { max: 5 } },
+      text: 'The spell breathes a dim, eager will into inert matter. Whatever clings to {subject.name} begins to move on its own — purposeful, unhurried, and entirely focused on getting itself inside her.',
+    },
+    {
+      when: {},
+      text: 'Inert matter stirs with borrowed life, eager and single-minded, and turns toward the work of feeding.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.ooze_coated.imbue_life', [
+    { when: {}, text: 'The ooze sheeting {subject.name} shivers, gathers, and comes alive. It no longer waits to be eaten — it climbs, finds her lips, and pours itself down in thick, deliberate swallows, feeding every rich drop of itself into her until there is nothing left but a softer, fuller her.' },
+  ]);
+  engine.registerModule('spell.interaction.oozing_abundance.imbue_life', [
+    { when: {}, text: 'The ooze-arrow has barely finished spreading before the animation takes it. The fresh coating rises as one purposeful mass and begins funneling itself into {subject.name}, wasting nothing.' },
+  ]);
+  engine.registerModule('spell.interaction.shape_earth.imbue_life', [
+    { when: {}, text: 'The stone you shaped a moment ago grinds and rises. What was a basin or a seat now stands as a squat little golem, patient and tireless, waiting to be pointed at someone to feed.' },
+  ]);
+  engine.registerModule('spell.interaction.grease.imbue_life', [
+    { when: {}, text: 'The conjured grease slicking {subject.name} draws together and quickens. Animated, it slides upward and feeds itself between her lips, rich and slippery and impossible to refuse.' },
+  ]);
+
+  // ─── Feast Exile (banishment to the endless banquet) ───
+  engine.registerModule('spell.scene.feast_exile', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The air folds, and {subject.name}\'s considerable form is gone — pulled into a realm where the tables never end and the day never closes. Wherever she is now, she is eating, and she will not stop until the spell brings her back.',
+    },
+    {
+      when: {},
+      text: 'Reality opens a soft seam and swallows {subject.name} whole. She vanishes toward a pocket realm of endless banquets, where she will gorge through days that pass in a blink before the magic returns her.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.ravenous.feast_exile', [
+    { when: {}, text: 'You banish her mid-hunger, and the feast realm is merciless about it. {subject.name} arrives already starving and falls on the endless banquet like a woman possessed — she will come back having eaten far, far more than a calmer exile could ever hold.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.satiated.feast_exile', [
+    { when: {}, text: 'Already stuffed when the seam takes her, {subject.name} is given a realm where fullness simply does not count. Whatever limit she had reached is left behind in this world; in the next, she keeps going regardless.' },
+  ]);
+  engine.registerModule('spell.interaction.suggestion.feast_exile', [
+    { when: {}, text: 'The suggestion still warm in her mind, {subject.name} steps into the exile willingly, even eagerly — sent off to the endless banquet wanting nothing more than to indulge every moment of it.' },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.engorged.enlarge_person', [
+    { when: {}, text: 'The enlargement pours into a body still swollen and soft from the feast realm. {subject.name} grows on top of the engorgement, her temporary fullness becoming a foundation for something even more lavish.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.engorged.suggestion', [
+    { when: {}, text: 'Flushed and engorged from her exile, {subject.name} is in no state to refuse anything. The suggestion lands on a woman already drunk on indulgence, and she agrees before you have finished speaking.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.engorged.confection_snare', [
+    { when: {}, text: 'The candy bindings wrap a body still round and yielding from the feast realm. There is so much more of {subject.name} to bind now, every soft swell of her engorged form caught and held in sweet restraint.' },
+  ]);
+
+  // ─── Sphere of Influence (area hunger compulsion) ───
+  engine.registerModule('spell.scene.sphere_of_influence', [
+    {
+      when: {},
+      text: 'A sphere of pure appetite blooms outward and settles over the whole room. Every creature, every bystander, every dumb beast in reach feels it at once — a gnawing, obsessive hunger that crowds out every other thought. One by one, they turn toward the nearest food and begin to eat, and they do not intend to stop.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ambrosial_aura.sphere_of_influence', [
+    { when: {}, text: 'The room is already thick with the essence of feast, and now everyone in it is starving for exactly that. The aura and the hunger sphere feed each other into a frenzy — a whole room of bodies gorging on air made edible, growing softer together.' },
+  ]);
+  engine.registerModule('spell.interaction.plant_growth.sphere_of_influence', [
+    { when: {}, text: 'Fresh growth has just made the area abundant, and the hunger sphere falls on it like a swarm. Every famished occupant tears into the new bounty at once, stripping it and still wanting more.' },
+  ]);
+  engine.registerModule('spell.interaction.create_food_and_water.sphere_of_influence', [
+    { when: {}, text: 'A conjured banquet sits ready just as obsessive hunger seizes the room. The feast does not last long — a dozen ravenous mouths fall on it together, and the magic only makes them want the next course faster.' },
+  ]);
+
+  // ─── Gust of Wind (scatter; heavy stand firm) ───
+  engine.registerModule('spell.scene.gust_of_wind', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The gale tears through the room — and breaks around {subject.name} like surf around a boulder. She is far too heavy now for any wind to move; she simply stands, unbothered, as everything lighter than her goes tumbling.',
+    },
+    {
+      when: { stage: { max: 2 } },
+      text: 'A blast of wind howls out and catches {subject.name} square, shoving her back a staggering step. Light as she still is, she has nothing to anchor her against it.',
+    },
+    {
+      when: {},
+      text: 'Wind sweeps the area, flinging loose food and coatings in every direction and shoving at anyone not heavy enough to hold their ground.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.oozing_abundance.gust_of_wind', [
+    { when: {}, text: 'The wind catches the nutritive ooze still in the air and flings it wide, spattering thick, calorie-rich sludge across everyone in the room at once.' },
+  ]);
+  engine.registerModule('spell.interaction.grease.gust_of_wind', [
+    { when: {}, text: 'The gale sweeps the conjured grease off the floor and into a glistening mist, coating the whole area — and everyone standing in it — in a slick, rich film.' },
+  ]);
+  engine.registerModule('spell.interaction.ambrosial_aura.gust_of_wind', [
+    { when: {}, text: 'The wind takes the feast-thick aura and carries it everywhere, the smell of endless abundance filling every corner until every nose in the room is leading its owner toward food.' },
+  ]);
+
+  // ─── Wall of Force (impassable pen) ───
+  engine.registerModule('spell.scene.wall_of_force', [
+    {
+      when: { stage: { min: 7 } },
+      text: 'The wall snaps into being around {subject.name}, and the irony is plain: she could not have left this spot if she tried. Now she truly cannot. Penned and enormous, she has nowhere to go and nothing to do but be fed.',
+    },
+    {
+      when: {},
+      text: 'An invisible barrier seals shut around {subject.name} with no seam and no give. She presses against it, finds it utterly solid, and slowly understands that she is not getting out until you decide she does.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.sphere_of_influence.wall_of_force', [
+    { when: {}, text: 'You raise the wall around a room already mad with hunger. Now the ravenous crowd is penned in with the food and with each other — nowhere to go, nothing to do but eat until the barrier drops.' },
+  ]);
+  engine.registerModule('spell.interaction.conjure_food.wall_of_force', [
+    { when: {}, text: 'The conjured food is sealed inside the pen along with {subject.name}. Just her and the feast, walled in together, with no exit and no reason to stop.' },
+  ]);
+  engine.registerModule('spell.interaction.create_food_and_water.wall_of_force', [
+    { when: {}, text: 'A whole banquet, walled in with {subject.name} and no one else. The force booth holds her in with more food than she could finish in a day, and all the time in the world to try.' },
+  ]);
+
+  // ─── Web (immobility utility) ───
+  engine.registerModule('spell.scene.web', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'Strand after strand lashes across {subject.name}\'s vast frame — and there is so much of her to bind that the webbing layers thick and white over every soft expanse. She strains, and the strands only pull tauter against her. She is not going anywhere.',
+    },
+    {
+      when: {},
+      text: 'Clinging webbing whips out and wraps {subject.name} fast. She pulls against it and finds it only clings harder, holding her exactly where she stands.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.web.oozing_abundance', [
+    { when: {}, text: 'Caught fast in the webbing, {subject.name} cannot so much as flinch as the nutritive ooze strikes her. It spreads across her bound body and soaks in, and there is nothing she can do but take it.' },
+  ]);
+  engine.registerModule('spell.interaction.web.confection_snare', [
+    { when: {}, text: 'Candy bindings layer over the webbing, sugar-sticky strands knotting into silk. {subject.name} is doubly bound now, sweet and snug, with no slack left anywhere.' },
+  ]);
+  engine.registerModule('spell.interaction.web.enlarge_person', [
+    { when: {}, text: 'The enlargement swells {subject.name} outward into the webbing, and the strands stretch and bite as she grows to fill them. The bigger she gets, the more thoroughly the web has her.' },
+  ]);
+
+  // ─── Mage Hand (remote feeding cantrip) ───
+  engine.registerModule('spell.scene.mage_hand', [
+    {
+      when: {},
+      text: 'A translucent hand blinks into being and flexes its spectral fingers. It drifts toward the nearest food, plucks up a morsel, and carries it patiently toward {subject.name}\'s mouth — the first of many trips it intends to make.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.conjure_food.mage_hand', [
+    { when: {}, text: 'The spectral hand has a fresh-conjured spread to work from, and it is tireless about it — ferrying morsel after morsel to {subject.name}\'s lips so all she has to do is open and swallow, again and again.' },
+  ]);
+  engine.registerModule('spell.interaction.goodberry.mage_hand', [
+    { when: {}, text: 'The hand pops berry after berry between {subject.name}\'s lips, an idle, endless rhythm she barely notices — until the bowl is empty and she finds she has eaten every one.' },
+  ]);
+  engine.registerModule('spell.interaction.create_food_and_water.mage_hand', [
+    { when: {}, text: 'A whole conjured banquet and a tireless hand to serve it. The spectral fingers work without pause, and {subject.name} need do nothing but receive course after course.' },
+  ]);
+
+  // ─── Command (forced compulsion) ───
+  engine.registerModule('spell.scene.command', [
+    {
+      when: {},
+      text: '"Eat." The word lands with the weight of geas, and {subject.name}\'s body answers before her mind can object — her hand moving to the nearest food, lifting it, bringing it to her mouth whether she chose to or not.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.conjure_food.command', [
+    { when: {}, text: 'You conjure the food and then command her to it. {subject.name} has no say in the matter — the word takes hold and she eats the conjured spread down without a flicker of choice.' },
+  ]);
+  engine.registerModule('spell.interaction.feast_of_shadows.command', [
+    { when: {}, text: 'The command does not care that the feast is illusion. {subject.name} is compelled to eat it regardless, and her convinced body banks every phantom calorie as if it were real.' },
+  ]);
+  engine.registerModule('spell.interaction.sphere_of_influence.command', [
+    { when: {}, text: 'A room already seized by hunger, and now a single word drives them all at once. "Eat," you say, and every compelled, ravenous occupant obeys as one.' },
+  ]);
+
+  // ─── Sleep (helpless feeding) ───
+  engine.registerModule('spell.scene.sleep', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'Sleep rolls over {subject.name} like a warm tide and she sinks into it, her great soft bulk settling deeper into whatever holds her. She could not lift a hand now if she wanted to — and her slack, parted lips will still accept whatever you choose to give them.',
+    },
+    {
+      when: {},
+      text: 'The spell draws {subject.name} down into a soft, heavy sleep. Her body goes pliant and unresisting, her breathing slow and even — and her mouth stays just open enough to be fed.',
+    },
+  ]);
+  engine.registerModule('spell.interaction.sleep.mage_hand', [
+    { when: {}, text: 'Asleep and helpless, {subject.name} is fed entirely by the spectral hand. It slips morsel after morsel between her parted lips, and she swallows on reflex, dreaming, never once waking.' },
+  ]);
+  engine.registerModule('spell.interaction.sleep.feast_of_shadows', [
+    { when: {}, text: 'The illusory feast becomes {subject.name}\'s dream. She eats it in her sleep, lips working at phantom food, and her convinced body banks every dreamed calorie as real, soft weight.' },
+  ]);
+  engine.registerModule('spell.interaction.sleep.enlarge_person', [
+    { when: {}, text: 'She never stirs as the enlargement takes her. {subject.name} simply grows in her sleep, swelling larger and softer across whatever she lies upon, dreaming through every new inch.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.asleep.oozing_abundance', [
+    { when: {}, text: 'The nutritive ooze strikes a sleeper who cannot flinch from it. It spreads over {subject.name}\'s slack, soft body and soaks slowly in, feeding her while she dreams.' },
+  ]);
+
+  // ─── Malleable Flesh (pliant, keeps more) ───
+  engine.registerModule('spell.scene.malleable_flesh', [
+    {
+      when: { stage: { min: 5 } },
+      text: 'The transmutation sinks into {subject.name}\'s already-generous form and every soft pound of her turns softer still — pliant, receptive, eager. Whatever she eats now will settle into her like water into a sponge and stay there.',
+    },
+    {
+      when: {},
+      text: 'A warmth passes through {subject.name} and her flesh changes character — yielding where it was firm, quick to take and hold. Her body has become a thing that keeps every calorie it is given.',
+    },
+  ]);
+  engine.registerModule('spell.interaction.malleable_flesh.enlarge_person', [
+    { when: {}, text: 'The enlargement pours into flesh made soft and receptive, and {subject.name} blooms outward all the more lavishly for it — every new inch landing softer, rounder, and more permanent than it would on firmer stuff.' },
+  ]);
+  engine.registerModule('spell.interaction.malleable_flesh.morph_mass', [
+    { when: {}, text: 'Pliant flesh drinks in the absorbed matter greedily. {subject.name}\'s softened body folds the new mass deep into itself, keeping every ounce where firmer flesh would have shed some.' },
+  ]);
+  engine.registerModule('spell.interaction.malleable_flesh.swelling_tide', [
+    { when: {}, text: 'The rising tide of growth meets flesh primed to receive it, and there is no resistance anywhere. {subject.name} swells in soft, compounding waves, each one settling fully into her pliant body.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.pliable.confection_snare', [
+    { when: {}, text: 'The candy bindings sink into flesh gone soft and yielding, pressing deep into every pliant curve of {subject.name} and holding her all the more snugly for how readily she gives.' },
+  ]);
+
+  // ─── Sylvan Bounty (druidic renewing food source) ───
+  engine.registerModule('spell.scene.sylvan_bounty', [
+    {
+      when: {},
+      text: 'You press the magic into the earth and the ground answers. Vines climb, boughs unfurl, and within moments the area is heavy with ripe, glistening fruit — and as the first is picked, more swells visibly to take its place. The thicket will not run dry.',
+    },
+  ]);
+  engine.registerModule('spell.interaction.create_water.sylvan_bounty', [
+    { when: {}, text: 'The conjured water sinks into the new growth and the thicket answers with abundance, fruit swelling fatter and sweeter and faster than before, until the boughs bend under the weight of it.' },
+  ]);
+  engine.registerModule('spell.interaction.plant_growth.sylvan_bounty', [
+    { when: {}, text: 'Plant Growth and Sylvan Bounty feed into one another, and the thicket erupts into a riot of fruit — more than any room of mouths could finish, replenishing faster than it can be picked.' },
+  ]);
+  engine.registerModule('spell.interaction.sphere_of_influence.sylvan_bounty', [
+    { when: {}, text: 'A renewing thicket of fruit, and a roomful of occupants seized by obsessive hunger. They fall on the bounty together — and the bounty simply keeps growing back, feeding the frenzy as long as it lasts.' },
   ]);
 
 }

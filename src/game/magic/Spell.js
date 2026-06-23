@@ -3,6 +3,8 @@
  * Base spell class with contextual effects and smart targeting
  */
 
+import { TABLE } from './InteractionTable.js';
+
 class SpellEffect {
   constructor(name, description, implementation) {
     this.name = name;
@@ -218,7 +220,10 @@ class Spell {
       description: this.description,
       weightGainTheme: this.weightGainTheme,
       tags: this.tags,
-      interactions: this.interactsWith,
+      // ponytail: generated from table — single source of truth
+      interactions: TABLE
+        .filter(e => e.trigger === this.name || e.requires?.recentSpell === this.name)
+        .map(e => ({ spellName: e.requires?.recentSpell || e.trigger, description: e.description })),
       validTargets: this.validTargets,
       hasOptions: this.options.length > 0,
     };

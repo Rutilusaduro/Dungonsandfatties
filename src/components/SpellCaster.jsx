@@ -47,16 +47,16 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
       }
     });
 
-    // Check creatures
+    // Check creatures (exiled ones are away in the feast realm — not targetable)
     zone.getCreatures?.().forEach(creature => {
-      if (selectedSpell.canTargetEntity(creature)) {
+      if (!creature.isExiled && selectedSpell.canTargetEntity(creature)) {
         validTargets.push(creature);
       }
     });
 
     // Check NPCs
     zone.getNPCs?.().forEach(npc => {
-      if (selectedSpell.canTargetEntity(npc)) {
+      if (!npc.isExiled && selectedSpell.canTargetEntity(npc)) {
         validTargets.push(npc);
       }
     });
@@ -85,6 +85,7 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
     if (secondaryType === 'creature' || secondaryType === 'entity') {
       const creatures = zone.getCreatures?.() || [];
       creatures.forEach(creature => {
+        if (creature.isExiled) return;
         if (selectedTarget && creature === selectedTarget) return;
         validSecondaryTargets.push(creature);
       });
@@ -93,6 +94,7 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
     if (secondaryType === 'npc' || secondaryType === 'entity') {
       const npcs = zone.getNPCs?.() || [];
       npcs.forEach(npc => {
+        if (npc.isExiled) return;
         if (selectedTarget && npc === selectedTarget) return;
         validSecondaryTargets.push(npc);
       });

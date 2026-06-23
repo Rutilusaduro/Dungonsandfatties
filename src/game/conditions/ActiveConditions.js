@@ -16,6 +16,9 @@
 //   floating         -> { height, intensity }
 //   floor_tethered   -> { source, intensity }
 //   slowed           -> { intensity }
+//   engorged         -> { swell, intensity }  // temporary post-Feast-Exile fullness
+//   asleep           -> { intensity }          // magically asleep, helpless to feeding
+//   pliable          -> { intensity }          // flesh softened, keeps more from every meal
 // ═══════════════════════════════════════════════════════════════
 
 export const CONDITION_KEYS = [
@@ -31,6 +34,9 @@ export const CONDITION_KEYS = [
   'floating',
   'floor_tethered',
   'slowed',
+  'engorged',
+  'asleep',
+  'pliable',
 ];
 
 // Spell key (name lowercased, spaces -> _) -> restraint material.
@@ -41,6 +47,8 @@ export const RESTRAINT_MATERIAL = {
   buried: 'earth',
   vineweave_restraint: 'vines',
   grease: 'slick',
+  wall_of_force: 'force',
+  web: 'webbing',
 };
 
 class ActiveConditions {
