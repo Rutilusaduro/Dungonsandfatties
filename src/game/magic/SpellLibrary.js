@@ -2232,6 +2232,43 @@ class SpellLibrary {
           }))
         )
     );
+
+    // Sphere of Influence - area enchantment: everyone present becomes obsessively hungry
+    this.registerSpell(
+      new Spell('Sphere of Influence', {
+        level: 5,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: 'Self (30-foot radius)',
+        duration: 'Concentration, up to 10 minutes',
+        description: 'Fill the area with obsessive hunger; every creature, monster, and critter present eats continuously.',
+        weightGainTheme:
+          'A sphere of compulsive appetite settles over the whole room. Friend, beast, and bystander alike are seized by a gnawing, single-minded hunger and will not stop eating while it holds.',
+        validTargets: [], // area spell — targets the zone, not one entity
+        tags: ['enchantment', 'area', 'hunger-compulsion', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Gnawing Hunger', 'Everyone present becomes ravenously hungry', () => ({
+            type: 'mass_hunger',
+            intensity: 1,
+            description: 'A gnawing hunger grips everyone in the area.',
+          }))
+        )
+        .addOption(
+          new SpellOption('Insatiable Frenzy', 'Everyone present is driven to obsessive gorging', () => ({
+            type: 'mass_hunger',
+            intensity: 2,
+            description: 'An insatiable frenzy seizes the whole room.',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Compulsion', 'Fill the area with hunger', () => ({
+            type: 'mass_hunger',
+            intensity: 1,
+            description: 'Obsessive hunger fills the area.',
+          }))
+        )
+    );
   }
 }
 

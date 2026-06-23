@@ -1641,6 +1641,24 @@ export function registerSpellModules(engine) {
     { when: {}, text: 'The candy bindings wrap a body still round and yielding from the feast realm. There is so much more of {subject.name} to bind now, every soft swell of her engorged form caught and held in sweet restraint.' },
   ]);
 
+  // ─── Sphere of Influence (area hunger compulsion) ───
+  engine.registerModule('spell.scene.sphere_of_influence', [
+    {
+      when: {},
+      text: 'A sphere of pure appetite blooms outward and settles over the whole room. Every creature, every bystander, every dumb beast in reach feels it at once — a gnawing, obsessive hunger that crowds out every other thought. One by one, they turn toward the nearest food and begin to eat, and they do not intend to stop.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ambrosial_aura.sphere_of_influence', [
+    { when: {}, text: 'The room is already thick with the essence of feast, and now everyone in it is starving for exactly that. The aura and the hunger sphere feed each other into a frenzy — a whole room of bodies gorging on air made edible, growing softer together.' },
+  ]);
+  engine.registerModule('spell.interaction.plant_growth.sphere_of_influence', [
+    { when: {}, text: 'Fresh growth has just made the area abundant, and the hunger sphere falls on it like a swarm. Every famished occupant tears into the new bounty at once, stripping it and still wanting more.' },
+  ]);
+  engine.registerModule('spell.interaction.create_food_and_water.sphere_of_influence', [
+    { when: {}, text: 'A conjured banquet sits ready just as obsessive hunger seizes the room. The feast does not last long — a dozen ravenous mouths fall on it together, and the magic only makes them want the next course faster.' },
+  ]);
+
 }
 
 export default registerSpellModules;

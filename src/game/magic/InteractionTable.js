@@ -1086,6 +1086,32 @@ const TABLE = [
     description: 'Candy bindings wrap a body still round and yielding — so much more of her to catch and hold now.',
   },
 
+  // ── Sphere of Influence (area hunger; combos fire off zone spell memory) ──
+  {
+    id: 'sphere_of_influence+ambrosial_aura',
+    trigger: 'Sphere of Influence',
+    requires: { recentSpell: 'Ambrosial Aura' },
+    symmetric: false,
+    text: 'spell.interaction.ambrosial_aura.sphere_of_influence',
+    description: 'A room thick with feast-essence and starving for it — aura and hunger sphere spiral into a frenzy.',
+  },
+  {
+    id: 'sphere_of_influence+plant_growth',
+    trigger: 'Sphere of Influence',
+    requires: { recentSpell: 'Plant Growth' },
+    symmetric: false,
+    text: 'spell.interaction.plant_growth.sphere_of_influence',
+    description: 'Fresh growth meets a swarm of famished occupants who strip it and still want more.',
+  },
+  {
+    id: 'sphere_of_influence+create_food_and_water',
+    trigger: 'Sphere of Influence',
+    requires: { recentSpell: 'Create Food and Water' },
+    symmetric: false,
+    text: 'spell.interaction.create_food_and_water.sphere_of_influence',
+    description: 'A conjured banquet and a roomful of ravenous mouths — the feast vanishes and they crave the next.',
+  },
+
 ];
 
 // ─── Match engine ─────────────────────────────────────────────────────────────

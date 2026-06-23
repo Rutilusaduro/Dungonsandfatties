@@ -203,6 +203,22 @@ describe('combo integration: key pairs fire end-to-end', () => {
     expect(target.currentWeight).toBeLessThan(250);             // most of it gone
   });
 
+  it('Sphere of Influence makes every zone occupant ravenous', () => {
+    const spell = lib.getSpell('Sphere of Influence');
+    const a = mockNPC('Pig'); a.hungerLevel = 20;
+    const b = mockNPC('Cow'); b.hungerLevel = 20;
+    const npc = mockNPC('Boris'); npc.hungerLevel = 20;
+    const creatures = [a, b];
+    const npcs = [npc];
+    const zone = {
+      getCreatures: () => creatures, getNPCs: () => npcs, getFoods: () => [],
+      getEnvironmentalObjects: () => [], getRecentSpells: () => [], recordSpellCast() {}, addFood() {},
+    };
+    SpellResolver.cast({ spell, caster: new Character('C'), target: null, zone, selectedOption: null });
+    expect([a, b, npc].every(o => o.conditions.has('ravenous'))).toBe(true);
+    expect([a, b, npc].every(o => o.hungerLevel === 100)).toBe(true);
+  });
+
   it('condition combo fires when condition present, not when absent', () => {
     const spell = lib.getSpell('Feast of Shadows');
     const caster = new Character('Caster');

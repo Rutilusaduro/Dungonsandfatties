@@ -59,6 +59,7 @@ const SPELL_KEY_TO_NAME = {
   swelling_tide: 'Swelling Tide',
   imbue_life: 'Imbue Life',
   feast_exile: 'Feast Exile',
+  sphere_of_influence: 'Sphere of Influence',
 };
 
 const gravity = new GravityCalculator();
@@ -497,6 +498,25 @@ class SpellResolver {
     }
 
     if (!zone) return;
+
+    if (effect.type === 'mass_hunger') {
+      const intensity = effect.intensity || 1;
+      const occupants = [...(zone.getCreatures?.() || []), ...(zone.getNPCs?.() || [])];
+      let affected = 0;
+      for (const o of occupants) {
+        if (!o) continue;
+        o.conditions?.add?.('ravenous', { intensity });
+        if (typeof o.hungerLevel === 'number') o.hungerLevel = 100;
+        affected += 1;
+      }
+      result.environmentalChanges.push({
+        type: 'mass_hunger',
+        description: affected > 0
+          ? `Obsessive hunger grips ${affected} occupant${affected > 1 ? 's' : ''} of the area — every one of them driven to eat.`
+          : 'The hunger sphere settles over an empty room, waiting for someone to feel it.',
+      });
+      return;
+    }
 
     if (effect.type === 'object_to_food') {
       if (!target || !target.id || !target.material) return;
