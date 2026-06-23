@@ -2343,6 +2343,110 @@ class SpellLibrary {
           }))
         )
     );
+
+    // Web - sticky strands that ensnare; immobility utility (reuses 'restrained')
+    this.registerSpell(
+      new Spell('Web', {
+        level: 2,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 hour',
+        description: 'Fill an area with thick, clinging webbing that ensnares whatever it touches.',
+        weightGainTheme:
+          'Sticky strands wrap a target fast, holding her in place for whatever feeding comes next — and the more of her there is, the more thoroughly the webbing has to hold.',
+        validTargets: ['creature', 'npc', 'area'],
+        tags: ['conjuration', 'restraint', 'containment'],
+      })
+        .addOption(
+          new SpellOption('Ensnare', 'Bind a single target in webbing', (caster, target) => ({
+            type: 'web',
+            mode: 'single',
+            description: `${target ? target.name : 'The target'} is wrapped fast in clinging webbing.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Web the Area', 'Fill the whole area with webbing', () => ({
+            type: 'web',
+            mode: 'area',
+            description: 'Thick webbing fills the area.',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Ensnarement', 'Bind the target in webbing', (caster, target) => ({
+            type: 'web',
+            mode: 'single',
+            description: `${target ? target.name : 'The target'} is caught in the web.`,
+          }))
+        )
+    );
+
+    // Mage Hand - a spectral hand that brings food to a target's mouth at range
+    this.registerSpell(
+      new Spell('Mage Hand', {
+        level: 0,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: '1 minute',
+        description: 'A spectral hand that fetches, carries, and — pointedly — brings food to a waiting mouth.',
+        weightGainTheme:
+          'The conjured hand makes feeding effortless: it ferries morsel after morsel to a target\'s lips so she never has to lift a finger, only open and swallow.',
+        validTargets: ['creature', 'npc', 'object'],
+        tags: ['conjuration', 'utility', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Bring Food', 'Ferry nearby food to the target\'s mouth', (caster, target) => ({
+            type: 'mage_hand',
+            mode: 'feed',
+            description: `The spectral hand carries food to ${target ? target.name : 'the target'}'s mouth.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Spectral Hand', 'Conjure a helping hand', () => ({
+            type: 'mage_hand',
+            mode: 'feed',
+            description: 'A spectral hand appears, ready to ferry food.',
+          }))
+        )
+    );
+
+    // Command - a one-word compulsion; "Eat!" forces a target to obey
+    this.registerSpell(
+      new Spell('Command', {
+        level: 1,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: '1 round',
+        description: 'A single word of power the target must obey — most usefully, "Eat."',
+        weightGainTheme:
+          'One commanding word overrides hesitation entirely. "Eat," you say, and the target must — reaching for the nearest food and obeying whether she meant to or not.',
+        validTargets: ['creature', 'npc'],
+        tags: ['enchantment', 'compulsion', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Eat!', 'Force the target to take a mouthful', (caster, target) => ({
+            type: 'command',
+            word: 'eat',
+            description: `${target ? target.name : 'The target'} is compelled to eat.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Gorge!', 'Force the target into a frantic mouthful after mouthful', (caster, target) => ({
+            type: 'command',
+            word: 'gorge',
+            description: `${target ? target.name : 'The target'} is compelled to gorge.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Compulsion', 'Issue a one-word command', (caster, target) => ({
+            type: 'command',
+            word: 'eat',
+            description: `${target ? target.name : 'The target'} must obey.`,
+          }))
+        )
+    );
   }
 }
 

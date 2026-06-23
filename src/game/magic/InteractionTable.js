@@ -1164,6 +1164,89 @@ const TABLE = [
     description: 'A whole banquet walled in with her and no one else, and all the time in the world to finish it.',
   },
 
+  // ── Web (immobility; also sets restrained -> @restrained combos fire) ──────
+  {
+    id: 'oozing_abundance+web',
+    trigger: 'Oozing Abundance',
+    requires: { recentSpell: 'Web' },
+    symmetric: false,
+    text: 'spell.interaction.web.oozing_abundance',
+    description: 'Caught fast in the webbing, she cannot flinch as the nutritive ooze strikes and soaks in.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Web + Oozing Abundance'),
+  },
+  {
+    id: 'confection_snare+web',
+    trigger: 'Confection Snare',
+    requires: { recentSpell: 'Web' },
+    symmetric: false,
+    text: 'spell.interaction.web.confection_snare',
+    description: 'Candy bindings layer over the webbing — she is doubly bound, sweet and snug, no slack left.',
+  },
+  {
+    id: 'enlarge_person+web',
+    trigger: 'Enlarge Person',
+    requires: { recentSpell: 'Web' },
+    symmetric: false,
+    text: 'spell.interaction.web.enlarge_person',
+    description: 'She swells outward into the webbing; the bigger she grows, the more thoroughly the web has her.',
+  },
+
+  // ── Mage Hand (remote feeding) ────────────────────────────────────────────
+  {
+    id: 'mage_hand+conjure_food',
+    trigger: 'Mage Hand',
+    requires: { recentSpell: 'Conjure Food' },
+    symmetric: false,
+    text: 'spell.interaction.conjure_food.mage_hand',
+    description: 'The tireless hand ferries the conjured spread to her lips, morsel after morsel.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Conjure Food + Mage Hand'),
+  },
+  {
+    id: 'mage_hand+goodberry',
+    trigger: 'Mage Hand',
+    requires: { recentSpell: 'Goodberry' },
+    symmetric: false,
+    text: 'spell.interaction.goodberry.mage_hand',
+    description: 'The hand pops berry after berry between her lips until the bowl is empty.',
+  },
+  {
+    id: 'mage_hand+create_food_and_water',
+    trigger: 'Mage Hand',
+    requires: { recentSpell: 'Create Food and Water' },
+    symmetric: false,
+    text: 'spell.interaction.create_food_and_water.mage_hand',
+    description: 'A whole banquet and a tireless hand to serve it; she need do nothing but receive course after course.',
+    effect: ({ bonusCalories }) => bonusCalories(10, 'Create Food and Water + Mage Hand'),
+  },
+
+  // ── Command (forced eating) ───────────────────────────────────────────────
+  {
+    id: 'command+conjure_food',
+    trigger: 'Command',
+    requires: { recentSpell: 'Conjure Food' },
+    symmetric: false,
+    text: 'spell.interaction.conjure_food.command',
+    description: 'You conjure the food and command her to it; she eats it down without a flicker of choice.',
+    effect: ({ bonusCalories }) => bonusCalories(10, 'Conjure Food + Command'),
+  },
+  {
+    id: 'command+feast_of_shadows',
+    trigger: 'Command',
+    requires: { recentSpell: 'Feast of Shadows' },
+    symmetric: false,
+    text: 'spell.interaction.feast_of_shadows.command',
+    description: 'Compelled to eat the illusion, her convinced body banks every phantom calorie as real.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Feast of Shadows + Command'),
+  },
+  {
+    id: 'command+sphere_of_influence',
+    trigger: 'Command',
+    requires: { recentSpell: 'Sphere of Influence' },
+    symmetric: false,
+    text: 'spell.interaction.sphere_of_influence.command',
+    description: 'A room already mad with hunger, driven by a single word — every ravenous occupant obeys as one.',
+  },
+
 ];
 
 // ─── Match engine ─────────────────────────────────────────────────────────────

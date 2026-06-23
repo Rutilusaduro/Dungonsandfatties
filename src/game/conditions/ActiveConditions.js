@@ -44,6 +44,7 @@ export const RESTRAINT_MATERIAL = {
   vineweave_restraint: 'vines',
   grease: 'slick',
   wall_of_force: 'force',
+  web: 'webbing',
 };
 
 class ActiveConditions {

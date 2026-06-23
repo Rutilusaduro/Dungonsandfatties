@@ -62,6 +62,9 @@ const SPELL_KEY_TO_NAME = {
   sphere_of_influence: 'Sphere of Influence',
   gust_of_wind: 'Gust of Wind',
   wall_of_force: 'Wall of Force',
+  web: 'Web',
+  mage_hand: 'Mage Hand',
+  command: 'Command',
 };
 
 const gravity = new GravityCalculator();

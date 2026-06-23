@@ -1707,6 +1707,64 @@ export function registerSpellModules(engine) {
     { when: {}, text: 'A whole banquet, walled in with {subject.name} and no one else. The force booth holds her in with more food than she could finish in a day, and all the time in the world to try.' },
   ]);
 
+  // ─── Web (immobility utility) ───
+  engine.registerModule('spell.scene.web', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'Strand after strand lashes across {subject.name}\'s vast frame — and there is so much of her to bind that the webbing layers thick and white over every soft expanse. She strains, and the strands only pull tauter against her. She is not going anywhere.',
+    },
+    {
+      when: {},
+      text: 'Clinging webbing whips out and wraps {subject.name} fast. She pulls against it and finds it only clings harder, holding her exactly where she stands.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.web.oozing_abundance', [
+    { when: {}, text: 'Caught fast in the webbing, {subject.name} cannot so much as flinch as the nutritive ooze strikes her. It spreads across her bound body and soaks in, and there is nothing she can do but take it.' },
+  ]);
+  engine.registerModule('spell.interaction.web.confection_snare', [
+    { when: {}, text: 'Candy bindings layer over the webbing, sugar-sticky strands knotting into silk. {subject.name} is doubly bound now, sweet and snug, with no slack left anywhere.' },
+  ]);
+  engine.registerModule('spell.interaction.web.enlarge_person', [
+    { when: {}, text: 'The enlargement swells {subject.name} outward into the webbing, and the strands stretch and bite as she grows to fill them. The bigger she gets, the more thoroughly the web has her.' },
+  ]);
+
+  // ─── Mage Hand (remote feeding cantrip) ───
+  engine.registerModule('spell.scene.mage_hand', [
+    {
+      when: {},
+      text: 'A translucent hand blinks into being and flexes its spectral fingers. It drifts toward the nearest food, plucks up a morsel, and carries it patiently toward {subject.name}\'s mouth — the first of many trips it intends to make.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.conjure_food.mage_hand', [
+    { when: {}, text: 'The spectral hand has a fresh-conjured spread to work from, and it is tireless about it — ferrying morsel after morsel to {subject.name}\'s lips so all she has to do is open and swallow, again and again.' },
+  ]);
+  engine.registerModule('spell.interaction.goodberry.mage_hand', [
+    { when: {}, text: 'The hand pops berry after berry between {subject.name}\'s lips, an idle, endless rhythm she barely notices — until the bowl is empty and she finds she has eaten every one.' },
+  ]);
+  engine.registerModule('spell.interaction.create_food_and_water.mage_hand', [
+    { when: {}, text: 'A whole conjured banquet and a tireless hand to serve it. The spectral fingers work without pause, and {subject.name} need do nothing but receive course after course.' },
+  ]);
+
+  // ─── Command (forced compulsion) ───
+  engine.registerModule('spell.scene.command', [
+    {
+      when: {},
+      text: '"Eat." The word lands with the weight of geas, and {subject.name}\'s body answers before her mind can object — her hand moving to the nearest food, lifting it, bringing it to her mouth whether she chose to or not.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.conjure_food.command', [
+    { when: {}, text: 'You conjure the food and then command her to it. {subject.name} has no say in the matter — the word takes hold and she eats the conjured spread down without a flicker of choice.' },
+  ]);
+  engine.registerModule('spell.interaction.feast_of_shadows.command', [
+    { when: {}, text: 'The command does not care that the feast is illusion. {subject.name} is compelled to eat it regardless, and her convinced body banks every phantom calorie as if it were real.' },
+  ]);
+  engine.registerModule('spell.interaction.sphere_of_influence.command', [
+    { when: {}, text: 'A room already seized by hunger, and now a single word drives them all at once. "Eat," you say, and every compelled, ravenous occupant obeys as one.' },
+  ]);
+
 }
 
 export default registerSpellModules;
