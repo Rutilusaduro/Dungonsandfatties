@@ -1765,6 +1765,71 @@ export function registerSpellModules(engine) {
     { when: {}, text: 'A room already seized by hunger, and now a single word drives them all at once. "Eat," you say, and every compelled, ravenous occupant obeys as one.' },
   ]);
 
+  // ─── Sleep (helpless feeding) ───
+  engine.registerModule('spell.scene.sleep', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'Sleep rolls over {subject.name} like a warm tide and she sinks into it, her great soft bulk settling deeper into whatever holds her. She could not lift a hand now if she wanted to — and her slack, parted lips will still accept whatever you choose to give them.',
+    },
+    {
+      when: {},
+      text: 'The spell draws {subject.name} down into a soft, heavy sleep. Her body goes pliant and unresisting, her breathing slow and even — and her mouth stays just open enough to be fed.',
+    },
+  ]);
+  engine.registerModule('spell.interaction.sleep.mage_hand', [
+    { when: {}, text: 'Asleep and helpless, {subject.name} is fed entirely by the spectral hand. It slips morsel after morsel between her parted lips, and she swallows on reflex, dreaming, never once waking.' },
+  ]);
+  engine.registerModule('spell.interaction.sleep.feast_of_shadows', [
+    { when: {}, text: 'The illusory feast becomes {subject.name}\'s dream. She eats it in her sleep, lips working at phantom food, and her convinced body banks every dreamed calorie as real, soft weight.' },
+  ]);
+  engine.registerModule('spell.interaction.sleep.enlarge_person', [
+    { when: {}, text: 'She never stirs as the enlargement takes her. {subject.name} simply grows in her sleep, swelling larger and softer across whatever she lies upon, dreaming through every new inch.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.asleep.oozing_abundance', [
+    { when: {}, text: 'The nutritive ooze strikes a sleeper who cannot flinch from it. It spreads over {subject.name}\'s slack, soft body and soaks slowly in, feeding her while she dreams.' },
+  ]);
+
+  // ─── Malleable Flesh (pliant, keeps more) ───
+  engine.registerModule('spell.scene.malleable_flesh', [
+    {
+      when: { stage: { min: 5 } },
+      text: 'The transmutation sinks into {subject.name}\'s already-generous form and every soft pound of her turns softer still — pliant, receptive, eager. Whatever she eats now will settle into her like water into a sponge and stay there.',
+    },
+    {
+      when: {},
+      text: 'A warmth passes through {subject.name} and her flesh changes character — yielding where it was firm, quick to take and hold. Her body has become a thing that keeps every calorie it is given.',
+    },
+  ]);
+  engine.registerModule('spell.interaction.malleable_flesh.enlarge_person', [
+    { when: {}, text: 'The enlargement pours into flesh made soft and receptive, and {subject.name} blooms outward all the more lavishly for it — every new inch landing softer, rounder, and more permanent than it would on firmer stuff.' },
+  ]);
+  engine.registerModule('spell.interaction.malleable_flesh.morph_mass', [
+    { when: {}, text: 'Pliant flesh drinks in the absorbed matter greedily. {subject.name}\'s softened body folds the new mass deep into itself, keeping every ounce where firmer flesh would have shed some.' },
+  ]);
+  engine.registerModule('spell.interaction.malleable_flesh.swelling_tide', [
+    { when: {}, text: 'The rising tide of growth meets flesh primed to receive it, and there is no resistance anywhere. {subject.name} swells in soft, compounding waves, each one settling fully into her pliant body.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.pliable.confection_snare', [
+    { when: {}, text: 'The candy bindings sink into flesh gone soft and yielding, pressing deep into every pliant curve of {subject.name} and holding her all the more snugly for how readily she gives.' },
+  ]);
+
+  // ─── Sylvan Bounty (druidic renewing food source) ───
+  engine.registerModule('spell.scene.sylvan_bounty', [
+    {
+      when: {},
+      text: 'You press the magic into the earth and the ground answers. Vines climb, boughs unfurl, and within moments the area is heavy with ripe, glistening fruit — and as the first is picked, more swells visibly to take its place. The thicket will not run dry.',
+    },
+  ]);
+  engine.registerModule('spell.interaction.create_water.sylvan_bounty', [
+    { when: {}, text: 'The conjured water sinks into the new growth and the thicket answers with abundance, fruit swelling fatter and sweeter and faster than before, until the boughs bend under the weight of it.' },
+  ]);
+  engine.registerModule('spell.interaction.plant_growth.sylvan_bounty', [
+    { when: {}, text: 'Plant Growth and Sylvan Bounty feed into one another, and the thicket erupts into a riot of fruit — more than any room of mouths could finish, replenishing faster than it can be picked.' },
+  ]);
+  engine.registerModule('spell.interaction.sphere_of_influence.sylvan_bounty', [
+    { when: {}, text: 'A renewing thicket of fruit, and a roomful of occupants seized by obsessive hunger. They fall on the bounty together — and the bounty simply keeps growing back, feeding the frenzy as long as it lasts.' },
+  ]);
+
 }
 
 export default registerSpellModules;

@@ -141,7 +141,7 @@ describe('combo integration: key pairs fire end-to-end', () => {
   it('all 4 new themed spells cast and their scenes resolve', async () => {
     const { getTextEngine } = await import('../textEngine/index.js');
     const engine = getTextEngine();
-    for (const name of ['Rooting Glut', 'Bottomless Gullet', "Feeder's Devotion", 'Swelling Tide', 'Gust of Wind', 'Wall of Force', 'Web', 'Mage Hand', 'Command']) {
+    for (const name of ['Rooting Glut', 'Bottomless Gullet', "Feeder's Devotion", 'Swelling Tide', 'Gust of Wind', 'Wall of Force', 'Web', 'Mage Hand', 'Command', 'Sleep', 'Malleable Flesh', 'Sylvan Bounty']) {
       const spell = lib.getSpell(name);
       expect(spell, `${name} not registered`).toBeTruthy();
       const { result } = SpellResolver.cast({

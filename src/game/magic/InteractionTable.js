@@ -1247,6 +1247,106 @@ const TABLE = [
     description: 'A room already mad with hunger, driven by a single word — every ravenous occupant obeys as one.',
   },
 
+  // ── Sleep (helpless feeding; also sets asleep -> @asleep combos) ───────────
+  {
+    id: 'mage_hand+sleep',
+    trigger: 'Mage Hand',
+    requires: { recentSpell: 'Sleep' },
+    symmetric: false,
+    text: 'spell.interaction.sleep.mage_hand',
+    description: 'The spectral hand feeds the sleeper morsel by morsel; she swallows on reflex, never waking.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Sleep + Mage Hand'),
+  },
+  {
+    id: 'feast_of_shadows+sleep',
+    trigger: 'Feast of Shadows',
+    requires: { recentSpell: 'Sleep' },
+    symmetric: false,
+    text: 'spell.interaction.sleep.feast_of_shadows',
+    description: 'The illusory feast becomes her dream; she eats it asleep and banks every dreamed calorie as real.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Sleep + Feast of Shadows'),
+  },
+  {
+    id: 'enlarge_person+sleep',
+    trigger: 'Enlarge Person',
+    requires: { recentSpell: 'Sleep' },
+    symmetric: false,
+    text: 'spell.interaction.sleep.enlarge_person',
+    description: 'She never stirs as the enlargement takes her, simply growing larger and softer in her sleep.',
+  },
+  {
+    id: 'oozing_abundance@asleep',
+    trigger: 'Oozing Abundance',
+    requires: { condition: 'asleep' },
+    symmetric: false,
+    text: 'spell.interaction.condition.asleep.oozing_abundance',
+    description: 'The ooze strikes a sleeper who cannot flinch, spreading over her slack body and soaking in.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Oozing Abundance on sleeping target'),
+  },
+
+  // ── Malleable Flesh (pliant; growth lands harder; sets pliable) ────────────
+  {
+    id: 'enlarge_person+malleable_flesh',
+    trigger: 'Enlarge Person',
+    requires: { recentSpell: 'Malleable Flesh' },
+    symmetric: false,
+    text: 'spell.interaction.malleable_flesh.enlarge_person',
+    description: 'Growth pours into soft, receptive flesh and blooms all the more lavishly and permanently.',
+    effect: ({ bonusWeight }) => bonusWeight(10, 'Malleable Flesh + Enlarge Person'),
+  },
+  {
+    id: 'morph_mass+malleable_flesh',
+    trigger: 'Morph Mass',
+    requires: { recentSpell: 'Malleable Flesh' },
+    symmetric: false,
+    text: 'spell.interaction.malleable_flesh.morph_mass',
+    description: 'Pliant flesh drinks in the absorbed matter greedily, keeping every ounce.',
+    effect: ({ bonusWeight }) => bonusWeight(12, 'Malleable Flesh + Morph Mass'),
+  },
+  {
+    id: 'swelling_tide+malleable_flesh',
+    trigger: 'Swelling Tide',
+    requires: { recentSpell: 'Malleable Flesh' },
+    symmetric: false,
+    text: 'spell.interaction.malleable_flesh.swelling_tide',
+    description: 'The rising tide meets flesh primed to receive it; each wave settles fully into her pliant body.',
+    effect: ({ bonusWeight }) => bonusWeight(10, 'Malleable Flesh + Swelling Tide'),
+  },
+  {
+    id: 'confection_snare@pliable',
+    trigger: 'Confection Snare',
+    requires: { condition: 'pliable' },
+    symmetric: false,
+    text: 'spell.interaction.condition.pliable.confection_snare',
+    description: 'Candy bindings sink into soft, yielding flesh, holding her all the more snugly for how she gives.',
+  },
+
+  // ── Sylvan Bounty (druidic renewing food source; zone-memory combos) ──────
+  {
+    id: 'sylvan_bounty+create_water',
+    trigger: 'Sylvan Bounty',
+    requires: { recentSpell: 'Create Water' },
+    symmetric: false,
+    text: 'spell.interaction.create_water.sylvan_bounty',
+    description: 'Conjured water sinks into the new growth; fruit swells fatter, sweeter, and faster.',
+  },
+  {
+    id: 'sylvan_bounty+plant_growth',
+    trigger: 'Sylvan Bounty',
+    requires: { recentSpell: 'Plant Growth' },
+    symmetric: false,
+    text: 'spell.interaction.plant_growth.sylvan_bounty',
+    description: 'Plant Growth and the thicket feed each other into a riot of fruit, replenishing faster than it is picked.',
+  },
+  {
+    id: 'sylvan_bounty+sphere_of_influence',
+    trigger: 'Sylvan Bounty',
+    requires: { recentSpell: 'Sphere of Influence' },
+    symmetric: false,
+    text: 'spell.interaction.sphere_of_influence.sylvan_bounty',
+    description: 'A renewing thicket and a roomful of ravenous mouths — the bounty keeps growing back to feed the frenzy.',
+  },
+
 ];
 
 // ─── Match engine ─────────────────────────────────────────────────────────────

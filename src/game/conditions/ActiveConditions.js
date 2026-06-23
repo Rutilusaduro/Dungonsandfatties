@@ -17,6 +17,8 @@
 //   floor_tethered   -> { source, intensity }
 //   slowed           -> { intensity }
 //   engorged         -> { swell, intensity }  // temporary post-Feast-Exile fullness
+//   asleep           -> { intensity }          // magically asleep, helpless to feeding
+//   pliable          -> { intensity }          // flesh softened, keeps more from every meal
 // ═══════════════════════════════════════════════════════════════
 
 export const CONDITION_KEYS = [
@@ -33,6 +35,8 @@ export const CONDITION_KEYS = [
   'floor_tethered',
   'slowed',
   'engorged',
+  'asleep',
+  'pliable',
 ];
 
 // Spell key (name lowercased, spaces -> _) -> restraint material.

@@ -2447,6 +2447,129 @@ class SpellLibrary {
           }))
         )
     );
+
+    // Sleep - magical slumber; a sleeper is helpless to passive feeding
+    this.registerSpell(
+      new Spell('Sleep', {
+        level: 1,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: '90 feet',
+        duration: '1 minute',
+        description: 'Sink a target into magical sleep, helpless and pliant to whatever is brought to her lips.',
+        weightGainTheme:
+          'A sleeping target offers no resistance at all. She can still swallow what is placed in her mouth, and she does — drifting through dreams of feasting while her body is fed.',
+        validTargets: ['creature', 'npc'],
+        tags: ['enchantment', 'sleep', 'helpless'],
+      })
+        .addOption(
+          new SpellOption('Drowse', 'Ease a single target into sleep', (caster, target) => ({
+            type: 'sleep',
+            intensity: 1,
+            description: `${target ? target.name : 'The target'} sinks into a soft, heavy sleep.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Deep Slumber', 'Drop a target into a profound sleep', (caster, target) => ({
+            type: 'sleep',
+            intensity: 2,
+            description: `${target ? target.name : 'The target'} falls into a deep, unwakeable slumber.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Slumber', 'Send the target to sleep', (caster, target) => ({
+            type: 'sleep',
+            intensity: 1,
+            description: `${target ? target.name : 'The target'} drifts off to sleep.`,
+          }))
+        )
+    );
+
+    // Malleable Flesh - transmute the body soft and pliant so it keeps more from every meal
+    this.registerSpell(
+      new Spell('Malleable Flesh', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: 'Touch',
+        duration: 'Until next long rest',
+        description: 'Transmute a target\'s body soft and yielding, so it banks far more weight from whatever it eats.',
+        weightGainTheme:
+          'The flesh turns pliant and receptive, every curve a little softer and quicker to take on weight. Whatever she eats before her next rest settles deeper and stays.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'body', 'weight-gain'],
+      })
+        .addOption(
+          new SpellOption('Soften', 'Body keeps 50% more from the next rest', (caster, target) => {
+            if (target) target.calorieRetentionMultiplier = Math.max(target.calorieRetentionMultiplier || 1, 1.5);
+            return {
+              type: 'malleable_flesh',
+              retention: 1.5,
+              description: `${target ? target.name : 'The target'}'s flesh softens and grows receptive.`,
+            };
+          })
+        )
+        .addOption(
+          new SpellOption('Render', 'Body keeps double from the next rest', (caster, target) => {
+            if (target) target.calorieRetentionMultiplier = Math.max(target.calorieRetentionMultiplier || 1, 2);
+            return {
+              type: 'malleable_flesh',
+              retention: 2,
+              description: `${target ? target.name : 'The target'} turns lavishly soft and pliant.`,
+            };
+          })
+        )
+        .addEffect(
+          new SpellEffect('Softening', 'Make the flesh pliant', (caster, target) => {
+            if (target) target.calorieRetentionMultiplier = Math.max(target.calorieRetentionMultiplier || 1, 1.5);
+            return {
+              type: 'malleable_flesh',
+              retention: 1.5,
+              description: `${target ? target.name : 'The target'}'s body softens.`,
+            };
+          })
+        )
+    );
+
+    // Sylvan Bounty - druidic; grow a living, self-replenishing food source in the zone
+    this.registerSpell(
+      new Spell('Sylvan Bounty', {
+        level: 3,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: '1 hour',
+        description: 'Call forth a living thicket heavy with fruit that keeps producing more as it is picked.',
+        weightGainTheme:
+          'Vines and boughs erupt from the ground, sagging with ripe, sweet, calorie-dense fruit — and the more is eaten, the more swells back to replace it.',
+        validTargets: [], // druidic area spell — fills the zone
+        tags: ['conjuration', 'druid', 'food-source', 'nature'],
+      })
+        .addOption(
+          new SpellOption('Berry Thicket', 'Grow a modest, renewing thicket', () => ({
+            type: 'sylvan_bounty',
+            servings: 8,
+            caloriesPerServing: 240,
+            description: 'A thicket heavy with renewing berries rises from the ground.',
+          }))
+        )
+        .addOption(
+          new SpellOption('Orchard Burst', 'Grow a lavish, renewing orchard', () => ({
+            type: 'sylvan_bounty',
+            servings: 16,
+            caloriesPerServing: 320,
+            description: 'A whole orchard bursts into being, boughs sagging with fruit.',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Bounty', 'Grow a renewing food source', () => ({
+            type: 'sylvan_bounty',
+            servings: 8,
+            caloriesPerServing: 240,
+            description: 'A renewing thicket of fruit rises from the ground.',
+          }))
+        )
+    );
   }
 }
 

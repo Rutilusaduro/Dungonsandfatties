@@ -65,6 +65,9 @@ const SPELL_KEY_TO_NAME = {
   web: 'Web',
   mage_hand: 'Mage Hand',
   command: 'Command',
+  sleep: 'Sleep',
+  malleable_flesh: 'Malleable Flesh',
+  sylvan_bounty: 'Sylvan Bounty',
 };
 
 const gravity = new GravityCalculator();
@@ -468,6 +471,26 @@ class SpellResolver {
   }
 
   static applyWorldCreationEffect({ effect, result, target, zone, createdFoods }) {
+    // sleep + malleable_flesh act on the target, not the zone — handle before the zone guard.
+    if (effect.type === 'sleep') {
+      if (!target) return;
+      target.conditions?.add?.('asleep', { intensity: effect.intensity || 1 });
+      result.environmentalChanges.push({
+        type: 'sleep',
+        description: `${target.name} is asleep and helpless, able only to swallow what reaches her lips.`,
+      });
+      return;
+    }
+    if (effect.type === 'malleable_flesh') {
+      if (!target) return;
+      target.conditions?.add?.('pliable', { intensity: effect.retention >= 2 ? 2 : 1 });
+      result.environmentalChanges.push({
+        type: 'malleable_flesh',
+        description: `${target.name}'s flesh is soft and receptive; she will keep far more from her next rest.`,
+      });
+      return;
+    }
+
     // feast_exile acts on the target, not the zone — handle before the zone guard.
     if (effect.type === 'feast_exile') {
       if (!target) return;
@@ -503,6 +526,22 @@ class SpellResolver {
     }
 
     if (!zone) return;
+
+    if (effect.type === 'sylvan_bounty') {
+      const thicket = createFood('Produce', {
+        servings: effect.servings || 8,
+        caloriesPerServing: effect.caloriesPerServing || 240,
+        isMagical: true,
+        description: 'A living thicket of ripe fruit that swells back as fast as it is picked.',
+      }).enableReplication().makeAppetizing(20);
+      zone.addFood(thicket, 'Sylvan Bounty');
+      createdFoods.push(thicket);
+      result.environmentalChanges.push({
+        type: 'sylvan_bounty',
+        description: `A renewing ${effect.servings >= 16 ? 'orchard' : 'thicket'} of fruit fills the area.`,
+      });
+      return;
+    }
 
     if (effect.type === 'mass_hunger') {
       const intensity = effect.intensity || 1;
