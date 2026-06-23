@@ -6,6 +6,7 @@
 import { Food, Pastry, Bread, Meat, Cream, Pudding, IceCream } from '../items/Food.js';
 import { matchCombos } from './InteractionTable.js';
 import { Cow, Monstrosity } from '../entities/Creature.js';
+import { beginFeastExile } from '../mechanics/SwellSystem.js';
 import GravityCalculator from '../mechanics/GravitySystem.js';
 import {
   CALORIES_PER_POUND,
@@ -57,6 +58,7 @@ const SPELL_KEY_TO_NAME = {
   "feeder's_devotion": "Feeder's Devotion",
   swelling_tide: 'Swelling Tide',
   imbue_life: 'Imbue Life',
+  feast_exile: 'Feast Exile',
 };
 
 const gravity = new GravityCalculator();
@@ -460,6 +462,17 @@ class SpellResolver {
   }
 
   static applyWorldCreationEffect({ effect, result, target, zone, createdFoods }) {
+    // feast_exile acts on the target, not the zone — handle before the zone guard.
+    if (effect.type === 'feast_exile') {
+      if (!target) return;
+      beginFeastExile(target, { rests: effect.rests, gorgePerRest: effect.gorgePerRest });
+      result.environmentalChanges.push({
+        type: 'feast_exile',
+        description: `${target.name} vanishes into the feast realm; it will return engorged after ${effect.rests} rest${effect.rests > 1 ? 's' : ''}.`,
+      });
+      return;
+    }
+
     // animate_coating acts on the target, not the zone — handle before the zone guard.
     if (effect.type === 'animate_coating') {
       const coated = target?.conditions?.has?.('ooze_coated');

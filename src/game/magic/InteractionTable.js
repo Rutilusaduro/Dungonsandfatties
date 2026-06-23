@@ -1028,6 +1028,64 @@ const TABLE = [
     description: 'The grease slicking her draws together, animates, and feeds itself between her lips.',
   },
 
+  // ── Feast Exile (banishment) ──────────────────────────────────────────────
+  {
+    id: 'feast_exile@ravenous',
+    trigger: 'Feast Exile',
+    requires: { condition: 'ravenous' },
+    symmetric: false,
+    text: 'spell.interaction.condition.ravenous.feast_exile',
+    description: 'Banished mid-hunger, she falls on the endless banquet possessed — returning far heavier than a calm exile.',
+  },
+  {
+    id: 'feast_exile@satiated',
+    trigger: 'Feast Exile',
+    requires: { condition: 'satiated' },
+    symmetric: false,
+    text: 'spell.interaction.condition.satiated.feast_exile',
+    description: 'Already stuffed, she is sent to a realm where fullness does not count, and keeps going regardless.',
+  },
+  {
+    id: 'feast_exile+suggestion',
+    trigger: 'Feast Exile',
+    requires: { recentSpell: 'Suggestion' },
+    symmetric: false,
+    text: 'spell.interaction.suggestion.feast_exile',
+    description: 'The suggestion still warm, she steps into the exile willingly, wanting only to indulge.',
+  },
+
+  // ── engorged returnees: combos that key off the post-exile state ──────────
+  {
+    id: 'enlarge_person@engorged',
+    trigger: 'Enlarge Person',
+    requires: { condition: 'engorged' },
+    symmetric: false,
+    text: 'spell.interaction.condition.engorged.enlarge_person',
+    description: 'Growth pours into a body still swollen from the feast realm, building on the temporary fullness.',
+    effect: ({ bonusWeight }) => bonusWeight(8, 'Enlarge Person on engorged target'),
+  },
+  {
+    id: 'suggestion@engorged',
+    trigger: 'Suggestion',
+    requires: { condition: 'engorged' },
+    symmetric: false,
+    text: 'spell.interaction.condition.engorged.suggestion',
+    description: 'Flushed and engorged from exile, she is in no state to refuse, agreeing before you finish speaking.',
+    effect: ({ target }) => {
+      if (target && target.willingness !== undefined) {
+        target.willingness = Math.min(100, target.willingness + 15);
+      }
+    },
+  },
+  {
+    id: 'confection_snare@engorged',
+    trigger: 'Confection Snare',
+    requires: { condition: 'engorged' },
+    symmetric: false,
+    text: 'spell.interaction.condition.engorged.confection_snare',
+    description: 'Candy bindings wrap a body still round and yielding — so much more of her to catch and hold now.',
+  },
+
 ];
 
 // ─── Match engine ─────────────────────────────────────────────────────────────

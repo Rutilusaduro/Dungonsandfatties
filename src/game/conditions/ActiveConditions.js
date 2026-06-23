@@ -16,6 +16,7 @@
 //   floating         -> { height, intensity }
 //   floor_tethered   -> { source, intensity }
 //   slowed           -> { intensity }
+//   engorged         -> { swell, intensity }  // temporary post-Feast-Exile fullness
 // ═══════════════════════════════════════════════════════════════
 
 export const CONDITION_KEYS = [
@@ -31,6 +32,7 @@ export const CONDITION_KEYS = [
   'floating',
   'floor_tethered',
   'slowed',
+  'engorged',
 ];
 
 // Spell key (name lowercased, spaces -> _) -> restraint material.

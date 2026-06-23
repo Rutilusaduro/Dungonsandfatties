@@ -13,6 +13,7 @@ import SpellResolver from '../game/magic/SpellResolver';
 import { getTextEngine } from '../textEngine/index.js';
 import { RESTRAINT_MATERIAL } from '../game/conditions/ActiveConditions.js';
 import { applyPreRestSharing } from '../game/mechanics/NutritionSystem.js';
+import { applyFeastExile } from '../game/mechanics/SwellSystem.js';
 import World from '../game/world/World';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
@@ -219,7 +220,13 @@ const Game = () => {
     const sharingNotes = applyPreRestSharing(restTargets, currentZone);
     sharingNotes.forEach(note => textEngine.addText(note));
 
+    // Feast Exile lifecycle: exile countdown, return engorged, swell fade
+    const exileNotes = applyFeastExile(restTargets);
+    exileNotes.forEach(note => textEngine.addText(note));
+
     const summaries = restTargets
+      // Exiled entities aren't here to eat; the swell system handles them.
+      .filter(entity => !entity.isExiled)
       .map(entity => ({ entity, result: entity.processLongRestNutrition?.() }))
       .filter(({ result }) => result && (result.rawCalories > 0 || result.weightGain > 0));
 

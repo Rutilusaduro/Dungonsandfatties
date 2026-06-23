@@ -2192,6 +2192,46 @@ class SpellLibrary {
           }))
         )
     );
+
+    // Feast Exile - banish a creature to a pocket realm of endless banquets
+    this.registerSpell(
+      new Spell('Feast Exile', {
+        level: 4,
+        school: 'Abjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: '1-2 long rests',
+        description: 'Banish a creature to a pocket realm of endless banquets; it returns temporarily engorged, softer, and curvier.',
+        weightGainTheme:
+          'The target vanishes into a realm with no floor to its appetite, gorging across days that pass in a blink, and returns swollen with temporary, jiggling softness that slowly settles — leaving a little behind for good.',
+        validTargets: ['creature', 'npc'],
+        tags: ['abjuration', 'banishment', 'weight-gain', 'temporary'],
+      })
+        .addOption(
+          new SpellOption('Brief Exile', 'One rest away; returns pleasantly swollen', (caster, target) => ({
+            type: 'feast_exile',
+            rests: 1,
+            gorgePerRest: 120,
+            description: `${target.name} blinks out toward the feast realm.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Deep Exile', 'Two rests away; returns enormously engorged', (caster, target) => ({
+            type: 'feast_exile',
+            rests: 2,
+            gorgePerRest: 140,
+            description: `${target.name} is banished deep into the endless banquet.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Banishment', 'Send the target to the feast realm', (caster, target) => ({
+            type: 'feast_exile',
+            rests: 2,
+            gorgePerRest: 140,
+            description: `${target.name} vanishes into a realm of endless feasting.`,
+          }))
+        )
+    );
   }
 }
 

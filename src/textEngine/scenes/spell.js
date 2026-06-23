@@ -1609,6 +1609,38 @@ export function registerSpellModules(engine) {
     { when: {}, text: 'The conjured grease slicking {subject.name} draws together and quickens. Animated, it slides upward and feeds itself between her lips, rich and slippery and impossible to refuse.' },
   ]);
 
+  // ─── Feast Exile (banishment to the endless banquet) ───
+  engine.registerModule('spell.scene.feast_exile', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The air folds, and {subject.name}\'s considerable form is gone — pulled into a realm where the tables never end and the day never closes. Wherever she is now, she is eating, and she will not stop until the spell brings her back.',
+    },
+    {
+      when: {},
+      text: 'Reality opens a soft seam and swallows {subject.name} whole. She vanishes toward a pocket realm of endless banquets, where she will gorge through days that pass in a blink before the magic returns her.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.ravenous.feast_exile', [
+    { when: {}, text: 'You banish her mid-hunger, and the feast realm is merciless about it. {subject.name} arrives already starving and falls on the endless banquet like a woman possessed — she will come back having eaten far, far more than a calmer exile could ever hold.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.satiated.feast_exile', [
+    { when: {}, text: 'Already stuffed when the seam takes her, {subject.name} is given a realm where fullness simply does not count. Whatever limit she had reached is left behind in this world; in the next, she keeps going regardless.' },
+  ]);
+  engine.registerModule('spell.interaction.suggestion.feast_exile', [
+    { when: {}, text: 'The suggestion still warm in her mind, {subject.name} steps into the exile willingly, even eagerly — sent off to the endless banquet wanting nothing more than to indulge every moment of it.' },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.engorged.enlarge_person', [
+    { when: {}, text: 'The enlargement pours into a body still swollen and soft from the feast realm. {subject.name} grows on top of the engorgement, her temporary fullness becoming a foundation for something even more lavish.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.engorged.suggestion', [
+    { when: {}, text: 'Flushed and engorged from her exile, {subject.name} is in no state to refuse anything. The suggestion lands on a woman already drunk on indulgence, and she agrees before you have finished speaking.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.engorged.confection_snare', [
+    { when: {}, text: 'The candy bindings wrap a body still round and yielding from the feast realm. There is so much more of {subject.name} to bind now, every soft swell of her engorged form caught and held in sweet restraint.' },
+  ]);
+
 }
 
 export default registerSpellModules;

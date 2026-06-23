@@ -176,6 +176,33 @@ describe('combo integration: key pairs fire end-to-end', () => {
     expect(fed).toBe(0);
   });
 
+  it('Feast Exile sends a target away, returns it engorged, then settles', async () => {
+    const { applyFeastExile } = await import('../game/mechanics/SwellSystem.js');
+    const spell = lib.getSpell('Feast Exile');
+    const option = spell.options.find(o => o.name === 'Deep Exile'); // 2 rests
+    const target = mockNPC('Exiled');
+    target.baseWeight = 150;
+    target.currentWeight = 150;
+
+    SpellResolver.cast({ spell, caster: new Character('C'), target, zone: null, selectedOption: option });
+    expect(target.isExiled).toBe(true);
+
+    applyFeastExile([target]); // rest 1: still away
+    expect(target.isExiled).toBe(true);
+    expect(target.currentWeight).toBe(150);
+
+    applyFeastExile([target]); // rest 2: returns engorged
+    expect(target.isExiled).toBe(false);
+    expect(target.conditions.has('engorged')).toBe(true);
+    expect(target.currentWeight).toBeGreaterThan(300);
+
+    let guard = 0;
+    while (target.swell && guard++ < 30) applyFeastExile([target]);
+    expect(target.conditions.has('engorged')).toBe(false);     // swell faded
+    expect(target.currentWeight).toBeGreaterThan(150);          // kept a little
+    expect(target.currentWeight).toBeLessThan(250);             // most of it gone
+  });
+
   it('condition combo fires when condition present, not when absent', () => {
     const spell = lib.getSpell('Feast of Shadows');
     const caster = new Character('Caster');
