@@ -1454,6 +1454,132 @@ export function registerSpellModules(engine) {
     },
   ]);
 
+  // ═══════════════════════════════════════════════════════════════
+  // P3.4 — NEW THEMED SPELL SCENES (weight-stage coverage) + COMBOS
+  // ═══════════════════════════════════════════════════════════════
+
+  engine.registerModule('spell.scene.rooting_glut', [
+    {
+      when: { stage: { min: 8 } },
+      text: 'The spell reaches a body already vast, and there is simply no fighting it. {subject.name} settles where she stands with a deep, final-sounding groan, her enormous weight rooting her to the spot. She was barely mobile before. Now she is a fixture, sinking softly into her own mass.',
+    },
+    {
+      when: { stage: { min: 4, max: 7 } },
+      text: 'Magic pours down through {subject.name} and pools at her feet like setting cement. Her heavy frame anchors in place, and when she tries to shift her weight she finds she simply cannot — rooted, settled, softening further by the second.',
+    },
+    {
+      when: { stage: { max: 3 } },
+      text: 'The spell takes hold and {subject.name} feels her footing change — a sudden, gentle heaviness pinning her where she stands. She shifts, testing it, and finds her own body unwilling to move, content to stay and soften right here.',
+    },
+    {
+      when: {},
+      text: '{subject.name} is rooted in place beneath her own gathering weight, anchored and slowly settling.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.bottomless_gullet', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The spell opens something in {subject.name} that was already generous. Whatever ceiling her enormous appetite once had simply lifts away, and the hunger behind her eyes turns bottomless — she could clear a banquet table now and ask, quite sincerely, what comes next.',
+    },
+    {
+      when: { stage: { max: 5 } },
+      text: 'A warmth spreads through {subject.name}\'s middle, and with it a strange new spaciousness. The familiar limit of fullness retreats, then retreats again, until she realizes with a slow flush that she could keep going far longer than she ever has.',
+    },
+    {
+      when: {},
+      text: '{subject.name}\'s capacity widens; the point of fullness slides far out of reach.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.feeder\'s_devotion', [
+    {
+      when: { willingness: { min: 70 } },
+      text: 'The enchantment lands on a target already fond of the attention, and it blooms into something close to bliss. {subject.name} leans into the next offered bite with open, grateful want, every feeding now an act of devotion she would never think to refuse.',
+    },
+    {
+      when: {},
+      text: 'The magic softens whatever resistance {subject.name} held. Feeding stops feeling like coercion and starts feeling like care — she leans in, lips parting for the next bite before it is even offered, wanting it now in a way she did not a moment ago.',
+    },
+  ]);
+
+  engine.registerModule('spell.scene.swelling_tide', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The tide rolls into a body already monumental, and it does not so much grow her as set her in motion — a slow, mounting swell rippling outward, each wave leaving {subject.name} broader and softer than the last, with no shoreline anywhere in sight.',
+    },
+    {
+      when: { stage: { min: 3, max: 5 } },
+      text: 'It begins gently — a faint, warm pressure under the skin. Then the first wave breaks and {subject.name} swells, settles, and swells again, the growth mounting with a slow inevitability she can feel building toward something far larger.',
+    },
+    {
+      when: { stage: { max: 2 } },
+      text: 'A slow swell starts somewhere deep in {subject.name} and rises outward in patient waves. Each one rounds her a little further, soft and unhurried, the tide only beginning to come in.',
+    },
+    {
+      when: {},
+      text: 'A mounting swell rolls through {subject.name} in slow, compounding waves.',
+    },
+  ]);
+
+  // ─── Rooting Glut combos (immobility) ───
+  engine.registerModule('spell.interaction.rooting_glut.enlarge_person', [
+    { when: {}, text: 'Rooted in place, {subject.name} can only grow where she stands. The enlargement swells her outward against an anchor she cannot break, every new pound pressing her more firmly into the spot.' },
+  ]);
+  engine.registerModule('spell.interaction.rooting_glut.morph_mass', [
+    { when: {}, text: 'The anchored body is a perfect well for the mass transmutation. Matter piles onto {subject.name} where she sits rooted, and she has no way to rise out from under it.' },
+  ]);
+  engine.registerModule('spell.interaction.rooting_glut.oozing_abundance', [
+    { when: {}, text: 'She is rooted and cannot dodge. The ooze-arrow strikes home and spreads, coating a target who can only sit and take it, feeding into her where she is anchored.' },
+  ]);
+
+  // ─── Bottomless Gullet combos (stuffing) ───
+  engine.registerModule('spell.interaction.bottomless_gullet.feast_of_shadows', [
+    { when: {}, text: 'With fullness pushed out of reach, the illusory feast has nowhere to stop. {subject.name} eats and eats the phantom abundance, her bottomless capacity turning a meal into a marathon her body fully believes.' },
+  ]);
+  engine.registerModule('spell.interaction.bottomless_gullet.oozing_abundance', [
+    { when: {}, text: 'The nutritive ooze pours into a gullet with no floor. There is no fullness to slow it, no limit to reach — just rich abundance sinking endlessly into {subject.name}.' },
+  ]);
+  engine.registerModule('spell.interaction.bottomless_gullet.suggestion', [
+    { when: {}, text: 'Eat your fill, you suggest — and with her capacity made bottomless, "her fill" no longer means anything. {subject.name} simply keeps going, happily, with no end in sight.' },
+  ]);
+
+  // ─── Feeder's Devotion combos (feeder) ───
+  engine.registerModule('spell.interaction.feeder\'s_devotion.suggestion', [
+    { when: {}, text: 'Devotion and suggestion fold seamlessly together. {subject.name} does not feel pushed at all — she feels adored, and so she opens for the next bite as though it were her own dearest idea.' },
+  ]);
+  engine.registerModule('spell.interaction.feeder\'s_devotion.detect_cravings', [
+    { when: {}, text: 'Knowing her cravings and wrapped in devotion, every offering becomes irresistible. {subject.name} is fed precisely what she loves, by someone she now adores, and she melts into the feeding completely.' },
+  ]);
+  engine.registerModule('spell.interaction.feeder\'s_devotion.oozing_abundance', [
+    { when: {}, text: 'What might have startled her instead lands as care. Bathed in devotion, {subject.name} welcomes the rush of nutritive ooze, leaning into the coating rather than away from it.' },
+  ]);
+
+  // ─── Swelling Tide combos (growth) ───
+  engine.registerModule('spell.interaction.swelling_tide.enlarge_person', [
+    { when: {}, text: 'The enlargement crests on an already-rising tide. {subject.name} surges outward all at once, the sudden growth riding the mounting swell into something far larger than either spell alone.' },
+  ]);
+  engine.registerModule('spell.interaction.swelling_tide.morph_mass', [
+    { when: {}, text: 'The mass transmutation feeds the tide and the tide feeds it back. Matter folds onto {subject.name} in waves, each swell heavier than the last, the growth compounding with nowhere to crest.' },
+  ]);
+  engine.registerModule('spell.interaction.swelling_tide.ravenous_expansion', [
+    { when: {}, text: 'A rising tide of growth meets a bottomless new hunger, and the two amplify without limit. {subject.name} swells as she gorges and gorges as she swells, each wave larger than the one before.' },
+  ]);
+
+  // ─── New-spell condition interactions ───
+  engine.registerModule('spell.interaction.condition.enlarged.rooting_glut', [
+    { when: {}, text: 'Already swollen larger than life, {subject.name} is rooted in place by her own enormous mass. The anchor settles over a body that could barely move to begin with, fixing her completely.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.satiated.bottomless_gullet', [
+    { when: {}, text: 'She is stuffed to the brim — exactly the moment the spell opens her further. The fullness {subject.name} just reached dissolves, and abruptly there is room again, far more than before.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.restrained.feeder\'s_devotion', [
+    { when: {}, text: 'Bound and unable to turn away, {subject.name} feels the devotion settle over her instead of panic. She cannot leave the feeding — and now, wrapped in adoration, she finds she no longer wants to.' },
+  ]);
+  engine.registerModule('spell.interaction.condition.ravenous.swelling_tide', [
+    { when: {}, text: 'The tide rises through a body already wild with hunger. Every ravenous bite {subject.name} takes feeds the swell, and the swell deepens the hunger, the two cresting higher and higher together.' },
+  ]);
+
 }
 
 export default registerSpellModules;

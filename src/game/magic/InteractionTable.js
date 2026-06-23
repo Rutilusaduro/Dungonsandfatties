@@ -844,6 +844,155 @@ const TABLE = [
     description: 'Candy bindings find the ooze already slicking her and take hold instantly — sticky meeting sticky.',
   },
 
+  // ════════════════════════════════════════════════════════════════════════
+  // P3.4 — NEW THEMED SPELL COMBOS
+  // ════════════════════════════════════════════════════════════════════════
+
+  // ── Rooting Glut (immobility) ─────────────────────────────────────────────
+  {
+    id: 'enlarge_person+rooting_glut',
+    trigger: 'Enlarge Person',
+    requires: { recentSpell: 'Rooting Glut' },
+    symmetric: false,
+    text: 'spell.interaction.rooting_glut.enlarge_person',
+    description: 'Rooted in place, she can only grow where she stands, swelling against an anchor she cannot break.',
+    effect: ({ bonusWeight }) => bonusWeight(8, 'Rooting Glut + Enlarge Person'),
+  },
+  {
+    id: 'morph_mass+rooting_glut',
+    trigger: 'Morph Mass',
+    requires: { recentSpell: 'Rooting Glut' },
+    symmetric: false,
+    text: 'spell.interaction.rooting_glut.morph_mass',
+    description: 'The anchored body is a perfect well for the mass transmutation; she cannot rise out from under it.',
+    effect: ({ bonusWeight }) => bonusWeight(10, 'Rooting Glut + Morph Mass'),
+  },
+  {
+    id: 'oozing_abundance+rooting_glut',
+    trigger: 'Oozing Abundance',
+    requires: { recentSpell: 'Rooting Glut' },
+    symmetric: false,
+    text: 'spell.interaction.rooting_glut.oozing_abundance',
+    description: 'Rooted and unable to dodge, she can only sit and take the nutritive ooze where she is anchored.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Rooting Glut + Oozing Abundance'),
+  },
+  {
+    id: 'rooting_glut@enlarged',
+    trigger: 'Rooting Glut',
+    requires: { condition: 'enlarged' },
+    symmetric: false,
+    text: 'spell.interaction.condition.enlarged.rooting_glut',
+    description: 'Already enormous, she is rooted in place by her own mass — fixed completely.',
+  },
+
+  // ── Bottomless Gullet (stuffing) ──────────────────────────────────────────
+  {
+    id: 'feast_of_shadows+bottomless_gullet',
+    trigger: 'Feast of Shadows',
+    requires: { recentSpell: 'Bottomless Gullet' },
+    symmetric: false,
+    text: 'spell.interaction.bottomless_gullet.feast_of_shadows',
+    description: 'With fullness pushed out of reach, the illusory feast never has to stop — a meal becomes a marathon.',
+    effect: ({ bonusCalories }) => bonusCalories(12, 'Bottomless Gullet + Feast of Shadows'),
+  },
+  {
+    id: 'oozing_abundance+bottomless_gullet',
+    trigger: 'Oozing Abundance',
+    requires: { recentSpell: 'Bottomless Gullet' },
+    symmetric: false,
+    text: 'spell.interaction.bottomless_gullet.oozing_abundance',
+    description: 'The nutritive ooze pours into a gullet with no floor — no fullness to slow it, sinking endlessly.',
+    effect: ({ bonusCalories }) => bonusCalories(12, 'Bottomless Gullet + Oozing Abundance'),
+  },
+  {
+    id: 'suggestion+bottomless_gullet',
+    trigger: 'Suggestion',
+    requires: { recentSpell: 'Bottomless Gullet' },
+    symmetric: false,
+    text: 'spell.interaction.bottomless_gullet.suggestion',
+    description: 'Eat your fill, you suggest — but with capacity made bottomless, she simply keeps going with no end.',
+  },
+  {
+    id: 'bottomless_gullet@satiated',
+    trigger: 'Bottomless Gullet',
+    requires: { condition: 'satiated' },
+    symmetric: false,
+    text: 'spell.interaction.condition.satiated.bottomless_gullet',
+    description: 'Stuffed to the brim is exactly the moment the spell opens her further — abruptly there is room again.',
+  },
+
+  // ── Feeder's Devotion (feeder) ────────────────────────────────────────────
+  {
+    id: "suggestion+feeders_devotion",
+    trigger: 'Suggestion',
+    requires: { recentSpell: "Feeder's Devotion" },
+    symmetric: false,
+    text: "spell.interaction.feeder's_devotion.suggestion",
+    description: 'Devotion and suggestion fold together; she does not feel pushed, she feels adored, and opens willingly.',
+  },
+  {
+    id: "detect_cravings+feeders_devotion",
+    trigger: 'Detect Cravings',
+    requires: { recentSpell: "Feeder's Devotion" },
+    symmetric: false,
+    text: "spell.interaction.feeder's_devotion.detect_cravings",
+    description: 'Fed exactly what she loves by someone she now adores, she melts into the feeding completely.',
+  },
+  {
+    id: "oozing_abundance+feeders_devotion",
+    trigger: 'Oozing Abundance',
+    requires: { recentSpell: "Feeder's Devotion" },
+    symmetric: false,
+    text: "spell.interaction.feeder's_devotion.oozing_abundance",
+    description: 'Bathed in devotion, she welcomes the rush of nutritive ooze, leaning into the coating rather than away.',
+  },
+  {
+    id: "feeders_devotion@restrained",
+    trigger: "Feeder's Devotion",
+    requires: { condition: 'restrained' },
+    symmetric: false,
+    text: "spell.interaction.condition.restrained.feeder's_devotion",
+    description: 'Bound and unable to leave the feeding, she is wrapped in adoration and finds she no longer wants to.',
+  },
+
+  // ── Swelling Tide (growth) ────────────────────────────────────────────────
+  {
+    id: 'enlarge_person+swelling_tide',
+    trigger: 'Enlarge Person',
+    requires: { recentSpell: 'Swelling Tide' },
+    symmetric: false,
+    text: 'spell.interaction.swelling_tide.enlarge_person',
+    description: 'The enlargement crests on a rising tide, surging her outward far larger than either spell alone.',
+    effect: ({ bonusWeight }) => bonusWeight(10, 'Swelling Tide + Enlarge Person'),
+  },
+  {
+    id: 'morph_mass+swelling_tide',
+    trigger: 'Morph Mass',
+    requires: { recentSpell: 'Swelling Tide' },
+    symmetric: false,
+    text: 'spell.interaction.swelling_tide.morph_mass',
+    description: 'Mass transmutation feeds the tide and the tide feeds it back — the growth compounding with no crest.',
+    effect: ({ bonusWeight }) => bonusWeight(14, 'Swelling Tide + Morph Mass'),
+  },
+  {
+    id: 'ravenous_expansion+swelling_tide',
+    trigger: 'Ravenous Expansion',
+    requires: { recentSpell: 'Swelling Tide' },
+    symmetric: false,
+    text: 'spell.interaction.swelling_tide.ravenous_expansion',
+    description: 'A rising tide of growth meets bottomless hunger; she swells as she gorges and gorges as she swells.',
+    effect: ({ bonusCalories }) => bonusCalories(12, 'Swelling Tide + Ravenous Expansion'),
+  },
+  {
+    id: 'swelling_tide@ravenous',
+    trigger: 'Swelling Tide',
+    requires: { condition: 'ravenous' },
+    symmetric: false,
+    text: 'spell.interaction.condition.ravenous.swelling_tide',
+    description: 'The tide rises through a body already wild with hunger, each cresting higher with the other.',
+    effect: ({ bonusWeight }) => bonusWeight(8, 'Swelling Tide on ravenous target'),
+  },
+
 ];
 
 // ─── Match engine ─────────────────────────────────────────────────────────────

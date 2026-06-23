@@ -68,7 +68,7 @@ for (const entry of TABLE) {
 // Coverage: every spell should participate in >= FLOOR combos (as trigger or partner).
 // ponytail: warn-only during the content build; flip COVERAGE_HARD=true at P3.5 closeout.
 const COVERAGE_FLOOR = 3;
-const COVERAGE_HARD = false;
+const COVERAGE_HARD = true; // P3.5 closeout: floor is now enforced, not just warned
 const touches = Object.fromEntries(knownSpells.map(s => [s, 0]));
 for (const entry of TABLE) {
   if (entry.trigger in touches) touches[entry.trigger]++;

@@ -52,6 +52,10 @@ const SPELL_KEY_TO_NAME = {
   goodberry: 'Goodberry',
   plant_growth: 'Plant Growth',
   slow: 'Slow',
+  rooting_glut: 'Rooting Glut',
+  bottomless_gullet: 'Bottomless Gullet',
+  "feeder's_devotion": "Feeder's Devotion",
+  swelling_tide: 'Swelling Tide',
 };
 
 const gravity = new GravityCalculator();

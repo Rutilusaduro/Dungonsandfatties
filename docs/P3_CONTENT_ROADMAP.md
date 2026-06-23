@@ -1,7 +1,12 @@
 # P3 Content Roadmap — Spell & Interaction Depth
 
-Scoped 2026-06-23. Builds on the unified `InteractionTable` (58 combos) and the
+Scoped 2026-06-23. Builds on the unified `InteractionTable` and the
 `content:lint` / `npm test` gates from P0–P3.
+
+> **STATUS: complete.** 42 spells, 97 combos. Every spell ≥3 combos (hard-lint).
+> P3.2 coverage floor · P3.3 condition combos (8) · P3.4 four themed spells
+> (Rooting Glut, Bottomless Gullet, Feeder's Devotion, Swelling Tide) · P3.5
+> closeout (coverage flipped to hard-fail). `npm test` 19 green, build passes.
 
 ## Goal
 

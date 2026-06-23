@@ -138,6 +138,21 @@ describe('combo integration: key pairs fire end-to-end', () => {
     expect(hasCombo).toBe(true);
   });
 
+  it('all 4 new themed spells cast and their scenes resolve', async () => {
+    const { getTextEngine } = await import('../textEngine/index.js');
+    const engine = getTextEngine();
+    for (const name of ['Rooting Glut', 'Bottomless Gullet', "Feeder's Devotion", 'Swelling Tide']) {
+      const spell = lib.getSpell(name);
+      expect(spell, `${name} not registered`).toBeTruthy();
+      const { result } = SpellResolver.cast({
+        spell, caster: new Character('C'), target: mockNPC(), zone: null, selectedOption: null,
+      });
+      expect(result.success, `${name} cast failed`).toBe(true);
+      const sceneKey = `spell.scene.${name.toLowerCase().replace(/ /g, '_')}`;
+      expect(engine.hasModule(sceneKey), `${sceneKey} missing`).toBe(true);
+    }
+  });
+
   it('condition combo fires when condition present, not when absent', () => {
     const spell = lib.getSpell('Feast of Shadows');
     const caster = new Character('Caster');

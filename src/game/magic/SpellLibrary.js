@@ -1966,6 +1966,179 @@ class SpellLibrary {
         .addInteraction('Plant Growth', 'Aura enhances magical plant growth')
         .addInteraction('Create Food and Water', 'Aura stacks with conjured food')
     );
+
+    // ═══════════════════════════════════════════════════════════════
+    // P3.4 — THEMED SPELLS (immobility / stuffing / feeder / growth)
+    // ═══════════════════════════════════════════════════════════════
+
+    // Rooting Glut (immobility) - anchor a target in place under its own weight
+    this.registerSpell(
+      new Spell('Rooting Glut', {
+        level: 2,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Concentration, up to 1 minute',
+        description: 'Bind a target to the ground beneath its own gathering weight.',
+        weightGainTheme:
+          'The target settles where it stands, anchored and softening, too heavy and too rooted to rise.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'immobility', 'weight-gain'],
+      })
+        .addOption(
+          new SpellOption('Settle', 'Anchor lightly; the target can still shift', (caster, target) => ({
+            type: 'rooting',
+            tether: 'light',
+            weightGainPerRound: 6,
+            description: `${target.name} settles heavily in place.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Take Root', 'Anchor fully; the target cannot rise', (caster, target) => ({
+            type: 'rooting',
+            tether: 'full',
+            weightGainPerRound: 12,
+            description: `${target.name} takes root, too heavy and too anchored to stand.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Anchoring', 'Root the target in place', (caster, target) => ({
+            type: 'rooting',
+            tether: 'full',
+            weightGainPerRound: 12,
+            description: `${target.name} is rooted in place beneath gathering weight.`,
+          }))
+        )
+    );
+
+    // Bottomless Gullet (stuffing) - raise a target's capacity before satiation
+    this.registerSpell(
+      new Spell('Bottomless Gullet', {
+        level: 2,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: 'Touch',
+        duration: '10 minutes',
+        description: 'Expand how much a target can take in before it feels full.',
+        weightGainTheme:
+          'Fullness retreats. A feast that should have ended becomes a marathon, every limit pushed further back.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'stuffing', 'capacity', 'weight-gain'],
+      })
+        .addOption(
+          new SpellOption('Widen', 'Double capacity before fullness', (caster, target) => ({
+            type: 'capacity',
+            capacityMultiplier: 2,
+            description: `${target.name}'s capacity widens; fullness feels far away.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Hollow', 'Quadruple capacity; fullness barely registers', (caster, target) => ({
+            type: 'capacity',
+            capacityMultiplier: 4,
+            description: `${target.name} becomes a near-bottomless gullet.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Capacity', 'Expand stomach capacity', (caster, target) => ({
+            type: 'capacity',
+            capacityMultiplier: 2,
+            description: `${target.name} can take far more before feeling full.`,
+          }))
+        )
+    );
+
+    // Feeder's Devotion (feeder) - turn feeding into welcome care, raising willingness
+    this.registerSpell(
+      new Spell("Feeder's Devotion", {
+        level: 1,
+        school: 'Enchantment',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: '1 hour',
+        description: 'Make every offered bite land as care, raising a target\'s willingness to be fed.',
+        weightGainTheme:
+          'Feeding stops feeling like coercion and starts feeling like devotion. The target leans into it, wanting the next bite.',
+        validTargets: ['creature', 'npc'],
+        tags: ['enchantment', 'feeder', 'relationship', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Warmth', 'Raise willingness by 20', (caster, target) => {
+            if (target && target.willingness !== undefined) {
+              target.willingness = Math.min(100, target.willingness + 20);
+            }
+            return {
+              type: 'devotion',
+              willingnessGain: 20,
+              description: `${target.name} warms to the feeding, leaning in for more.`,
+            };
+          })
+        )
+        .addOption(
+          new SpellOption('Adoration', 'Raise willingness by 40', (caster, target) => {
+            if (target && target.willingness !== undefined) {
+              target.willingness = Math.min(100, target.willingness + 40);
+            }
+            return {
+              type: 'devotion',
+              willingnessGain: 40,
+              description: `${target.name} adores being fed, wanting nothing else.`,
+            };
+          })
+        )
+        .addEffect(
+          new SpellEffect('Devotion', 'Raise willingness to be fed', (caster, target) => {
+            if (target && target.willingness !== undefined) {
+              target.willingness = Math.min(100, target.willingness + 20);
+            }
+            return {
+              type: 'devotion',
+              willingnessGain: 20,
+              description: `${target.name} welcomes the feeding.`,
+            };
+          })
+        )
+    );
+
+    // Swelling Tide (magical growth) - slow runaway growth that builds over a feast
+    this.registerSpell(
+      new Spell('Swelling Tide', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 minute',
+        description: 'Start a slow, mounting swell that compounds as the target keeps eating.',
+        weightGainTheme:
+          'Growth arrives like a tide — slow at first, then mounting, each wave of indulgence swelling the target a little further than the last.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'growth', 'weight-gain'],
+      })
+        .addOption(
+          new SpellOption('Rising', 'Gentle mounting swell', (caster, target) => ({
+            type: 'swelling_tide',
+            weightGainPerRound: 8,
+            compounding: true,
+            description: `${target.name} begins to swell in slow, mounting waves.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Surge', 'Steep runaway swell', (caster, target) => ({
+            type: 'swelling_tide',
+            weightGainPerRound: 18,
+            compounding: true,
+            description: `${target.name} surges outward, each wave larger than the last.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Tide', 'Begin a mounting swell', (caster, target) => ({
+            type: 'swelling_tide',
+            weightGainPerRound: 8,
+            compounding: true,
+            description: `${target.name} swells in mounting waves.`,
+          }))
+        )
+    );
   }
 }
 
