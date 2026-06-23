@@ -52,9 +52,29 @@ for (const entry of TABLE) {
   }
 }
 
+// Coverage: every spell should participate in >= FLOOR combos (as trigger or partner).
+// ponytail: warn-only during the content build; flip COVERAGE_HARD=true at P3.5 closeout.
+const COVERAGE_FLOOR = 3;
+const COVERAGE_HARD = false;
+const touches = Object.fromEntries(knownSpells.map(s => [s, 0]));
+for (const entry of TABLE) {
+  if (entry.trigger in touches) touches[entry.trigger]++;
+  if (entry.requires?.recentSpell in touches) touches[entry.requires.recentSpell]++;
+}
+const below = Object.entries(touches)
+  .filter(([, c]) => c < COVERAGE_FLOOR)
+  .sort((a, b) => a[1] - b[1]);
+
+if (below.length > 0) {
+  const list = below.map(([s, c]) => `${s}(${c})`).join(', ');
+  const msg = `coverage: ${below.length} spell(s) below floor(${COVERAGE_FLOOR}): ${list}`;
+  if (COVERAGE_HARD) { console.error(`content:lint ERROR ${msg}`); errors++; }
+  else { console.warn(`content:lint WARN  ${msg}`); }
+}
+
 if (errors > 0) {
   console.error(`\ncontent:lint: ${errors} error(s). Fix before shipping.`);
   process.exit(1);
 } else {
-  console.log(`content:lint: ${TABLE.length} entries, ${ids.size} unique IDs — clean.`);
+  console.log(`content:lint: ${TABLE.length} entries, ${ids.size} unique IDs, ${knownSpells.length} spells — clean.`);
 }

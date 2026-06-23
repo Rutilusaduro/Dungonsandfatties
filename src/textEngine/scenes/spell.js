@@ -1288,6 +1288,113 @@ export function registerSpellModules(engine) {
     },
   ]);
 
+  // ─── P3.2 coverage-fill interactions ─────────────────────────────
+
+  engine.registerModule('spell.interaction.arcane_appraisal.shape_wood', [
+    {
+      when: {},
+      text: 'Knowing exactly where the old chair would have failed, you shape the new wood past that limit — a seat rated for far more than she carries now, an invitation she will grow into.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.arcane_appraisal.telekinesis', [
+    {
+      when: {},
+      text: 'The appraisal already told you the bench would hold. You set {subject.name} down onto it without hesitation, and the wood takes her weight with a confident, unhurried creak.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.arcane_appraisal.shape_earth', [
+    {
+      when: {},
+      text: 'You read the ground\'s hidden tolerance first, then shape it to exceed her — a basin and seat of stone that will not crack no matter how much heavier she becomes.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.shape_earth.shape_wood', [
+    {
+      when: {},
+      text: 'Stone foundation and shaped wood rise together into a single feeding station: a low, broad seat and a table at the perfect reach, everything built so she never has to stand to eat.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.shape_wood.telekinesis', [
+    {
+      when: {},
+      text: 'The feeding chair is already shaped and waiting. You guide {subject.name} down into it, and she settles into the contoured wood as though it were made to hold exactly her — because it was.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.conjure_food.morph_mass', [
+    {
+      when: {},
+      text: 'The conjured spread becomes part of the absorption. Food and earth and matter fold inward together, packing onto {subject.name} in rich, heavy layers she can feel settling.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.polymorph.morph_mass', [
+    {
+      when: {},
+      text: 'The beast-form\'s bulk gives the mass transmutation more to work with. Surrounding matter clings to the already-massive shape, dragging it lower, broader, heavier with every breath.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.goodberry.conjure_food', [
+    {
+      when: {},
+      text: 'The conjured feast dominates the table, but the little berries sit beside it like an afterthought — and an afterthought is exactly what gets eaten absently, handful after handful, long after the main course is gone.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.detect_cravings.goodberry', [
+    {
+      when: {},
+      text: 'Knowing her cravings, you tune each berry to taste of the thing {subject.name} wants most. They vanish three and four at a time, and she barely notices her own hand returning to the bowl.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.conjure_food.prestidigitation', [
+    {
+      when: {},
+      text: 'A flick of minor magic and the conjured food warms, glistens, and releases a scent of butter and sugar into the air. It was tempting before. Now it is impossible to walk past.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.goodberry.prestidigitation', [
+    {
+      when: {},
+      text: 'The cantrip sweetens each berry and warms it on the tongue, turning a plain mouthful of nourishment into a small, moreish pleasure she keeps reaching for.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.detect_cravings.feast_of_shadows', [
+    {
+      when: {},
+      text: 'The illusion shapes itself from her own cravings. Every phantom dish is precisely what {subject.name} most wanted to eat, and her body believes every calorie of it.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.polymorph.fireball', [
+    {
+      when: {},
+      text: 'Roasted abundance rains down on the beast-form, and its already-insatiable appetite takes over. It eats without pause, without thought, swelling visibly as the seasoned feast disappears.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.fireball.flesh_to_food', [
+    {
+      when: {},
+      text: 'What the flames roasted, the transmutation completes — flesh becomes pure, rich, edible abundance, already warm, already seasoned, ready to be devoured.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.ambrosial_aura.oozing_abundance', [
+    {
+      when: {},
+      text: 'The ooze-arrow flies through air already thick with nourishment. It strikes heavier, coats thicker, every drop amplified by the aura into something dense and deeply fattening.',
+    },
+  ]);
+
 }
 
 export default registerSpellModules;

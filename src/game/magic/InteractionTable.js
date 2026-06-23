@@ -622,6 +622,140 @@ const TABLE = [
     description: 'Conjured food arrives into an aura-thick zone, stacking caloric abundance.',
   },
 
+  // ── P3.2 coverage fill: structure & support (immobility/size theme) ────────
+  {
+    id: 'shape_wood+arcane_appraisal',
+    trigger: 'Shape Wood',
+    requires: { recentSpell: 'Arcane Appraisal' },
+    symmetric: false,
+    text: 'spell.interaction.arcane_appraisal.shape_wood',
+    description: 'Knowing the breaking point, you shape the wood to exceed it — a seat rated far past her current size.',
+  },
+  {
+    id: 'telekinesis+arcane_appraisal',
+    trigger: 'Telekinesis',
+    requires: { recentSpell: 'Arcane Appraisal' },
+    symmetric: false,
+    text: 'spell.interaction.arcane_appraisal.telekinesis',
+    description: 'The appraisal confirmed the surface holds; you set her down onto it without hesitation.',
+  },
+  {
+    id: 'shape_earth+arcane_appraisal',
+    trigger: 'Shape Earth',
+    requires: { recentSpell: 'Arcane Appraisal' },
+    symmetric: false,
+    text: 'spell.interaction.arcane_appraisal.shape_earth',
+    description: 'You read the ground\'s tolerance, then shape stone to exceed it — a seat that will not crack as she grows.',
+  },
+  {
+    id: 'shape_wood+shape_earth',
+    trigger: 'Shape Wood',
+    requires: { recentSpell: 'Shape Earth' },
+    symmetric: false,
+    text: 'spell.interaction.shape_earth.shape_wood',
+    description: 'Stone foundation and shaped wood rise into one feeding station, built so she never stands to eat.',
+  },
+  {
+    id: 'telekinesis+shape_wood',
+    trigger: 'Telekinesis',
+    requires: { recentSpell: 'Shape Wood' },
+    symmetric: false,
+    text: 'spell.interaction.shape_wood.telekinesis',
+    description: 'The feeding chair waits already shaped; you guide her down into wood made to hold exactly her.',
+  },
+
+  // ── P3.2 coverage fill: mass & appetite (size/stuffing theme) ──────────────
+  {
+    id: 'morph_mass+conjure_food',
+    trigger: 'Morph Mass',
+    requires: { recentSpell: 'Conjure Food' },
+    symmetric: false,
+    text: 'spell.interaction.conjure_food.morph_mass',
+    description: 'Conjured food folds into the absorption, packing onto her in rich, heavy layers.',
+    effect: ({ bonusWeight }) => bonusWeight(8, 'Conjure Food + Morph Mass'),
+  },
+  {
+    id: 'morph_mass+polymorph',
+    trigger: 'Morph Mass',
+    requires: { recentSpell: 'Polymorph' },
+    symmetric: false,
+    text: 'spell.interaction.polymorph.morph_mass',
+    description: 'The beast-form\'s bulk gives the mass transmutation more to drag lower, broader, heavier.',
+    effect: ({ bonusWeight }) => bonusWeight(12, 'Polymorph + Morph Mass'),
+  },
+  {
+    id: 'conjure_food+goodberry',
+    trigger: 'Conjure Food',
+    requires: { recentSpell: 'Goodberry' },
+    symmetric: false,
+    text: 'spell.interaction.goodberry.conjure_food',
+    description: 'The little berries sit beside the feast — and an afterthought is exactly what gets eaten absently.',
+  },
+  {
+    id: 'goodberry+detect_cravings',
+    trigger: 'Goodberry',
+    requires: { recentSpell: 'Detect Cravings' },
+    symmetric: false,
+    text: 'spell.interaction.detect_cravings.goodberry',
+    description: 'Each berry tuned to her craving vanishes three and four at a time, her hand returning unnoticed.',
+    effect: ({ bonusCalories }) => bonusCalories(6, 'Detect Cravings + Goodberry'),
+  },
+
+  // ── P3.2 coverage fill: flavor & temptation (feeder theme) ─────────────────
+  {
+    id: 'prestidigitation+conjure_food',
+    trigger: 'Prestidigitation',
+    requires: { recentSpell: 'Conjure Food' },
+    symmetric: false,
+    text: 'spell.interaction.conjure_food.prestidigitation',
+    description: 'A flick of magic warms the conjured food and releases butter and sugar into the air — impossible to walk past.',
+  },
+  {
+    id: 'prestidigitation+goodberry',
+    trigger: 'Prestidigitation',
+    requires: { recentSpell: 'Goodberry' },
+    symmetric: false,
+    text: 'spell.interaction.goodberry.prestidigitation',
+    description: 'The cantrip sweetens each berry into a small, moreish pleasure she keeps reaching for.',
+  },
+  {
+    id: 'feast_of_shadows+detect_cravings',
+    trigger: 'Feast of Shadows',
+    requires: { recentSpell: 'Detect Cravings' },
+    symmetric: false,
+    text: 'spell.interaction.detect_cravings.feast_of_shadows',
+    description: 'The illusion shapes itself from her cravings — every phantom dish exactly what she most wanted, and her body believes it.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Detect Cravings + Feast of Shadows'),
+  },
+
+  // ── P3.2 coverage fill: roast & transmute (stuffing theme) ─────────────────
+  {
+    id: 'fireball+polymorph',
+    trigger: 'Fireball',
+    requires: { recentSpell: 'Polymorph' },
+    symmetric: false,
+    text: 'spell.interaction.polymorph.fireball',
+    description: 'Roasted abundance rains on the beast-form; its insatiable appetite devours without pause, swelling visibly.',
+    effect: ({ bonusCalories }) => bonusCalories(12, 'Polymorph + Fireball'),
+  },
+  {
+    id: 'flesh_to_food+fireball',
+    trigger: 'Flesh to Food',
+    requires: { recentSpell: 'Fireball' },
+    symmetric: false,
+    text: 'spell.interaction.fireball.flesh_to_food',
+    description: 'What the flames roasted, the transmutation completes — flesh becomes warm, seasoned, edible abundance.',
+  },
+  {
+    id: 'oozing_abundance+ambrosial_aura',
+    trigger: 'Oozing Abundance',
+    requires: { recentSpell: 'Ambrosial Aura' },
+    symmetric: false,
+    text: 'spell.interaction.ambrosial_aura.oozing_abundance',
+    description: 'The ooze-arrow flies through air thick with nourishment, striking heavier and coating thicker.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Ambrosial Aura + Oozing Abundance'),
+  },
+
 ];
 
 // ─── Match engine ─────────────────────────────────────────────────────────────
