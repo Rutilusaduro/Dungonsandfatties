@@ -3,6 +3,8 @@
  * Objects in zones that can be affected by spells and interactions
  */
 
+import ActiveConditions from '../conditions/ActiveConditions.js';
+
 class EnvironmentalObject {
   constructor(id, name, type, options = {}) {
     this.id = id;
@@ -15,6 +17,7 @@ class EnvironmentalObject {
     this.currentDurability = this.durability;
     this.canBeInteractedWith = options.canBeInteractedWith !== false;
     this.affectedBy = options.affectedBy || []; // List of spell names that can affect this
+    this.conditions = new ActiveConditions(); // Lingering spell conditions (uniform with Entity)
     this.state = options.state || 'intact';
     this.properties = options.properties || {};
   }
