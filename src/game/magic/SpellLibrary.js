@@ -2139,6 +2139,59 @@ class SpellLibrary {
           }))
         )
     );
+
+    // Imbue Life - animate inert matter: coatings feed themselves in, stone rises as golems
+    this.registerSpell(
+      new Spell('Imbue Life', {
+        level: 4,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Concentration, up to 1 minute',
+        description: 'Breathe crude life into inert matter — a coating that feeds itself in, or stone that rises to serve.',
+        weightGainTheme:
+          'Animated ooze creeps over its host and pours itself into her mouth; shaped stone stands up as a patient little feeder.',
+        validTargets: ['creature', 'npc', 'object'],
+        tags: ['transmutation', 'animation', 'feeding'],
+      })
+        .addOption(
+          new SpellOption('Animate Coating', 'Bring a target\'s ooze coating to life so it feeds itself in', (caster, target) => ({
+            type: 'animate_coating',
+            potency: 1,
+            description: `The coating on ${target.name} stirs and begins to feed itself into her.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Gorging Coating', 'A stronger animation; the coating pours in greedily', (caster, target) => ({
+            type: 'animate_coating',
+            potency: 2,
+            description: `The coating on ${target.name} surges to life and pours itself down her throat.`,
+          }))
+        )
+        .addOption(
+          new SpellOption('Stone Golem', 'Animate nearby stone into one small feeder golem', () => ({
+            type: 'animate_golem',
+            count: 1,
+            baseWeight: 200,
+            description: 'A small stone golem grinds upright, ready to feed whoever it is pointed at.',
+          }))
+        )
+        .addOption(
+          new SpellOption('Golem Trio', 'Animate three small feeder golems', () => ({
+            type: 'animate_golem',
+            count: 3,
+            baseWeight: 180,
+            description: 'Three squat stone golems rise from the rubble.',
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Animation', 'Animate a coating to feed itself in', (caster, target) => ({
+            type: 'animate_coating',
+            potency: 1,
+            description: `Inert matter around ${target.name} stirs with crude life.`,
+          }))
+        )
+    );
   }
 }
 

@@ -1580,6 +1580,35 @@ export function registerSpellModules(engine) {
     { when: {}, text: 'The tide rises through a body already wild with hunger. Every ravenous bite {subject.name} takes feeds the swell, and the swell deepens the hunger, the two cresting higher and higher together.' },
   ]);
 
+  // ─── Imbue Life (animation: coatings self-feed, stone golems) ───
+  engine.registerModule('spell.scene.imbue_life', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'Crude life shudders into the matter around {subject.name}. On a body this vast there is so much to animate — every slick of coating across her enormous form stirs at once, creeping inward of its own accord, intent on feeding her even fuller.',
+    },
+    {
+      when: { stage: { max: 5 } },
+      text: 'The spell breathes a dim, eager will into inert matter. Whatever clings to {subject.name} begins to move on its own — purposeful, unhurried, and entirely focused on getting itself inside her.',
+    },
+    {
+      when: {},
+      text: 'Inert matter stirs with borrowed life, eager and single-minded, and turns toward the work of feeding.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.ooze_coated.imbue_life', [
+    { when: {}, text: 'The ooze sheeting {subject.name} shivers, gathers, and comes alive. It no longer waits to be eaten — it climbs, finds her lips, and pours itself down in thick, deliberate swallows, feeding every rich drop of itself into her until there is nothing left but a softer, fuller her.' },
+  ]);
+  engine.registerModule('spell.interaction.oozing_abundance.imbue_life', [
+    { when: {}, text: 'The ooze-arrow has barely finished spreading before the animation takes it. The fresh coating rises as one purposeful mass and begins funneling itself into {subject.name}, wasting nothing.' },
+  ]);
+  engine.registerModule('spell.interaction.shape_earth.imbue_life', [
+    { when: {}, text: 'The stone you shaped a moment ago grinds and rises. What was a basin or a seat now stands as a squat little golem, patient and tireless, waiting to be pointed at someone to feed.' },
+  ]);
+  engine.registerModule('spell.interaction.grease.imbue_life', [
+    { when: {}, text: 'The conjured grease slicking {subject.name} draws together and quickens. Animated, it slides upward and feeds itself between her lips, rich and slippery and impossible to refuse.' },
+  ]);
+
 }
 
 export default registerSpellModules;

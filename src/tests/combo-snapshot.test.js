@@ -153,6 +153,29 @@ describe('combo integration: key pairs fire end-to-end', () => {
     }
   });
 
+  it('Imbue Life animates an ooze coating to feed itself in', () => {
+    const spell = lib.getSpell('Imbue Life');
+    const option = spell.options.find(o => o.name === 'Animate Coating');
+    const target = mockNPC('Coated');
+    target.conditions.add('ooze_coated', { intensity: 2 });
+    let fed = 0;
+    target.consumeCalories = (c) => { fed += c; return { calories: c, pendingWeightGain: Math.round(c / 3500) }; };
+
+    SpellResolver.cast({ spell, caster: new Character('C'), target, zone: null, selectedOption: option });
+    expect(target.conditions.has('ooze_coated')).toBe(false); // coating consumed
+    expect(fed).toBeGreaterThan(0); // fed itself in
+  });
+
+  it('Imbue Life on an uncoated target feeds nothing', () => {
+    const spell = lib.getSpell('Imbue Life');
+    const option = spell.options.find(o => o.name === 'Animate Coating');
+    const target = mockNPC('Dry');
+    let fed = 0;
+    target.consumeCalories = (c) => { fed += c; return { calories: c }; };
+    SpellResolver.cast({ spell, caster: new Character('C'), target, zone: null, selectedOption: option });
+    expect(fed).toBe(0);
+  });
+
   it('condition combo fires when condition present, not when absent', () => {
     const spell = lib.getSpell('Feast of Shadows');
     const caster = new Character('Caster');

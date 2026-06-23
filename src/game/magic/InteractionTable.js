@@ -993,6 +993,41 @@ const TABLE = [
     effect: ({ bonusWeight }) => bonusWeight(8, 'Swelling Tide on ravenous target'),
   },
 
+  // ── Imbue Life (animation) ────────────────────────────────────────────────
+  {
+    id: 'imbue_life@ooze_coated',
+    trigger: 'Imbue Life',
+    requires: { condition: 'ooze_coated' },
+    symmetric: false,
+    text: 'spell.interaction.condition.ooze_coated.imbue_life',
+    description: 'The ooze sheeting her comes alive, climbs to her lips, and feeds every rich drop of itself into her.',
+    // No bonus here: the spell's Animate Coating effect already feeds the coating in.
+  },
+  {
+    id: 'imbue_life+oozing_abundance',
+    trigger: 'Imbue Life',
+    requires: { recentSpell: 'Oozing Abundance' },
+    symmetric: false,
+    text: 'spell.interaction.oozing_abundance.imbue_life',
+    description: 'The fresh ooze coating rises as one purposeful mass and funnels itself into her, wasting nothing.',
+  },
+  {
+    id: 'imbue_life+shape_earth',
+    trigger: 'Imbue Life',
+    requires: { recentSpell: 'Shape Earth' },
+    symmetric: false,
+    text: 'spell.interaction.shape_earth.imbue_life',
+    description: 'The stone you just shaped grinds upright as a squat little feeder golem.',
+  },
+  {
+    id: 'imbue_life+grease',
+    trigger: 'Imbue Life',
+    requires: { recentSpell: 'Grease' },
+    symmetric: false,
+    text: 'spell.interaction.grease.imbue_life',
+    description: 'The grease slicking her draws together, animates, and feeds itself between her lips.',
+  },
+
 ];
 
 // ─── Match engine ─────────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@
 
 import { Food, Pastry, Bread, Meat, Cream, Pudding, IceCream } from '../items/Food.js';
 import { matchCombos } from './InteractionTable.js';
-import { Cow } from '../entities/Creature.js';
+import { Cow, Monstrosity } from '../entities/Creature.js';
 import GravityCalculator from '../mechanics/GravitySystem.js';
 import {
   CALORIES_PER_POUND,
@@ -56,6 +56,7 @@ const SPELL_KEY_TO_NAME = {
   bottomless_gullet: 'Bottomless Gullet',
   "feeder's_devotion": "Feeder's Devotion",
   swelling_tide: 'Swelling Tide',
+  imbue_life: 'Imbue Life',
 };
 
 const gravity = new GravityCalculator();
@@ -459,6 +460,29 @@ class SpellResolver {
   }
 
   static applyWorldCreationEffect({ effect, result, target, zone, createdFoods }) {
+    // animate_coating acts on the target, not the zone — handle before the zone guard.
+    if (effect.type === 'animate_coating') {
+      const coated = target?.conditions?.has?.('ooze_coated');
+      if (!coated) {
+        result.environmentalChanges.push({
+          type: 'animate_coating',
+          description: target
+            ? `There is no coating on ${target.name} for the spell to animate.`
+            : 'There is no coating here for the spell to animate.',
+        });
+        return;
+      }
+      const thickness = target.conditions.get('ooze_coated')?.intensity || 1;
+      const calories = (effect.potency || 1) * thickness * Math.round(CALORIES_PER_POUND * 1.5);
+      SpellResolver.addCalories(target, calories, 'Imbue Life (animated coating)', result, true);
+      target.conditions.remove('ooze_coated');
+      result.environmentalChanges.push({
+        type: 'animate_coating',
+        description: `The animated coating pours itself into ${target.name} and is gone — spent entirely into her.`,
+      });
+      return;
+    }
+
     if (!zone) return;
 
     if (effect.type === 'object_to_food') {
@@ -503,6 +527,37 @@ class SpellResolver {
       result.environmentalChanges.push({
         type: 'creatures_summoned',
         description: `${summoned.length} cattle appear in the area.`,
+      });
+      return;
+    }
+
+    if (effect.type === 'animate_golem') {
+      if (!zone) {
+        result.environmentalChanges.push({
+          type: 'animate_golem',
+          description: 'Without stone nearby, the animation has nothing to raise.',
+        });
+        return;
+      }
+      const count = effect.count || 1;
+      const golems = [];
+      const startCount = zone.getCreatures().length;
+      for (let i = 0; i < count; i++) {
+        const golem = new Monstrosity(`Stone Golem ${startCount + i + 1}`, {
+          type: 'construct',
+          baseWeight: effect.baseWeight || 200,
+          behavior: 'docile',
+          diet: 'omnivore',
+          hungerLevel: 0,
+          description: 'A squat little golem of animated stone, patient and tireless, built to feed.',
+        });
+        zone.addCreature(golem);
+        golems.push(golem);
+      }
+      result.summonedCreatures = [...(result.summonedCreatures || []), ...golems];
+      result.environmentalChanges.push({
+        type: 'golems_animated',
+        description: `${golems.length} stone golem${golems.length > 1 ? 's' : ''} grind upright, ready to feed.`,
       });
       return;
     }
