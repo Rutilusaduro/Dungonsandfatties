@@ -137,4 +137,18 @@ describe('combo integration: key pairs fire end-to-end', () => {
     const hasCombo = result.interactions.some(i => i.spellName === 'Covetous Siphon');
     expect(hasCombo).toBe(true);
   });
+
+  it('condition combo fires when condition present, not when absent', () => {
+    const spell = lib.getSpell('Feast of Shadows');
+    const caster = new Character('Caster');
+
+    const hungry = mockNPC('Hungry');
+    hungry.conditions.add('ravenous', {});
+    const r1 = SpellResolver.cast({ spell, caster, target: hungry, zone: null, selectedOption: null }).result;
+    expect(r1.interactions.some(i => i.spellName === 'ravenous')).toBe(true);
+
+    const calm = mockNPC('Calm');
+    const r2 = SpellResolver.cast({ spell, caster, target: calm, zone: null, selectedOption: null }).result;
+    expect(r2.interactions.some(i => i.spellName === 'ravenous')).toBe(false);
+  });
 });

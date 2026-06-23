@@ -756,6 +756,94 @@ const TABLE = [
     effect: ({ bonusCalories }) => bonusCalories(8, 'Ambrosial Aura + Oozing Abundance'),
   },
 
+  // ════════════════════════════════════════════════════════════════════════
+  // P3.3 — CONDITION-KEYED COMBOS
+  // Fire on lasting STATE (target.conditions), not recent casts. The emergent
+  // layer. Only conditions actually set in play: restrained, buried, satiated,
+  // enlarged, ravenous, ooze_coated.
+  // ════════════════════════════════════════════════════════════════════════
+
+  // ── Immobility: growth/feeding on a target that can't escape ──────────────
+  {
+    id: 'enlarge_person@restrained',
+    trigger: 'Enlarge Person',
+    requires: { condition: 'restrained' },
+    symmetric: false,
+    text: 'spell.interaction.condition.restrained.enlarge_person',
+    description: 'Held fast, she can only grow — swelling against her bonds until she fills the space she cannot leave.',
+    effect: ({ bonusWeight }) => bonusWeight(6, 'Enlarge Person on restrained target'),
+  },
+  {
+    id: 'enlarge_person@buried',
+    trigger: 'Enlarge Person',
+    requires: { condition: 'buried' },
+    symmetric: false,
+    text: 'spell.interaction.condition.buried.enlarge_person',
+    description: 'Buried and growing, she packs the earth tighter around herself, wedged ever more firmly into the ground.',
+    effect: ({ bonusWeight }) => bonusWeight(6, 'Enlarge Person on buried target'),
+  },
+  {
+    id: 'oozing_abundance@restrained',
+    trigger: 'Oozing Abundance',
+    requires: { condition: 'restrained' },
+    symmetric: false,
+    text: 'spell.interaction.condition.restrained.oozing_abundance',
+    description: 'She cannot dodge; the nutritive ooze strikes and spreads across skin she cannot wipe clean.',
+    effect: ({ bonusCalories }) => bonusCalories(8, 'Oozing Abundance on restrained target'),
+  },
+  {
+    id: 'telekinesis@satiated',
+    trigger: 'Telekinesis',
+    requires: { condition: 'satiated' },
+    symmetric: false,
+    text: 'spell.interaction.condition.satiated.telekinesis',
+    description: 'Stuffed and sluggish, she barely resists being lifted and set down onto the waiting seat.',
+  },
+
+  // ── Stuffing: feeding a target whose hunger or fullness is already extreme ─
+  {
+    id: 'feast_of_shadows@ravenous',
+    trigger: 'Feast of Shadows',
+    requires: { condition: 'ravenous' },
+    symmetric: false,
+    text: 'spell.interaction.condition.ravenous.feast_of_shadows',
+    description: 'Phantom food before real hunger; she devours the illusion and her body settles every imagined calorie.',
+    effect: ({ bonusCalories }) => bonusCalories(10, 'Feast of Shadows for ravenous target'),
+  },
+  {
+    id: 'suggestion@satiated',
+    trigger: 'Suggestion',
+    requires: { condition: 'satiated' },
+    symmetric: false,
+    text: 'spell.interaction.condition.satiated.suggestion',
+    description: 'Already full is exactly when a gentle suggestion works best — one more bite, and she finds the room.',
+    effect: ({ target, bonusCalories }) => {
+      if (target && target.willingness !== undefined) {
+        target.willingness = Math.min(100, target.willingness + 10);
+      }
+      bonusCalories(6, 'Suggestion on satiated target');
+    },
+  },
+
+  // ── Size & coating: spells that compound an already-altered body ──────────
+  {
+    id: 'morph_mass@enlarged',
+    trigger: 'Morph Mass',
+    requires: { condition: 'enlarged' },
+    symmetric: false,
+    text: 'spell.interaction.condition.enlarged.morph_mass',
+    description: 'An already-enormous frame gives the mass transmutation more to load; matter folds on by the armful.',
+    effect: ({ bonusWeight }) => bonusWeight(14, 'Morph Mass on enlarged target'),
+  },
+  {
+    id: 'confection_snare@ooze_coated',
+    trigger: 'Confection Snare',
+    requires: { condition: 'ooze_coated' },
+    symmetric: false,
+    text: 'spell.interaction.condition.ooze_coated.confection_snare',
+    description: 'Candy bindings find the ooze already slicking her and take hold instantly — sticky meeting sticky.',
+  },
+
 ];
 
 // ─── Match engine ─────────────────────────────────────────────────────────────

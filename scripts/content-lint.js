@@ -2,14 +2,19 @@
 // content:lint — validates the InteractionTable for dangling refs, dup IDs, missing fields.
 // Loud in dev (non-zero exit), silent in prod (not run).
 
-import { readFileSync } from 'fs';
 import { TABLE } from '../src/game/magic/InteractionTable.js';
 import { CONDITION_KEYS } from '../src/game/conditions/ActiveConditions.js';
 import { getTextEngine } from '../src/textEngine/index.js';
+import SpellLibrary from '../src/game/magic/SpellLibrary.js';
 
-// Parse spell names from SpellLibrary source (avoids importing React-adjacent deps)
-const libSrc = readFileSync(new URL('../src/game/magic/SpellLibrary.js', import.meta.url), 'utf-8');
-const knownSpells = [...libSrc.matchAll(/new Spell\('([^']+)'/g)].map(m => m[1]);
+// SpellLibrary is pure JS (no React) — load it for names + target validation
+const lib = new SpellLibrary();
+const knownSpells = [...lib.spells.keys()];
+// A spell can target a living entity if it allows creature/npc or has no restriction
+const targetsLiving = (name) => {
+  const vt = lib.getSpell(name)?.validTargets || [];
+  return vt.length === 0 || vt.includes('creature') || vt.includes('npc');
+};
 
 // Text engine is pure JS — load it to verify every combo's text key resolves
 const engine = getTextEngine();
@@ -43,6 +48,14 @@ for (const entry of TABLE) {
 
   if (entry.requires?.condition && !CONDITION_KEYS.includes(entry.requires.condition)) {
     console.error(`content:lint ERROR ${tag} unknown condition key: '${entry.requires.condition}'`);
+    errors++;
+  }
+
+  // Condition lives on the target — the trigger must be able to target a living entity,
+  // else the combo can never fire.
+  if (entry.requires?.condition && entry.trigger && knownSpells.includes(entry.trigger)
+      && !targetsLiving(entry.trigger)) {
+    console.error(`content:lint ERROR ${tag} trigger '${entry.trigger}' cannot target a living entity, so condition '${entry.requires.condition}' never applies`);
     errors++;
   }
 

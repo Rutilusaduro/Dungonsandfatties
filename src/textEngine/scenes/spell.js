@@ -1395,6 +1395,65 @@ export function registerSpellModules(engine) {
     },
   ]);
 
+  // ─── P3.3 condition-keyed interactions ───────────────────────────
+  // Fire on lasting state, not recent casts.
+
+  engine.registerModule('spell.interaction.condition.restrained.enlarge_person', [
+    {
+      when: {},
+      text: 'Held fast, {subject.name} can do nothing but grow. The spell swells her against her bonds, every new inch pressing harder into the restraints, until she fills the space she cannot leave.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.buried.enlarge_person', [
+    {
+      when: {},
+      text: 'Buried to the waist, {subject.name} begins to grow — and the growth packs the earth tighter around her, the spell wedging her ever more firmly into the ground she cannot climb out of.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.restrained.oozing_abundance', [
+    {
+      when: {},
+      text: 'She cannot dodge. The ooze-arrow strikes a target who can only take it, thick nutritive sludge spreading across skin she cannot wipe clean, feeding into her where she stands.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.satiated.telekinesis', [
+    {
+      when: {},
+      text: 'Stuffed and sluggish, she barely resists as you lift her. {subject.name} is set down onto the waiting seat with a heavy, contented settle, too full to do anything but stay.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.ravenous.feast_of_shadows', [
+    {
+      when: {},
+      text: 'Phantom food in front of real hunger. {subject.name} devours the illusion without question, and her body, convinced, settles every imagined calorie into soft reality.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.satiated.suggestion', [
+    {
+      when: {},
+      text: 'She is already full — and that is exactly when a gentle suggestion does its best work. One more bite, you murmur, and {subject.name} finds room she swore she did not have.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.enlarged.morph_mass', [
+    {
+      when: {},
+      text: 'Already swollen larger than life, {subject.name} gives the mass transmutation an enormous frame to load. Matter folds onto her by the armful, and the enlarged body drinks it in.',
+    },
+  ]);
+
+  engine.registerModule('spell.interaction.condition.ooze_coated.confection_snare', [
+    {
+      when: {},
+      text: 'The candy bindings find the ooze already slicking her and take hold instantly, sticky meeting sticky. {subject.name} is bound in a glaze of sweet and rich she cannot pull free of.',
+    },
+  ]);
+
 }
 
 export default registerSpellModules;
