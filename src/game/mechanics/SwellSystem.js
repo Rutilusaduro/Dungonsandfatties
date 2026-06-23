@@ -91,7 +91,7 @@ export function applyFeastExile(targets = []) {
 }
 
 // ── ponytail: one runnable self-check (node src/game/mechanics/SwellSystem.js) ──
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${globalThis.process?.argv?.[1]}`) {
   const mk = () => ({
     name: 'T', baseWeight: 150, currentWeight: 150,
     conditions: { _s: new Set(), add(k) { this._s.add(k); }, remove(k) { this._s.delete(k); }, has(k) { return this._s.has(k); } },
