@@ -692,6 +692,13 @@ export function registerSpellModules(engine) {
     },
   ]);
 
+  engine.registerModule('spell.interaction.create_water.shape_earth', [
+    {
+      when: {},
+      text: 'The conjured water pours into the freshly shaped basin and pools there, held by the new stone walls. What was loose earth a moment ago is now a brimming reservoir — a standing supply, ready to be sweetened, thickened, or transmuted into something far richer.',
+    },
+  ]);
+
   engine.registerModule('spell.interaction.create_water.delightful_transmutation', [
     {
       when: {},

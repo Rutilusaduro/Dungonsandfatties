@@ -63,6 +63,13 @@ describe('InteractionTable structure', () => {
       .filter(k => !CONDITION_KEYS.includes(k));
     expect(unknown).toEqual([]);
   });
+
+  it('every text key resolves in the text engine', async () => {
+    const { getTextEngine } = await import('../textEngine/index.js');
+    const engine = getTextEngine();
+    const dangling = TABLE.filter(e => !engine.hasModule(e.text)).map(e => `${e.id} -> ${e.text}`);
+    expect(dangling).toEqual([]);
+  });
 });
 
 describe('matchCombos', () => {
@@ -116,6 +123,18 @@ describe('combo integration: key pairs fire end-to-end', () => {
   it('Rapid Digestion+Feast of Shadows fires', () => {
     const result = castWithPrevious('Rapid Digestion', ['Feast of Shadows']);
     const hasCombo = result.interactions.some(i => i.spellName === 'Feast of Shadows');
+    expect(hasCombo).toBe(true);
+  });
+
+  it('newly-wired Draconic Hunger combo fires', () => {
+    const result = castWithPrevious('Ravenous Expansion', ['Draconic Hunger']);
+    const hasCombo = result.interactions.some(i => i.spellName === 'Draconic Hunger');
+    expect(hasCombo).toBe(true);
+  });
+
+  it('newly-wired Covetous Siphon combo fires', () => {
+    const result = castWithPrevious('Enlarge Person', ['Covetous Siphon']);
+    const hasCombo = result.interactions.some(i => i.spellName === 'Covetous Siphon');
     expect(hasCombo).toBe(true);
   });
 });

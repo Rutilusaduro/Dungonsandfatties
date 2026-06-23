@@ -5,10 +5,14 @@
 import { readFileSync } from 'fs';
 import { TABLE } from '../src/game/magic/InteractionTable.js';
 import { CONDITION_KEYS } from '../src/game/conditions/ActiveConditions.js';
+import { getTextEngine } from '../src/textEngine/index.js';
 
 // Parse spell names from SpellLibrary source (avoids importing React-adjacent deps)
 const libSrc = readFileSync(new URL('../src/game/magic/SpellLibrary.js', import.meta.url), 'utf-8');
 const knownSpells = [...libSrc.matchAll(/new Spell\('([^']+)'/g)].map(m => m[1]);
+
+// Text engine is pure JS — load it to verify every combo's text key resolves
+const engine = getTextEngine();
 
 let errors = 0;
 const ids = new Set();
@@ -39,6 +43,11 @@ for (const entry of TABLE) {
 
   if (entry.requires?.condition && !CONDITION_KEYS.includes(entry.requires.condition)) {
     console.error(`content:lint ERROR ${tag} unknown condition key: '${entry.requires.condition}'`);
+    errors++;
+  }
+
+  if (entry.text && !engine.hasModule(entry.text)) {
+    console.error(`content:lint ERROR ${tag} text key does not resolve: '${entry.text}'`);
     errors++;
   }
 }
