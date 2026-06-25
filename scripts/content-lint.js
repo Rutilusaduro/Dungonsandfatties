@@ -6,6 +6,7 @@ import { TABLE } from '../src/game/magic/InteractionTable.js';
 import { CONDITION_KEYS } from '../src/game/conditions/ActiveConditions.js';
 import { getTextEngine } from '../src/textEngine/index.js';
 import SpellLibrary from '../src/game/magic/SpellLibrary.js';
+import { ARCHETYPES } from '../src/game/combat/EnemyController.js';
 
 // SpellLibrary is pure JS (no React) — load it for names + target validation
 const lib = new SpellLibrary();
@@ -63,6 +64,19 @@ for (const entry of TABLE) {
     console.error(`content:lint ERROR ${tag} text key does not resolve: '${entry.text}'`);
     errors++;
   }
+
+  // Finisher entries (C2) must declare a defeat state the combat checker understands.
+  if (entry.finisher) {
+    const states = ['immobilized', 'succumbed', 'consumed'];
+    if (!entry.defeat || !states.includes(entry.defeat.state)) {
+      console.error(`content:lint ERROR ${tag} finisher must declare defeat.state in ${states.join('/')}`);
+      errors++;
+    }
+    if (!entry.requires?.condition) {
+      console.error(`content:lint ERROR ${tag} finisher must gate on a condition (the precondition an enemy can deny)`);
+      errors++;
+    }
+  }
 }
 
 // Coverage: every spell should participate in >= FLOOR combos (as trigger or partner).
@@ -83,6 +97,17 @@ if (below.length > 0) {
   const msg = `coverage: ${below.length} spell(s) below floor(${COVERAGE_FLOOR}): ${list}`;
   if (COVERAGE_HARD) { console.error(`content:lint ERROR ${msg}`); errors++; }
   else { console.warn(`content:lint WARN  ${msg}`); }
+}
+
+// Archetype finisher paths (C3): every enemy must leave >= 2 finisher preconditions
+// open, or the fight is a single-solution puzzle, not combat.
+const finisherConds = [...new Set(TABLE.filter(e => e.finisher).map(e => e.requires?.condition).filter(Boolean))];
+for (const [id, trait] of Object.entries(ARCHETYPES)) {
+  const open = finisherConds.filter(c => !(trait.denies || []).includes(c));
+  if (open.length < 2) {
+    console.error(`content:lint ERROR [archetype:${id}] leaves only ${open.length} open finisher path(s) (${open.join(', ') || 'none'}); need >= 2`);
+    errors++;
+  }
 }
 
 if (errors > 0) {
