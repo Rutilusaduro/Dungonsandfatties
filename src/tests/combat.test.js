@@ -3,6 +3,14 @@ import { describe, it, expect } from 'vitest';
 import { Creature } from '../game/entities/Creature.js';
 import { matchCombos, TABLE } from '../game/magic/InteractionTable.js';
 import {
+  ARCHETYPES,
+  controllerFor,
+  runEncounter,
+  applyCondition,
+  deniesCondition,
+  FINISHER_PRECONDITIONS,
+} from '../game/combat/EnemyController.js';
+import {
   Combat,
   actionsAvailable,
   mobilityLevelFor,
@@ -16,6 +24,19 @@ import {
   BANDS,
   WILLINGNESS_SUCCUMB,
 } from '../game/combat/Combat.js';
+
+// A player that force-feeds the enemy with every available action.
+function playerFeeder(rate) {
+  return ({ opponent, actions }) => {
+    for (let i = 0; i < actions; i++) fillUp(opponent, rate * (opponent.stomachCapacity || 0));
+  };
+}
+
+function combatant(ent, capacity, initiative) {
+  ent.stomachCapacity = capacity;
+  ent.fullness = 0;
+  return { entity: ent, initiative };
+}
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -405,5 +426,142 @@ describe('finishers (C2)', () => {
     e.conditions.add('restrained', { source: 'hold_person' });
     castFinisher('Shape Earth', e);
     expect(checkWinState(e)).toEqual({ state: 'immobilized', via: 'buried' });
+  });
+});
+
+// ── C3: scripted enemy controller ────────────────────────────
+
+describe('archetype trait denial (C3)', () => {
+  it('every archetype leaves >= 2 finisher preconditions open', () => {
+    for (const [id, trait] of Object.entries(ARCHETYPES)) {
+      const open = FINISHER_PRECONDITIONS.filter(c => !(trait.denies || []).includes(c));
+      expect(open.length, `archetype ${id}`).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('deniesCondition reflects each archetype denial list', () => {
+    expect(deniesCondition('flyer', 'buried')).toBe(true);
+    expect(deniesCondition('flyer', 'restrained')).toBe(false);
+    expect(deniesCondition('brute', 'buried')).toBe(false);
+    expect(deniesCondition('dispeller', 'restrained')).toBe(true);
+  });
+
+  it('applyCondition is blocked by a trait that denies it', () => {
+    const flyer = entity('Wisp', 100, 0);
+    flyer._trait = 'flyer';
+    expect(applyCondition(flyer, 'buried')).toBe(false); // flyer can't be grounded
+    expect(flyer.conditions.has('buried')).toBe(false);
+    expect(applyCondition(flyer, 'restrained', { source: 'hold_person' })).toBe(true);
+    expect(flyer.conditions.has('restrained')).toBe(true);
+  });
+
+  it('applyCondition always succeeds on a trait-less or non-denying entity', () => {
+    const brute = entity('Ogre', 100, 0);
+    brute._trait = 'brute';
+    expect(applyCondition(brute, 'buried')).toBe(true);
+    expect(brute.conditions.has('buried')).toBe(true);
+  });
+});
+
+describe('deterministic encounters (C3)', () => {
+  it('brute: easy to fatten — loses to immobilized', () => {
+    const player = entity('Player', 100, 0);
+    const brute  = entity('Brute', 100, 0);
+    brute._trait = 'brute';
+
+    const combat = new Combat(
+      [combatant(player, 100, 20), combatant(brute, 100, 10)],
+      { drainRate: 0 },
+    );
+    const result = runEncounter({
+      combat,
+      controllers: { Player: playerFeeder(0.35), Brute: controllerFor('brute') },
+    });
+
+    expect(result.loser).toBe('Brute');
+    expect(result.winState.state).toBe('immobilized');
+  });
+
+  it('flyer: kites but still fattens to immobilized via fullness', () => {
+    const player = entity('Player', 100, 0);
+    const flyer  = entity('Flyer', 100, 0);
+    flyer._trait = 'flyer';
+
+    const combat = new Combat(
+      [combatant(player, 100, 20), combatant(flyer, 100, 10)],
+      { drainRate: 0 },
+    );
+    const result = runEncounter({
+      combat,
+      controllers: { Player: playerFeeder(0.35), Flyer: controllerFor('flyer') },
+    });
+
+    expect(result.loser).toBe('Flyer');
+    expect(result.winState.state).toBe('immobilized');
+  });
+
+  it('glutton: over-eats itself and succumbs unaided', () => {
+    const player  = entity('Player', 100, 0);
+    const glutton = entity('Glutton', 100, 0);
+    glutton._trait = 'glutton';
+
+    // Glutton acts first; player does nothing — it defeats itself.
+    const combat = new Combat(
+      [combatant(glutton, 100, 20), combatant(player, 100, 10)],
+      { drainRate: 0 },
+    );
+    const result = runEncounter({
+      combat,
+      controllers: { Glutton: controllerFor('glutton'), Player: () => {} },
+    });
+
+    expect(result.loser).toBe('Glutton');
+    expect(result.winState.state).toBe('succumbed');
+    expect(result.round).toBe(1); // self-feeds past the willingness floor immediately
+  });
+
+  it('dispeller: raw fattening stalls out — no one wins', () => {
+    const player    = entity('Player', 100, 0);
+    const dispeller = entity('Dispeller', 100, 0);
+    dispeller._trait = 'dispeller';
+
+    const combat = new Combat(
+      [combatant(player, 100, 20), combatant(dispeller, 100, 10)],
+      { drainRate: 0 },
+    );
+    const result = runEncounter({
+      combat,
+      controllers: { Player: playerFeeder(0.35), Dispeller: controllerFor('dispeller') },
+      maxRounds: 40,
+    });
+
+    // Each round the dispeller purges the fullness the player piled on, so the
+    // fattening path never lands — a stalemate that forces a finisher instead.
+    expect(result.loser).toBeNull();
+  });
+
+  it('dispeller: an open finisher path (satiated → Flesh to Food) wins', () => {
+    const player    = entity('Player', 100, 0);
+    const dispeller = entity('Dispeller', 100, 0);
+    dispeller._trait = 'dispeller';
+
+    // Player opens the satiated path (dispeller denies restrained, not satiated)
+    // and lands the render finisher on round 1.
+    const playerFinish = ({ opponent }) => {
+      if (applyCondition(opponent, 'satiated')) castFinisher('Flesh to Food', opponent);
+    };
+
+    const combat = new Combat(
+      [combatant(player, 100, 20), combatant(dispeller, 100, 10)],
+      { drainRate: 0 },
+    );
+    const result = runEncounter({
+      combat,
+      controllers: { Player: playerFinish, Dispeller: controllerFor('dispeller') },
+    });
+
+    expect(result.loser).toBe('Dispeller');
+    expect(result.winState.state).toBe('consumed');
+    expect(result.round).toBe(1);
   });
 });
