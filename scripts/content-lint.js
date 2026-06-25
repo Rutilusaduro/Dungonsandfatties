@@ -63,6 +63,19 @@ for (const entry of TABLE) {
     console.error(`content:lint ERROR ${tag} text key does not resolve: '${entry.text}'`);
     errors++;
   }
+
+  // Finisher entries (C2) must declare a defeat state the combat checker understands.
+  if (entry.finisher) {
+    const states = ['immobilized', 'succumbed', 'consumed'];
+    if (!entry.defeat || !states.includes(entry.defeat.state)) {
+      console.error(`content:lint ERROR ${tag} finisher must declare defeat.state in ${states.join('/')}`);
+      errors++;
+    }
+    if (!entry.requires?.condition) {
+      console.error(`content:lint ERROR ${tag} finisher must gate on a condition (the precondition an enemy can deny)`);
+      errors++;
+    }
+  }
 }
 
 // Coverage: every spell should participate in >= FLOOR combos (as trigger or partner).

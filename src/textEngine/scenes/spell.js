@@ -1830,6 +1830,26 @@ export function registerSpellModules(engine) {
     { when: {}, text: 'A renewing thicket of fruit, and a roomful of occupants seized by obsessive hunger. They fall on the bounty together — and the bounty simply keeps growing back, feeding the frenzy as long as it lasts.' },
   ]);
 
+  // ─── C2 FINISHERS — the moment a combatant is sealed/consumed ───
+  engine.registerPool('spell.finisher.bury', [
+    { when: {}, text: 'You fold the earth up and over her. Bound where she sits and far too vast to dig free, {subject.name} vanishes into shaped stone — sealed, settled, finished.' },
+    { when: { stageMin: 10 }, text: 'There is so much of her now that the ground barely needs to close. The earth rises around {subject.name} and stays, a mound where a fight used to be — she could not have climbed out at half this size.' },
+  ]);
+
+  engine.registerPool('spell.finisher.crush', [
+    { when: {}, text: 'Already sunk to the waist, {subject.name} has nowhere left to go but down. The gravity you pour onto her presses her deeper into the earth until the ground itself holds her — settled for good.' },
+    { when: { stageMin: 10 }, text: 'Her own mass was almost enough; the crushing weight finishes it. {subject.name} sinks until the earth closes over the last of her, far too heavy and far too deep to ever rise.' },
+  ]);
+
+  engine.registerPool('spell.finisher.render', [
+    { when: {}, text: 'Stuffed past bursting, {subject.name} is already more feast than foe. The transmutation only finishes what the feeding began — warm, edible abundance where an enemy stood.' },
+    { when: { stageMin: 9 }, text: 'There is a banquet\'s worth of her now, and the spell takes all of it. {subject.name} becomes the feast she was fattened into — the fight ends the only way it could.' },
+  ]);
+
+  engine.registerPool('spell.finisher.swallow', [
+    { when: {}, text: 'Small enough to fit and far too deep asleep to stir, {subject.name} goes down in a single swallow. The fight is simply over.' },
+  ]);
+
 }
 
 export default registerSpellModules;

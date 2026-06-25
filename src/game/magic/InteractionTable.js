@@ -16,6 +16,31 @@
 //   effect(ctx) — optional fn. ctx = { target, zone, result, createdFoods, createFood,
 //                   bonusCalories(amt, src), bonusWeight(amt, src) }
 //                 Handles mechanics only; evaluator adds the interaction text.
+//
+// FINISHERS (C2): entries with `finisher: true` whose effect sets target._defeatState
+//   (read by Combat.checkWinState). Gated on a condition (the precondition an enemy
+//   trait can deny) AND a weight-stage gate. Apex finishers want a HEAVY target
+//   (stageMin); vore wants a SMALL one (stageMax). `defeat: { state, via }` documents
+//   the win path for C4 victory content.
+
+import { getStageId } from '../../textEngine/stages.js';
+
+function stageOf(target) {
+  const base = target?.baseWeight ?? 150;
+  return getStageId(target?.currentWeight ?? base, base);
+}
+
+// Build a finisher effect: sets target._defeatState iff the weight-stage gate passes.
+// The condition gate is handled by `requires.condition` in matchCombos.
+function finisherEffect({ state, via, stageMin, stageMax }) {
+  return ({ target }) => {
+    if (!target) return;
+    const s = stageOf(target);
+    if (stageMin != null && s < stageMin) return; // apex needs mass
+    if (stageMax != null && s > stageMax) return; // vore needs a small target
+    target._defeatState = { state, via };
+  };
+}
 
 const TABLE = [
 
@@ -1345,6 +1370,67 @@ const TABLE = [
     symmetric: false,
     text: 'spell.interaction.sphere_of_influence.sylvan_bounty',
     description: 'A renewing thicket and a roomful of ravenous mouths — the bounty keeps growing back to feed the frenzy.',
+  },
+
+  // ════════════════════════════════════════════════════════════════════════
+  // C2 — FINISHERS
+  // Effect sets target._defeatState (Combat.checkWinState reads it). Each is
+  // gated on a condition an enemy trait can deny + a weight-stage gate.
+  // Apex finishers (bury, crush) demand a HEAVY target — the strongest seals
+  // reward fattening hardest. Vore demands a SMALL one and is low-tier, so
+  // "keep them small" is never the optimal line.
+  // ════════════════════════════════════════════════════════════════════════
+
+  // ── Bury (apex, immobilize) — encase a held, heavy target in shaped stone ─
+  {
+    id: 'finisher.bury',
+    trigger: 'Shape Earth',
+    requires: { condition: 'restrained' },
+    symmetric: false,
+    finisher: true,
+    defeat: { state: 'immobilized', via: 'buried' },
+    text: 'spell.finisher.bury',
+    description: 'You fold the earth up and over the held, swollen target — too vast and too bound to dig free. She is sealed where she sits.',
+    effect: finisherEffect({ state: 'immobilized', via: 'buried', stageMin: 8 }),
+  },
+
+  // ── Crush (apex, immobilize) — pin a buried, heavy target under gravity ───
+  {
+    id: 'finisher.crush',
+    trigger: 'Enhance Gravity',
+    requires: { condition: 'buried' },
+    symmetric: false,
+    finisher: true,
+    defeat: { state: 'immobilized', via: 'gravity' },
+    text: 'spell.finisher.crush',
+    description: 'Already buried, the target sinks under the crushing weight you pour onto her — settled so deep and so heavy she will not rise again.',
+    effect: finisherEffect({ state: 'immobilized', via: 'gravity', stageMin: 8 }),
+  },
+
+  // ── Render (lethal, consume) — transmute a stuffed target into a feast ────
+  {
+    id: 'finisher.render',
+    trigger: 'Flesh to Food',
+    requires: { condition: 'satiated' },
+    symmetric: false,
+    finisher: true,
+    defeat: { state: 'consumed', via: 'flesh_to_food' },
+    text: 'spell.finisher.render',
+    description: 'Stuffed to bursting, the target is exactly the feast the spell wants — flesh becomes warm, edible abundance, and there is nothing left to fight.',
+    effect: finisherEffect({ state: 'consumed', via: 'flesh_to_food' }),
+  },
+
+  // ── Swallow (vore, low-tier, consume) — gulp down a small, sleeping target ─
+  {
+    id: 'finisher.swallow',
+    trigger: 'Draconic Hunger',
+    requires: { condition: 'asleep' },
+    symmetric: false,
+    finisher: true,
+    defeat: { state: 'consumed', via: 'vore' },
+    text: 'spell.finisher.swallow',
+    description: 'Small enough to fit and too deep asleep to struggle, the target goes down whole — a single swallow and the fight is simply over.',
+    effect: finisherEffect({ state: 'consumed', via: 'vore', stageMax: 2 }),
   },
 
 ];

@@ -1,6 +1,7 @@
-// C0 + C1 validation: turn loop, mobility throttle, fullness gauge, win-state checker
+// C0–C2 validation: turn loop, mobility throttle, fullness gauge, win-state, finishers
 import { describe, it, expect } from 'vitest';
 import { Creature } from '../game/entities/Creature.js';
+import { matchCombos, TABLE } from '../game/magic/InteractionTable.js';
 import {
   Combat,
   actionsAvailable,
@@ -324,5 +325,85 @@ describe('nextRound integration (C1)', () => {
 
     combat.nextRound(() => {});
     expect(e.fullness).toBe(0);   // 100 - 100
+  });
+});
+
+// ── C2: finishers as InteractionTable entries ────────────────
+
+// Simulate the resolver's combo path: match, then run effects with { target }.
+function castFinisher(triggerSpell, target) {
+  const matches = matchCombos(triggerSpell, [], target, null);
+  for (const { entry } of matches) {
+    if (entry.effect) entry.effect({ target });
+  }
+  return matches;
+}
+
+describe('finishers (C2)', () => {
+  it('every finisher entry declares a valid defeat state + condition gate', () => {
+    const states = ['immobilized', 'succumbed', 'consumed'];
+    const finishers = TABLE.filter(e => e.finisher);
+    expect(finishers.length).toBeGreaterThan(0);
+    for (const f of finishers) {
+      expect(states).toContain(f.defeat?.state);
+      expect(f.requires?.condition).toBeTruthy();
+    }
+  });
+
+  it('bury fires on a restrained HEAVY target → immobilized', () => {
+    const e = entity('bound-blob', 100, 250); // stage 9 (heavy, ≥8)
+    e.conditions.add('restrained', { source: 'hold_person' });
+    castFinisher('Shape Earth', e);
+    expect(e._defeatState).toEqual({ state: 'immobilized', via: 'buried' });
+  });
+
+  it('bury REFUSES a restrained but LIGHT target (mass gate denies apex)', () => {
+    const e = entity('bound-thin', 100, 0); // stage 0 (light)
+    e.conditions.add('restrained', { source: 'hold_person' });
+    const matches = castFinisher('Shape Earth', e);
+    expect(matches.some(m => m.entry.id === 'finisher.bury')).toBe(true); // combo matched
+    expect(e._defeatState).toBeUndefined(); // but mass gate blocked the defeat
+  });
+
+  it('bury does not even match when the precondition (restrained) is absent', () => {
+    const e = entity('free-blob', 100, 250); // heavy but not restrained
+    const matches = matchCombos('Shape Earth', [], e, null);
+    expect(matches.some(m => m.entry.id === 'finisher.bury')).toBe(false);
+    expect(e._defeatState).toBeUndefined();
+  });
+
+  it('crush fires on a buried HEAVY target → immobilized via gravity', () => {
+    const e = entity('sunk', 100, 300); // stage 9
+    e.conditions.add('buried', { depth: 2 });
+    castFinisher('Enhance Gravity', e);
+    expect(e._defeatState).toEqual({ state: 'immobilized', via: 'gravity' });
+  });
+
+  it('render fires on a satiated target → consumed (no mass gate)', () => {
+    const e = entity('stuffed', 100, 0); // any size
+    e.conditions.add('satiated');
+    castFinisher('Flesh to Food', e);
+    expect(e._defeatState).toEqual({ state: 'consumed', via: 'flesh_to_food' });
+  });
+
+  it('swallow (vore) fires on an asleep SMALL target → consumed', () => {
+    const e = entity('napping-mouse', 100, 0); // stage 0, small
+    e.conditions.add('asleep');
+    castFinisher('Draconic Hunger', e);
+    expect(e._defeatState).toEqual({ state: 'consumed', via: 'vore' });
+  });
+
+  it('swallow REFUSES an asleep HEAVY target (vore wants small — inverted gate)', () => {
+    const e = entity('napping-blob', 100, 300); // stage 9, too big to swallow
+    e.conditions.add('asleep');
+    castFinisher('Draconic Hunger', e);
+    expect(e._defeatState).toBeUndefined();
+  });
+
+  it('a fired finisher is read by checkWinState', () => {
+    const e = entity('victim', 100, 250);
+    e.conditions.add('restrained', { source: 'hold_person' });
+    castFinisher('Shape Earth', e);
+    expect(checkWinState(e)).toEqual({ state: 'immobilized', via: 'buried' });
   });
 });
