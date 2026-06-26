@@ -21,6 +21,7 @@ import {
   distance,
   canReach,
   move,
+  lineOfSight,
   BANDS,
   WILLINGNESS_SUCCUMB,
 } from '../game/combat/Combat.js';
@@ -621,5 +622,39 @@ describe('vic.* scene skeleton (C4)', () => {
     gert.willingness = 30; // would otherwise hit the "furious" aftermath line
     const out = engine.render('vic.aftermath', { subject: gert });
     expect(out).toMatch(/butter/);
+  });
+});
+
+// ── C5: grid-backed position (bands are the y=0 lane) ─────────
+
+describe('grid position (C5)', () => {
+  it('grid coords reproduce the band distances exactly', () => {
+    // engaged/near/far == x 0/1/2 on y=0; Chebyshev == old indexOf math.
+    expect(distance({ x: 0, y: 0 }, { x: 2, y: 0 })).toBe(2);
+    expect(distance({ band: 'engaged' }, { x: 1, y: 0 })).toBe(1);
+  });
+
+  it('diagonal movement costs one (Chebyshev)', () => {
+    expect(distance({ x: 0, y: 0 }, { x: 3, y: 3 })).toBe(3);
+    expect(distance({ x: 0, y: 0 }, { x: 1, y: 3 })).toBe(3);
+  });
+
+  it('moves through the y dimension and clamps to the field', () => {
+    const c = { x: 1, y: 0 };
+    move(c, 'down', { maxY: 2 });
+    expect(c).toMatchObject({ x: 1, y: 1 });
+    move(c, 'down', { maxY: 2 });
+    move(c, 'down', { maxY: 2 });
+    expect(c.y).toBe(2); // clamped at maxY
+    move(c, 'up', { maxY: 2 });
+    expect(c.y).toBe(1);
+  });
+
+  it('line of sight is clear with no obstacles and blocked by a wall between', () => {
+    const a = { x: 0, y: 0 }, b = { x: 4, y: 0 };
+    expect(lineOfSight(a, b)).toBe(true);
+    expect(lineOfSight(a, b, (x, y) => x === 2 && y === 0)).toBe(false);
+    // a wall off the line doesn't block.
+    expect(lineOfSight(a, b, (x, y) => x === 2 && y === 1)).toBe(true);
   });
 });
