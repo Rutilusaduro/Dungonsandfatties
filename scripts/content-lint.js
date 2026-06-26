@@ -7,6 +7,7 @@ import { CONDITION_KEYS } from '../src/game/conditions/ActiveConditions.js';
 import { getTextEngine } from '../src/textEngine/index.js';
 import SpellLibrary from '../src/game/magic/SpellLibrary.js';
 import { ARCHETYPES } from '../src/game/combat/EnemyController.js';
+import { WEIGHT_STAGES } from '../src/textEngine/stages.js';
 
 // SpellLibrary is pure JS (no React) — load it for names + target validation
 const lib = new SpellLibrary();
@@ -108,6 +109,28 @@ for (const [id, trait] of Object.entries(ARCHETYPES)) {
     console.error(`content:lint ERROR [archetype:${id}] leaves only ${open.length} open finisher path(s) (${open.join(', ') || 'none'}); need >= 2`);
     errors++;
   }
+}
+
+// Victory-scene coverage (C4): vic.size_payoff must resolve a line at EVERY
+// weight stage (a glut-clear and a floor-win can't share one readout), and the
+// vic.scene composer must render non-empty for both ends of the ladder.
+for (const stage of WEIGHT_STAGES) {
+  const base = 100;
+  const subject = { name: 'Test', baseWeight: base, currentWeight: base * (1 + stage.minPct / 100) };
+  const payoff = engine.render('vic.size_payoff', { subject });
+  if (!payoff) {
+    console.error(`content:lint ERROR [vic.size_payoff] no line resolves at stage ${stage.id} (${stage.key})`);
+    errors++;
+  }
+}
+// The full skeleton must compose end-to-end for a representative win.
+const vicSmoke = engine.render('vic.scene', {
+  subject: { name: 'Test', baseWeight: 100, currentWeight: 400, willingness: 90 },
+  globals: { state: 'consumed', via: 'flesh_to_food' },
+});
+if (!vicSmoke || vicSmoke.split(/\s+/).length < 8) {
+  console.error(`content:lint ERROR [vic.scene] skeleton failed to compose: "${vicSmoke}"`);
+  errors++;
 }
 
 if (errors > 0) {

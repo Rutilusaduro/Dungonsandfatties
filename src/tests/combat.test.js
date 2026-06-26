@@ -24,6 +24,8 @@ import {
   BANDS,
   WILLINGNESS_SUCCUMB,
 } from '../game/combat/Combat.js';
+import { computeReward } from '../game/combat/Reward.js';
+import { getTextEngine } from '../textEngine/index.js';
 
 // A player that force-feeds the enemy with every available action.
 function playerFeeder(rate) {
@@ -563,5 +565,61 @@ describe('deterministic encounters (C3)', () => {
     expect(result.loser).toBe('Dispeller');
     expect(result.winState.state).toBe('consumed');
     expect(result.round).toBe(1);
+  });
+});
+
+// ── C4: rewards + victory scene skeleton ──────────────────────
+
+describe('computeReward (C4)', () => {
+  it('scales with the loser final stage — a glut-clear dwarfs a floor-win', () => {
+    const floor = computeReward(entity('Floor', 100, 5), { state: 'immobilized' });  // stage 1
+    const glut  = computeReward(entity('Glut', 100, 300), { state: 'succumbed' });   // stage 9
+    expect(floor.stage).toBe(1);
+    expect(glut.stage).toBe(9);
+    expect(glut.xp).toBeGreaterThan(floor.xp * 5);
+    expect(glut.calorieBank).toBeGreaterThan(floor.calorieBank);
+    expect(glut.loot).toBeGreaterThan(floor.loot);
+  });
+
+  it('consuming the enemy doubles the calorie bank vs an equal-stage non-consume win', () => {
+    const eaten   = computeReward(entity('A', 100, 300), { state: 'consumed' });
+    const pinned  = computeReward(entity('B', 100, 300), { state: 'succumbed' });
+    expect(eaten.stage).toBe(pinned.stage);
+    expect(eaten.calorieBank).toBe(pinned.calorieBank * 2);
+  });
+});
+
+describe('vic.* scene skeleton (C4)', () => {
+  const engine = getTextEngine();
+
+  it('size_payoff resolves a line at every weight stage', () => {
+    for (const pct of [0, 5, 30, 75, 150, 300, 500]) {
+      const subject = entity('S', 100, pct);
+      expect(engine.render('vic.size_payoff', { subject })).toBeTruthy();
+    }
+  });
+
+  it('floor-win and glut-clear produce visibly different prose', () => {
+    const floor = engine.render('vic.scene', {
+      subject: entity('Mira', 100, 5),
+      globals: { state: 'immobilized', via: 'throttle' },
+    });
+    const glut = engine.render('vic.scene', {
+      subject: withFullness(entity('Mira', 100, 300), 100, 0),
+      globals: { state: 'consumed', via: 'flesh_to_food' },
+    });
+    expect(floor).toBeTruthy();
+    expect(glut).toBeTruthy();
+    expect(floor).not.toBe(glut);
+    // The small loser reads as barely-softened; the big one does not.
+    expect(floor).toMatch(/little spoil|barely softened/);
+  });
+
+  it('the bespoke boss override wins on priority regardless of willingness', () => {
+    const gert = entity('Gertrude', 100, 150);
+    gert.persona = 'gertrude';
+    gert.willingness = 30; // would otherwise hit the "furious" aftermath line
+    const out = engine.render('vic.aftermath', { subject: gert });
+    expect(out).toMatch(/butter/);
   });
 });
