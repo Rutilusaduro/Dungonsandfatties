@@ -55,8 +55,9 @@ class NPC {
     this.trades = options.trades || []; // Items/services they can trade
     this.dialogue_state = 'greeting'; // Current state in dialogue tree
 
-    // Unique ID
-    this.id = options.id || Math.random().toString(36).substr(2, 9);
+    // Deterministic id from name so discovery/save state survives a world rebuild
+    // on reload (names are unique within a zone). Explicit options.id still wins.
+    this.id = options.id || `npc_${name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
 
     // Food preferences (for weight gain themed interactions)
     this.foodLoves = options.foodLoves || []; // LOVES these foods

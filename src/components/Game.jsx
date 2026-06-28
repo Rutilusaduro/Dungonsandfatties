@@ -27,6 +27,7 @@ import { DungeonState } from '../game/dungeon/DungeonState.js';
 import { Combat, fillUp, checkWinState, actionsAvailable } from '../game/combat/Combat.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
+import { Discovery } from '../game/discovery/Discovery.js';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -81,14 +82,36 @@ const Game = () => {
   const [dungeon, setDungeon] = useState(null);        // DungeonState instance
   const [combatState, setCombatState] = useState(null); // { combat, enemies, round, status, log }
   const [savedRunExists] = useState(() => hasSave());
+  const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
+  const [discoveryTick, setDiscoveryTick] = useState(0); // bump to force re-render after reveal
+
+  // Reveal everything in a zone (the things you can "see"). Returns count newly seen.
+  const revealZone = (zone) => {
+    if (!zone) return 0;
+    const present = [
+      ...(zone.getEnvironmentalObjects?.() || []),
+      ...(zone.getCreatures?.() || []),
+      ...(zone.getNPCs?.() || []),
+    ];
+    const fresh = discovery.revealAll(zone.id, present);
+    if (fresh.length) setDiscoveryTick(t => t + 1);
+    return fresh.length;
+  };
+
+  // ponytail: P1 temporary — auto-reveal a zone on entry so the game stays
+  // playable before the "Look around" button lands in P2. P2 flips this to
+  // arrive-blind (reveal only on explicit look).
+  useEffect(() => {
+    if (gameStarted && currentZone) revealZone(currentZone);
+  }, [gameStarted, currentZone]);
 
   // Autosave: persist the run whenever progress-bearing state changes.
   // Combat isn't restored (enemies respawn on resume) so we don't save combatState itself.
   useEffect(() => {
     if (!gameStarted) return;
     const player = gameState.getPlayer();
-    if (player) saveGame({ player, dungeon, knownSpells });
-  }, [gameStarted, dungeon, knownSpells, combatState, levelUpState]);
+    if (player) saveGame({ player, dungeon, knownSpells, discovery: discovery.serialize() });
+  }, [gameStarted, dungeon, knownSpells, combatState, levelUpState, discoveryTick]);
 
   // Resume a saved run.
   const resumeGame = () => {
@@ -97,6 +120,7 @@ const Game = () => {
     gameState.setPlayer(run.player);
     setKnownSpells(run.knownSpells);
     setDungeon(run.dungeon);
+    setDiscovery(Discovery.hydrate(run.discovery));
     textEngine.clearBuffer();
     textEngine.addText(`Welcome back, ${run.player.name}.`);
     textEngine.addText('Your run resumes where you left it.');
@@ -316,6 +340,12 @@ const Game = () => {
   };
 
   const handleNPCInteract = (npc) => {
+    // Fog-of-war: can't talk to someone you haven't seen.
+    if (currentZone && !discovery.has(currentZone.id, npc.id)) {
+      addEntry('You haven\'t noticed anyone like that here. Try looking around first.', 'info');
+      setTextBuffer(textEngine.getBuffer());
+      return;
+    }
     setSelectedNPC(npc);
   };
 
@@ -572,6 +602,7 @@ const Game = () => {
               availableTargets={availableTargets}
               onCastSpell={handleCastSpell}
               currentZone={currentZone}
+              discovery={discovery}
               playerStats={player ? {
                 currentWeight: player.currentWeight,
                 baseWeight: player.baseWeight,
