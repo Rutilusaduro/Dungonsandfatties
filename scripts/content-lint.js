@@ -127,6 +127,17 @@ for (const stage of WEIGHT_STAGES) {
     errors++;
   }
 }
+// Combat-fattening coverage (phase 5): combat.fattening must resolve a line at
+// every fullness band, so a mid-fight swell never renders empty.
+for (const ratio of [0.55, 0.75, 0.9, 1.0]) {
+  const subject = { name: 'Test', baseWeight: 100, currentWeight: 220, stomachCapacity: 100, fullness: ratio * 100 };
+  const line = engine.render('combat.fattening', { subject });
+  if (!line) {
+    console.error(`content:lint ERROR [combat.fattening] no line resolves at fullness ${ratio}`);
+    errors++;
+  }
+}
+
 // The full skeleton must compose end-to-end for a representative win.
 const vicSmoke = engine.render('vic.scene', {
   subject: { name: 'Test', baseWeight: 100, currentWeight: 400, willingness: 90 },

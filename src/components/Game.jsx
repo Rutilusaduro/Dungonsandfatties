@@ -612,6 +612,18 @@ const Game = () => {
   // Spell reach: ranged with a per-spell range (cells) + line of sight.
   const spellRange = (spell) => spell.combatRange ?? ((spell.level ?? 1) <= 2 ? 2 : 4);
 
+  // When a fill pushes a foe across a fullness band, narrate her swelling.
+  const FATTEN_BANDS = [0.5, 0.7, 0.85, 1.0];
+  const narrateFatten = (enemy, beforeFull, log) => {
+    const cap = enemy.stomachCapacity || 0;
+    if (!cap) return;
+    const before = beforeFull / cap, after = (enemy.fullness || 0) / cap;
+    if (FATTEN_BANDS.some(bnd => before < bnd && after >= bnd)) {
+      const line = getTextEngine().render('combat.fattening', enemy._createContext());
+      if (line) log.push(line);
+    }
+  };
+
   const handleCombatCastSpell = (spell) => {
     runPlayerTurn(({ player, mod, selEnemy, selEnemyPos, playerPos }) => {
       if (!selEnemy || !selEnemyPos) return { ok: false, msg: 'No target — pick a foe first.' };
@@ -624,8 +636,11 @@ const Game = () => {
       if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `No L${cost} slots — ${spell.name} fizzles.` };
       player.spellSlots[cost] -= 1;
       const pct = cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
+      const before = selEnemy.fullness || 0;
       fillUp(selEnemy, pct * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
-      return { ok: true, msg: `You cast ${spell.name} on ${selEnemy.name}.` };
+      log.push(`You cast ${spell.name} on ${selEnemy.name}.`);
+      narrateFatten(selEnemy, before, log);
+      return { ok: true };
     });
   };
 
@@ -635,8 +650,11 @@ const Game = () => {
       if (!canReach(playerPos, selEnemyPos, 1)) {
         return { ok: false, msg: `${selEnemy.name} is too far to force-feed. Move adjacent first.` };
       }
+      const before = selEnemy.fullness || 0;
       fillUp(selEnemy, 0.15 * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
-      return { ok: true, msg: `You force-feed ${selEnemy.name}.` };
+      log.push(`You force-feed ${selEnemy.name}.`);
+      narrateFatten(selEnemy, before, log);
+      return { ok: true };
     });
   };
 
