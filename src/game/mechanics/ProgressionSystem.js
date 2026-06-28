@@ -1,10 +1,16 @@
 // XP thresholds and level-up mechanics.
-// Levels 1-5 cover a single dungeon run.
+// Levels 1-20 cover a full 12-floor dungeon run.
 
 import { SLOT_CAP } from './Balance.js';
 
-export const XP_THRESHOLDS = [0, 0, 300, 900, 2100, 4500];
-// index = level, value = XP needed to reach that level. Level 1 = 0.
+// index = level, value = cumulative XP needed to reach that level. L1 = 0.
+// Smooth superlinear curve; no cliffs. Levels 1-5 unchanged from the original.
+export const XP_THRESHOLDS = [
+  0, 0, 300, 900, 2100, 4500,            // 0-5
+  7500, 11500, 16500, 22500, 30000,      // 6-10
+  39000, 50000, 63000, 78000, 95000,     // 11-15
+  115000, 138000, 165000, 196000, 232000, // 16-20
+];
 
 // Spell pools per class for level-up choices (3 options per level-up, player picks 1)
 export const LEVEL_UP_SPELLS = {
@@ -25,11 +31,23 @@ export const LEVEL_UP_SPELLS = {
   ],
 };
 
-// Slot bonuses granted each level: { 1: +N, 2: +N, 3: +N }
+// Slot bonuses granted each level: { 1: +N, 2: +N, 3: +N }.
+// Levels 1-5 are the original hand-tuned grants; 6-20 share a rotating tail
+// (L1, then L2, then L3) — SLOT_CAP in applyLevelBonus clamps any overflow,
+// so late-game grants quietly become no-ops once a tier is maxed.
+function slotTail(startLevel, endLevel) {
+  const out = [];
+  for (let L = startLevel; L <= endLevel; L++) {
+    const tier = (L % 3 === 0) ? 1 : (L % 3 === 1) ? 2 : 3;
+    out[L] = { [tier]: 1 };
+  }
+  return out;
+}
+
 const SLOT_BONUS_BY_CLASS = {
-  Paladin: [null, null, { 1: 1 }, { 1: 1, 2: 1 }, { 2: 1 }, { 2: 1, 3: 1 }],
-  Mage:    [null, null, { 2: 1 }, { 2: 1 }, { 2: 1, 3: 1 }, { 3: 1 }],
-  Warlock: [null, null, { 2: 1 }, { 3: 1 }, { 2: 1, 3: 1 }, { 3: 2 }],
+  Paladin: Object.assign([null, null, { 1: 1 }, { 1: 1, 2: 1 }, { 2: 1 }, { 2: 1, 3: 1 }], slotTail(6, 20)),
+  Mage:    Object.assign([null, null, { 2: 1 }, { 2: 1 }, { 2: 1, 3: 1 }, { 3: 1 }], slotTail(6, 20)),
+  Warlock: Object.assign([null, null, { 2: 1 }, { 3: 1 }, { 2: 1, 3: 1 }, { 3: 2 }], slotTail(6, 20)),
 };
 
 /**
