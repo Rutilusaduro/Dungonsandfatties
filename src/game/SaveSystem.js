@@ -52,7 +52,7 @@ export function clearSave() {
 }
 
 // ── self-check: node src/game/SaveSystem.js ──
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (typeof process !== 'undefined' && process.argv?.[1] && import.meta.url === `file://${process.argv[1]}`) {
   const { ITEMS } = await import('./items/Equipment.js');
   const p = new Character('Tester', { class: 'Mage', baseWeight: 140 });
   p.level = 7; p.experience = 1234;

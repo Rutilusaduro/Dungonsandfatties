@@ -39,7 +39,7 @@ export function computeReward(loser, winState = {}) {
 
 // ── self-check ──────────────────────────────────────────────────
 // run: node src/game/combat/Reward.js
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (typeof process !== 'undefined' && process.argv?.[1] && import.meta.url === `file://${process.argv[1]}`) {
   const at = (curMult) => ({ baseWeight: 100, currentWeight: 100 * curMult });
   const floor = computeReward(at(1.05), { state: 'immobilized' }); // stage 1
   const glut = computeReward(at(4.0), { state: 'succumbed' });     // stage 9
