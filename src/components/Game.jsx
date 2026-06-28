@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import TextDisplay from './TextDisplay';
 import CharacterPanel from './CharacterPanel';
 import SpellCaster from './SpellCaster';
-import ZoneDisplay from './ZoneDisplay';
+import LocationView from './LocationView';
+import { zoneToLocation } from '../game/discovery/locationAdapter.js';
 import NPCInteraction from './NPCInteraction';
 import CharacterCreation from './CharacterCreation';
 import GameState from '../game/GameState';
@@ -27,7 +28,7 @@ import { DungeonState } from '../game/dungeon/DungeonState.js';
 import { Combat, fillUp, checkWinState, actionsAvailable } from '../game/combat/Combat.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
-import { Discovery } from '../game/discovery/Discovery.js';
+import { Discovery, idOf } from '../game/discovery/Discovery.js';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -85,25 +86,53 @@ const Game = () => {
   const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
   const [discoveryTick, setDiscoveryTick] = useState(0); // bump to force re-render after reveal
 
-  // Reveal everything in a zone (the things you can "see"). Returns count newly seen.
-  const revealZone = (zone) => {
-    if (!zone) return 0;
-    const present = [
-      ...(zone.getEnvironmentalObjects?.() || []),
-      ...(zone.getCreatures?.() || []),
-      ...(zone.getNPCs?.() || []),
-    ];
-    const fresh = discovery.revealAll(zone.id, present);
-    if (fresh.length) setDiscoveryTick(t => t + 1);
-    return fresh.length;
+  // All discoverable things present in a zone, with their entity refs.
+  const zonePresent = (zone) => [
+    ...(zone.getNPCs?.() || []),
+    ...(zone.getCreatures?.() || []),
+    ...(zone.getEnvironmentalObjects?.() || []),
+    ...(zone.getFoods?.() || []),
+  ];
+
+  const findEntity = (zone, id) => zonePresent(zone).find(e => idOf(e) === id) || null;
+
+  // "Look around": reveal everything present and narrate what you notice.
+  const handleLookAround = () => {
+    if (!currentZone) return;
+    const present = zonePresent(currentZone);
+    const before = discovery.forLocation(currentZone.id).size;
+    discovery.revealAll(currentZone.id, present);
+    const after = discovery.forLocation(currentZone.id).size;
+    addEntry('— You look around —', 'divider');
+    if (present.length === 0) {
+      addEntry('Nothing here but you and the quiet.');
+    } else if (after === before) {
+      addEntry('You\'ve already taken in everything here.', 'info');
+    } else {
+      const names = present.map(e => e.name).join(', ');
+      addEntry(`You take in your surroundings. You notice: ${names}.`);
+    }
+    setDiscoveryTick(t => t + 1);
+    setTextBuffer(textEngine.getBuffer());
   };
 
-  // ponytail: P1 temporary — auto-reveal a zone on entry so the game stays
-  // playable before the "Look around" button lands in P2. P2 flips this to
-  // arrive-blind (reveal only on explicit look).
-  useEffect(() => {
-    if (gameStarted && currentZone) revealZone(currentZone);
-  }, [gameStarted, currentZone]);
+  // "Examine X": render the entity's detailed description into the log.
+  const handleExamine = (row) => {
+    const entity = currentZone && findEntity(currentZone, row.id);
+    if (!entity) return;
+    addEntry(`— You examine ${entity.name} —`, 'divider');
+    const detail = entity.examine?.() || entity.description || `${entity.name}. Nothing more to note.`;
+    addEntry(detail);
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  // "Talk to X" from the location list → existing NPC flow (still fog-gated).
+  const handleTalkRow = (row) => {
+    const npc = currentZone && findEntity(currentZone, row.id);
+    if (npc) handleNPCInteract(npc);
+  };
+
+  // Arrive blind: entering a zone reveals nothing until you "Look around".
 
   // Autosave: persist the run whenever progress-bearing state changes.
   // Combat isn't restored (enemies respawn on resume) so we don't save combatState itself.
@@ -573,10 +602,12 @@ const Game = () => {
           </div>
           {currentZone && (
             <div style={styles.zoneSection}>
-              <ZoneDisplay
-                zone={currentZone}
-                onZoneAction={handleZoneAction}
-                onNPCInteract={handleNPCInteract}
+              <LocationView
+                location={zoneToLocation(currentZone, discovery)}
+                onLookAround={handleLookAround}
+                onExamine={handleExamine}
+                onTalk={handleTalkRow}
+                onMove={(dir) => handleZoneAction({ type: 'move', direction: dir })}
               />
             </div>
           )}
