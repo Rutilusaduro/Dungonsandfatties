@@ -390,7 +390,10 @@ const Game = () => {
       ...enemies.map(e => ({ entity: e, initiative: 5 })),
     ]);
     setDungeon(ds);
-    setCombatState({ combat, enemies, round: 1, status: 'active', log: [`${enemies[0]?.name} appears!`] });
+    const floor = ds.currentFloor;
+    const intro = floor?.modifier ? ` (${floor.biomeLabel})` : '';
+    setCombatState({ combat, enemies, round: 1, status: 'active', modifier: floor?.modifier || null,
+      log: [`${floor?.name || 'The dungeon'}${intro}: ${enemies[0]?.name} appears!`] });
   };
 
   const doCombatPlayerAction = (actionFn) => {
@@ -400,10 +403,11 @@ const Game = () => {
       if (!player) return prev;
       const { combat, enemies } = prev;
       const enemy = enemies[0];
+      const mod = prev.modifier || {};
       const newLog = [...prev.log];
 
-      // Player action
-      const msg = actionFn(player, enemy);
+      // Player action (biome feedScale resists/eases fattening)
+      const msg = actionFn(player, enemy, mod);
       if (msg) newLog.push(msg);
 
       // Check enemy defeat after player action
@@ -421,10 +425,14 @@ const Game = () => {
       ctrl({ self: enemy, opponent: player, selfPos, oppPos, actions, combat });
       newLog.push(`${enemy.name} retaliates.`);
 
+      // Biome willDrift: tempting air nudges the enemy toward succumb each round.
+      if (mod.willDrift) enemy.willingness = Math.min(100, (enemy.willingness ?? 50) + mod.willDrift);
+
       // Per-round fullness drain (mirrors Combat.nextRound drainRate=0.1).
-      // Player's feedCling makes the ENEMY drain less, so feeding sticks.
-      const enemyDrain = 0.1 * (1 - player.feedClingFactor);
-      for (const [e, rate] of [[player, 0.1], [enemy, enemyDrain]]) {
+      // Player's feedCling makes the ENEMY drain less; biome drainScale scales both.
+      const drainScale = mod.drainScale ?? 1;
+      const enemyDrain = 0.1 * (1 - player.feedClingFactor) * drainScale;
+      for (const [e, rate] of [[player, 0.1 * drainScale], [enemy, enemyDrain]]) {
         const cap = e.stomachCapacity || 0;
         if (cap) e.fullness = Math.max(0, (e.fullness || 0) - cap * rate);
       }
@@ -441,20 +449,20 @@ const Game = () => {
   };
 
   const handleCombatCastSpell = (spell) => {
-    doCombatPlayerAction((player, enemy) => {
+    doCombatPlayerAction((player, enemy, mod) => {
       const lvl = spell.level ?? 1;
       const cost = lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
       if ((player.spellSlots[cost] ?? 0) <= 0) return `No L${cost} slots — ${spell.name} fizzles.`;
       player.spellSlots[cost] -= 1;
       const pct = cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
-      fillUp(enemy, pct * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1));
+      fillUp(enemy, pct * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
       return `You cast ${spell.name} on ${enemy.name}.`;
     });
   };
 
   const handleForceFeed = () => {
-    doCombatPlayerAction((player, enemy) => {
-      fillUp(enemy, 0.15 * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1));
+    doCombatPlayerAction((player, enemy, mod) => {
+      fillUp(enemy, 0.15 * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
       return `You force-feed ${enemy.name}.`;
     });
   };
@@ -488,13 +496,15 @@ const Game = () => {
         setDungeon(null);
         clearSave(); // run finished — don't resurrect it
       } else {
-        if (floorComplete) addEntry(`Floor complete! Entering ${dungeon.currentFloor?.name || 'next floor'}.`);
+        const floor = dungeon.currentFloor;
+        if (floorComplete) addEntry(`Floor complete! Entering ${floor?.name || 'next floor'} — ${floor?.description || ''}`);
         const nextEnemies = dungeon.spawnEnemies();
         const nextCombat = new Combat([
           { entity: player, initiative: 10 },
           ...nextEnemies.map(e => ({ entity: e, initiative: 5 })),
         ]);
-        setCombatState({ combat: nextCombat, enemies: nextEnemies, round: 1, status: 'active', log: [`${nextEnemies[0]?.name} appears!`] });
+        setCombatState({ combat: nextCombat, enemies: nextEnemies, round: 1, status: 'active', modifier: floor?.modifier || null,
+          log: [`${nextEnemies[0]?.name} appears!`] });
       }
       gainXP(enemy.xpValue || 100);
     } else {
