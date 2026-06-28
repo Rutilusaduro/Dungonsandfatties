@@ -18,6 +18,14 @@ import { applyFeastExile } from '../game/mechanics/SwellSystem.js';
 import World from '../game/world/World';
 import CLASS_REGISTRY from '../game/classes/ClassRegistry.js';
 import { optionSlotCost } from '../game/magic/slotUtils.js';
+import EquipmentPanel from './EquipmentPanel';
+import LevelUpPanel from './LevelUpPanel';
+import { ITEMS } from '../game/items/Equipment.js';
+import { awardXP, applyLevelBonus, levelUpChoices, xpToNextLevel } from '../game/mechanics/ProgressionSystem.js';
+import CombatScreen from './CombatScreen';
+import { DungeonState } from '../game/dungeon/DungeonState.js';
+import { Combat, fillUp, checkWinState, actionsAvailable } from '../game/combat/Combat.js';
+import { controllerFor } from '../game/combat/EnemyController.js';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -68,6 +76,9 @@ const Game = () => {
   const [textBuffer, setTextBuffer] = useState([]);
   const [selectedNPC, setSelectedNPC] = useState(null);
   const [knownSpells, setKnownSpells] = useState(null);
+  const [levelUpState, setLevelUpState] = useState(null); // { level, choices }
+  const [dungeon, setDungeon] = useState(null);        // DungeonState instance
+  const [combatState, setCombatState] = useState(null); // { combat, enemies, round, status, log }
 
   // Initialize game
   const startGame = (playerName, classKey) => {
@@ -81,12 +92,24 @@ const Game = () => {
     });
     setKnownSpells(new Set(classDef.startingSpells));
 
+    // Starting gear by class offhand type
+    const startingGear = {
+      shield: ITEMS.divine_platter,
+      tome:   ITEMS.gluttons_tome,
+      focus:  ITEMS.hunger_focus,
+    };
+    const startWeapon = ITEMS.feeding_fork;
+    character.equip(startWeapon);
+    const offhand = startingGear[classDef.offHand];
+    if (offhand) character.equip(offhand);
+
     gameState.setPlayer(character);
     textEngine.clearBuffer();
 
     // Add initial message
     textEngine.addText(`Welcome, ${playerName}!`);
     textEngine.addText('You find yourself in The Bloated Boar Tavern...');
+    textEngine.addText('Barkeep Boris leans across the bar, voice hushed: "Listen close, adventurer. There\'s a dungeon beneath this very tavern — three floors of cursed kitchens, haunted feasting halls, and the Grand Gourmand himself at the bottom. Sealed himself in there centuries ago and never stopped eating. Every soul who went down came back changed, if they came back at all. Trapdoor\'s behind the staircase. Use the \'Enter Dungeon\' button when you\'re ready. Don\'t say I didn\'t warn you."')
     setTextBuffer(textEngine.getBuffer());
 
     // Set starting zone
@@ -287,6 +310,174 @@ const Game = () => {
     setSelectedNPC(null);
   };
 
+  const handleEquip = (item, invIndex) => {
+    const player = gameState.getPlayer();
+    if (!player) return;
+    const result = player.equip(item);
+    if (!result.ok) return;
+    player.inventory.splice(invIndex, 1);
+    if (result.replaced) player.inventory.push(result.replaced);
+    setTextBuffer(textEngine.getBuffer()); // force re-render
+  };
+
+  const handleUnequip = (slot) => {
+    const player = gameState.getPlayer();
+    if (!player) return;
+    const item = player.unequip(slot);
+    if (item) player.inventory.push(item);
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const gainXP = (amount) => {
+    const player = gameState.getPlayer();
+    if (!player) return;
+    const { leveledUp, newLevel } = awardXP(player, amount);
+    addEntry(`+${amount} XP`, 'info');
+    if (leveledUp) {
+      const choices = levelUpChoices(player, knownSpells);
+      setLevelUpState({ level: newLevel, choices });
+    }
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleLevelUpChoice = (spellName) => {
+    const player = gameState.getPlayer();
+    applyLevelBonus(player);
+    if (spellName) {
+      setKnownSpells(prev => new Set([...(prev || []), spellName]));
+      addEntry(`— Level ${player.level} —`, 'divider');
+      addEntry(`You learned ${spellName}!`);
+    }
+    setLevelUpState(null);
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  // ── Dungeon / Combat ─────────────────────────────────────────
+
+  const handleEnterDungeon = () => {
+    const player = gameState.getPlayer();
+    if (!player) return;
+    const ds = new DungeonState();
+    const enemies = ds.spawnEnemies();
+    const combat = new Combat([
+      { entity: player, initiative: 10 },
+      ...enemies.map(e => ({ entity: e, initiative: 5 })),
+    ]);
+    setDungeon(ds);
+    setCombatState({ combat, enemies, round: 1, status: 'active', log: [`${enemies[0]?.name} appears!`] });
+  };
+
+  const doCombatPlayerAction = (actionFn) => {
+    setCombatState(prev => {
+      if (!prev || prev.status !== 'active') return prev;
+      const player = gameState.getPlayer();
+      if (!player) return prev;
+      const { combat, enemies } = prev;
+      const enemy = enemies[0];
+      const newLog = [...prev.log];
+
+      // Player action
+      const msg = actionFn(player, enemy);
+      if (msg) newLog.push(msg);
+
+      // Check enemy defeat after player action
+      const enemyDefeated = checkWinState(enemy);
+      if (enemyDefeated) {
+        newLog.push(`${enemy.name} is defeated!`);
+        return { ...prev, round: prev.round + 1, status: 'won', log: newLog.slice(-8) };
+      }
+
+      // Enemy turn
+      const selfPos = combat.combatants.find(c => c.entity === enemy);
+      const oppPos  = combat.combatants.find(c => c.entity === player);
+      const actions = actionsAvailable(enemy);
+      const ctrl = controllerFor(enemy._trait);
+      ctrl({ self: enemy, opponent: player, selfPos, oppPos, actions, combat });
+      newLog.push(`${enemy.name} retaliates.`);
+
+      // Per-round fullness drain (mirrors Combat.nextRound drainRate=0.1)
+      for (const e of [player, enemy]) {
+        const cap = e.stomachCapacity || 0;
+        if (cap) e.fullness = Math.max(0, (e.fullness || 0) - cap * 0.1);
+      }
+
+      // Check player defeat
+      const playerDefeated = checkWinState(player);
+      if (playerDefeated) {
+        newLog.push('You have been overwhelmed!');
+        return { ...prev, round: prev.round + 1, status: 'lost', log: newLog.slice(-8) };
+      }
+
+      return { ...prev, round: prev.round + 1, log: newLog.slice(-8) };
+    });
+  };
+
+  const handleCombatCastSpell = (spell) => {
+    doCombatPlayerAction((player, enemy) => {
+      const lvl = spell.level ?? 1;
+      const cost = lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
+      if ((player.spellSlots[cost] ?? 0) <= 0) return `No L${cost} slots — ${spell.name} fizzles.`;
+      player.spellSlots[cost] -= 1;
+      const pct = cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
+      fillUp(enemy, pct * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1));
+      return `You cast ${spell.name} on ${enemy.name}.`;
+    });
+  };
+
+  const handleForceFeed = () => {
+    doCombatPlayerAction((player, enemy) => {
+      fillUp(enemy, 0.15 * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1));
+      return `You force-feed ${enemy.name}.`;
+    });
+  };
+
+  const handleFlee = () => {
+    setCombatState(null);
+    setDungeon(null);
+    addEntry('— Fled —', 'divider');
+    addEntry('You escape into the shadows, heart pounding.');
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleCombatContinue = () => {
+    if (!combatState || !dungeon) return;
+    const { enemies, status } = combatState;
+
+    if (status === 'won') {
+      const enemy = enemies[0];
+      if (enemy.bossEvent) addEntry(enemy.bossEvent);
+
+      // Advance dungeon + spawn next BEFORE gainXP so level-up modal doesn't race
+      const { loot, floorComplete, dungeonComplete } = dungeon.advance(enemies);
+      const player = gameState.getPlayer();
+      loot.forEach(item => player.inventory.push(item));
+      if (loot.length) addEntry(`Loot: ${loot.map(i => i.name).join(', ')}.`, 'info');
+
+      if (dungeonComplete) {
+        addEntry('— Dungeon Cleared! —', 'divider');
+        addEntry('You have conquered the dungeon. A legend is born.');
+        setCombatState(null);
+        setDungeon(null);
+      } else {
+        if (floorComplete) addEntry(`Floor complete! Entering ${dungeon.currentFloor?.name || 'next floor'}.`);
+        const nextEnemies = dungeon.spawnEnemies();
+        const nextCombat = new Combat([
+          { entity: player, initiative: 10 },
+          ...nextEnemies.map(e => ({ entity: e, initiative: 5 })),
+        ]);
+        setCombatState({ combat: nextCombat, enemies: nextEnemies, round: 1, status: 'active', log: [`${nextEnemies[0]?.name} appears!`] });
+      }
+      gainXP(enemy.xpValue || 100);
+    } else {
+      // lost — retreat
+      setCombatState(null);
+      setDungeon(null);
+      addEntry('— Defeated —', 'divider');
+      addEntry('You retreat, licking your wounds.');
+    }
+    setTextBuffer(textEngine.getBuffer());
+  };
+
   if (!gameStarted) {
     return <CharacterCreation onStart={startGame} />;
   }
@@ -305,6 +496,11 @@ const Game = () => {
             <button onClick={handleLongRest} style={styles.restButton}>
               Long Rest
             </button>
+            {!combatState && (
+              <button onClick={handleEnterDungeon} style={styles.dungeonButton}>
+                Enter Dungeon
+              </button>
+            )}
           </div>
           {currentZone && (
             <div style={styles.zoneSection}>
@@ -320,6 +516,14 @@ const Game = () => {
         <aside style={styles.sidebar}>
           <div style={styles.panelSection}>
             {player && <CharacterPanel character={player} />}
+          </div>
+
+          <div style={styles.panelSection}>
+            <EquipmentPanel
+              character={player}
+              onEquip={handleEquip}
+              onUnequip={handleUnequip}
+            />
           </div>
 
           <div style={styles.panelSection}>
@@ -348,6 +552,31 @@ const Game = () => {
           npc={selectedNPC}
           onClose={handleCloseNPC}
           onAction={handleNPCAction}
+        />
+      )}
+
+      {levelUpState && (
+        <LevelUpPanel
+          level={levelUpState.level}
+          choices={levelUpState.choices}
+          onChoose={handleLevelUpChoice}
+        />
+      )}
+
+      {combatState && (
+        <CombatScreen
+          player={player}
+          enemies={combatState.enemies}
+          round={combatState.round}
+          status={combatState.status}
+          combatLog={combatState.log}
+          knownSpells={knownSpells}
+          spellLibrary={spellLibrary}
+          playerStats={{ actionsLeft: actionsAvailable(player), spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
+          onCastSpell={handleCombatCastSpell}
+          onForceFeed={handleForceFeed}
+          onFlee={handleFlee}
+          onContinue={handleCombatContinue}
         />
       )}
     </div>
@@ -403,6 +632,15 @@ const styles = {
   restButton: {
     padding: '8px 14px',
     backgroundColor: '#4a6a2a',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
+  dungeonButton: {
+    padding: '8px 14px',
+    backgroundColor: '#6a2a2a',
     color: '#fff',
     border: 'none',
     borderRadius: '4px',
