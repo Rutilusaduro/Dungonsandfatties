@@ -1,11 +1,7 @@
 import { useState } from 'react';
+import { optionSlotCost } from '../game/magic/slotUtils.js';
 
-// Slot cost for an option given its spell — mirrors Game.jsx logic
-function optionSlotLevel(spell, option) {
-  return option?.slotLevel ?? (spell.level <= 1 ? 1 : spell.level <= 3 ? 2 : 3);
-}
-
-const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) => {
+const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, playerStats }) => {
   const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'you'
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [selectedTarget, setSelectedTarget] = useState(null);
@@ -15,7 +11,8 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSchool, setSelectedSchool] = useState(null);
 
-  const spells = spellLibrary ? spellLibrary.getAllSpells() : [];
+  const spells = (spellLibrary ? spellLibrary.getAllSpells() : [])
+    .filter(s => !knownSpells || knownSpells.has(s.name));
 
   // School filtering
   const schools = [...new Set(spells.map(s => s.school))];
@@ -177,7 +174,8 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
         <div style={styles.slotBar}>
           {[1, 2, 3].map(lvl => {
             const cur = playerStats.spellSlots[lvl] ?? 0;
-            const max = playerStats.maxSpellSlots?.[lvl] ?? cur;
+            const max = playerStats.maxSpellSlots?.[lvl] ?? 0;
+            if (max === 0) return null;
             return (
               <div key={lvl} style={styles.slotGroup}>
                 <span style={styles.slotLabel}>L{lvl}</span>
@@ -365,8 +363,8 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
                   <p style={styles.label}>How to Cast:</p>
                   <div style={styles.optionList}>
                     {availableOptions.map((option, idx) => {
-                      const cost = optionSlotLevel(selectedSpell, option);
-                      const hasSlot = (playerStats?.spellSlots?.[cost] ?? 1) > 0;
+                      const cost = optionSlotCost(selectedSpell, option);
+                      const hasSlot = (playerStats?.spellSlots?.[cost] ?? 0) > 0;
                       return (
                         <button
                           key={idx}

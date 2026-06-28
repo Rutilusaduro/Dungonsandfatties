@@ -25,7 +25,11 @@ class SpellOption {
     this.slotLevel = null; // null = derive from spell.level at cast time
   }
 
-  atSlot(level) { this.slotLevel = level; return this; }
+  atSlot(level) {
+    if (level !== 1 && level !== 2 && level !== 3) throw new RangeError(`atSlot: level must be 1–3, got ${level}`);
+    this.slotLevel = level;
+    return this;
+  }
 
   apply(caster, target, context) {
     return this.implementation(caster, target, context);

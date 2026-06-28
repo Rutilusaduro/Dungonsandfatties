@@ -4,6 +4,7 @@ import CharacterPanel from './CharacterPanel';
 import SpellCaster from './SpellCaster';
 import ZoneDisplay from './ZoneDisplay';
 import NPCInteraction from './NPCInteraction';
+import CharacterCreation from './CharacterCreation';
 import GameState from '../game/GameState';
 import Character from '../game/Character';
 import TextEngine from '../engine/TextEngine';
@@ -15,6 +16,8 @@ import { RESTRAINT_MATERIAL } from '../game/conditions/ActiveConditions.js';
 import { applyPreRestSharing } from '../game/mechanics/NutritionSystem.js';
 import { applyFeastExile } from '../game/mechanics/SwellSystem.js';
 import World from '../game/world/World';
+import CLASS_REGISTRY from '../game/classes/ClassRegistry.js';
+import { optionSlotCost } from '../game/magic/slotUtils.js';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -64,14 +67,19 @@ const Game = () => {
   const [currentZone, setCurrentZone] = useState(null);
   const [textBuffer, setTextBuffer] = useState([]);
   const [selectedNPC, setSelectedNPC] = useState(null);
+  const [knownSpells, setKnownSpells] = useState(null);
 
   // Initialize game
-  const startGame = (playerName) => {
+  const startGame = (playerName, classKey) => {
+    const classDef = CLASS_REGISTRY[classKey];
+    if (!classDef) throw new Error(`Unknown class: ${classKey}`);
     const character = new Character(playerName, {
       race: 'Human',
-      class: 'Adventurer',
-      baseWeight: 150,
+      class: classKey,
+      baseWeight: classDef.baseWeight,
+      spellSlots: { ...classDef.spellSlots },
     });
+    setKnownSpells(new Set(classDef.startingSpells));
 
     gameState.setPlayer(character);
     textEngine.clearBuffer();
@@ -96,9 +104,7 @@ const Game = () => {
     const caster = gameState.getPlayer();
     if (!caster) return;
 
-    // Determine slot cost: option.slotLevel if explicit, else derive from spell level
-    const slotLevel = selectedOption?.slotLevel
-      ?? (spell.level <= 1 ? 1 : spell.level <= 3 ? 2 : 3);
+    const slotLevel = optionSlotCost(spell, selectedOption);
     const available = caster.spellSlots[slotLevel] ?? 0;
     if (available <= 0) {
       addEntry(`— ${spell.name} —`, 'divider');
@@ -282,7 +288,7 @@ const Game = () => {
   };
 
   if (!gameStarted) {
-    return <StartScreen onStart={startGame} />;
+    return <CharacterCreation onStart={startGame} />;
   }
 
   const player = gameState.getPlayer();
@@ -319,6 +325,7 @@ const Game = () => {
           <div style={styles.panelSection}>
             <SpellCaster
               spellLibrary={spellLibrary}
+              knownSpells={knownSpells}
               availableTargets={availableTargets}
               onCastSpell={handleCastSpell}
               currentZone={currentZone}
@@ -343,34 +350,6 @@ const Game = () => {
           onAction={handleNPCAction}
         />
       )}
-    </div>
-  );
-};
-
-const StartScreen = ({ onStart }) => {
-  const [playerName, setPlayerName] = useState('');
-
-  const handleStart = () => {
-    if (playerName.trim()) {
-      onStart(playerName);
-    }
-  };
-
-  return (
-    <div style={styles.startScreen}>
-      <h1>Dungeons & Fatties</h1>
-      <p>A Text-Based Adventure</p>
-      <input
-        type="text"
-        placeholder="Enter your character name"
-        value={playerName}
-        onChange={(e) => setPlayerName(e.target.value)}
-        onKeyPress={(e) => e.key === 'Enter' && handleStart()}
-        style={styles.input}
-      />
-      <button onClick={handleStart} style={styles.button}>
-        Start Adventure
-      </button>
     </div>
   );
 };
@@ -429,33 +408,6 @@ const styles = {
     borderRadius: '4px',
     cursor: 'pointer',
     fontWeight: 'bold',
-  },
-  startScreen: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    backgroundColor: '#1a1a1a',
-    color: '#e0e0e0',
-  },
-  input: {
-    padding: '10px',
-    fontSize: '16px',
-    marginBottom: '20px',
-    backgroundColor: '#2a2a2a',
-    color: '#e0e0e0',
-    border: '1px solid #444',
-    borderRadius: '4px',
-  },
-  button: {
-    padding: '12px 24px',
-    fontSize: '16px',
-    backgroundColor: '#8B4513',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
   },
 };
 
