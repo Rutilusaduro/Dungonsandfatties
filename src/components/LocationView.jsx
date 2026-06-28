@@ -30,7 +30,7 @@ const LocationView = ({ location, onLookAround, onExamine, onTalk, onMove, onPro
           🔍 Look around
         </button>
         {hiddenCount > 0 && nothingSeen && (
-          <span style={s.hint}>Something stirs here, just out of notice.</span>
+          <span style={s.hint} className="lv-hint">Something stirs here, just out of notice.</span>
         )}
       </div>
 
@@ -102,14 +102,16 @@ const css = `
   .lv-btn:active { transform: scale(0.97); }
   .lv-btn:focus-visible { outline: 2px solid #c9a227; outline-offset: 2px; }
   @media (hover: hover) and (pointer: fine) {
-    .lv-look:hover { background: #6a531f; }
+    .lv-look:hover { background: #5a7a38; }
     .lv-exit:hover { background: #5a8a3a; }
     .lv-talk:hover { background: #a8538a; }
     .lv-danger:hover { background: #8f3232; }
     .lv-good:hover { background: #4a6a2f; }
     .lv-btn:hover { border-color: #555; }
   }
-  @media (prefers-reduced-motion: reduce) { .lv-btn { transition: none; } }
+  @keyframes stirPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+  .lv-hint { animation: stirPulse 2.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .lv-btn { transition: none; } .lv-hint { animation: none; } }
 `;
 
 const s = {
@@ -129,12 +131,14 @@ const s = {
     padding: '11px 18px', background: '#4a6a2a', color: '#fff',
     border: 'none', borderRadius: '8px', cursor: 'pointer',
     fontFamily: 'Georgia, serif', fontSize: '0.92rem', fontWeight: 700,
+    letterSpacing: '0.04em',
+    boxShadow: '0 2px 8px rgba(74,106,42,0.4), 0 4px 2px rgba(0,0,0,0.3)',
   },
   hint: { fontSize: '0.82rem', color: '#8a7a55', fontStyle: 'italic' },
   list: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' },
   item: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px',
-    padding: '10px 14px', background: '#161616', borderRadius: '8px',
+    padding: '10px 14px', background: '#181614', borderRadius: '8px',
     borderLeft: '3px solid #555',
     boxShadow: '0 1px 2px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.25)',
   },
@@ -156,11 +160,11 @@ const s = {
     cursor: 'pointer', fontFamily: 'Georgia, serif', fontSize: '0.95rem', fontWeight: 700,
     boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
   },
-  promptDanger: { background: '#7a2a2a' },
-  promptGood: { background: '#3f5a28' },
+  promptDanger: { background: '#7a2a2a', boxShadow: '0 2px 12px rgba(122,42,42,0.5)' },
+  promptGood: { background: '#3f5a28', boxShadow: '0 2px 12px rgba(63,90,40,0.4)' },
   exits: { borderTop: '1px solid #2a2a2a', paddingTop: '14px' },
   exitsLabel: {
-    fontSize: '0.68rem', color: '#666', textTransform: 'uppercase',
+    fontSize: '0.68rem', color: '#7a6a50', textTransform: 'uppercase',
     letterSpacing: '0.1em', display: 'block', marginBottom: '8px',
   },
   exitGrid: { display: 'flex', flexWrap: 'wrap', gap: '8px' },
@@ -169,6 +173,7 @@ const s = {
     border: 'none', borderRadius: '8px', cursor: 'pointer',
     fontFamily: 'Georgia, serif', fontSize: '0.85rem', fontWeight: 600,
     textTransform: 'capitalize',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
   },
 };
 

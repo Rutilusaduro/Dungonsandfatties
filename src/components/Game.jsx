@@ -747,12 +747,16 @@ const Game = () => {
 
   return (
     <div style={styles.container}>
+      <style>{`
+        .game-rest-btn:active { transform: scale(0.97); }
+        .game-rest-btn:focus-visible { outline: 2px solid #c9a227; outline-offset: 2px; }
+      `}</style>
       <div style={styles.mainContent}>
         <div style={styles.primaryPanel}>
           <TextDisplay textBuffer={textBuffer} />
           <div style={styles.actionBar}>
             {!dungeon && (
-              <button onClick={handleLongRest} style={styles.restButton}>
+              <button onClick={handleLongRest} style={styles.restButton} className="game-rest-btn">
                 Long Rest
               </button>
             )}
@@ -871,8 +875,8 @@ const styles = {
     height: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: '#1a1a1a',
-    color: '#e0e0e0',
+    backgroundColor: '#111214',
+    color: '#e8e6e1',
     fontFamily: 'Georgia, serif',
   },
   mainContent: {
@@ -884,42 +888,44 @@ const styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    borderRight: '1px solid #333',
+    borderRight: '1px solid #2c2c30',
     overflowY: 'auto',
   },
   zoneSection: {
     maxHeight: '50%',
-    borderTop: '1px solid #333',
+    borderTop: '1px solid #2c2c30',
     overflowY: 'auto',
   },
   sidebar: {
     width: '320px',
     overflowY: 'auto',
-    backgroundColor: '#0a0a0a',
-    borderLeft: '1px solid #333',
+    backgroundColor: '#0e0f11',
+    borderLeft: '1px solid #2c2c30',
     display: 'flex',
     flexDirection: 'column',
   },
   panelSection: {
-    borderBottom: '1px solid #333',
+    borderBottom: '1px solid #2c2c30',
   },
   actionBar: {
     display: 'flex',
     justifyContent: 'flex-end',
     gap: '8px',
     padding: '10px 14px',
-    borderTop: '1px solid #333',
-    borderBottom: '1px solid #333',
-    backgroundColor: '#121212',
+    borderTop: '1px solid #2c2c30',
+    borderBottom: '1px solid #2c2c30',
+    backgroundColor: '#0e0f11',
   },
   restButton: {
     padding: '8px 14px',
     backgroundColor: '#4a6a2a',
     color: '#fff',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: '6px',
     cursor: 'pointer',
     fontWeight: 'bold',
+    letterSpacing: '0.04em',
+    transition: 'opacity 120ms, transform 80ms',
   },
   dungeonButton: {
     padding: '8px 14px',

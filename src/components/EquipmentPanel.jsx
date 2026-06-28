@@ -9,10 +9,24 @@ const RARITY_COLOR = {
 };
 
 const SLOT_LABEL = {
-  weapon:    'Weapon',
-  offhand:   'Off-hand',
-  armor:     'Armor',
-  accessory: 'Accessory',
+  weapon:    '⚔ Weapon',
+  offhand:   '🛡 Off-hand',
+  armor:     '🧥 Armor',
+  accessory: '💍 Accessory',
+};
+
+const SLOT_EMPTY = {
+  weapon:    '· no weapon ·',
+  offhand:   '· bare hand ·',
+  armor:     '· unarmored ·',
+  accessory: '· none ·',
+};
+
+const SLOT_ABBR = {
+  weapon:    'W',
+  offhand:   'O',
+  armor:     'A',
+  accessory: 'X',
 };
 
 const EquipmentPanel = ({ character, onEquip, onUnequip }) => {
@@ -26,8 +40,17 @@ const EquipmentPanel = ({ character, onEquip, onUnequip }) => {
 
   return (
     <div style={s.root}>
-      <button style={s.header} onClick={() => setOpen(o => !o)} aria-expanded={open}>
-        <span style={s.headerTitle}>Equipment</span>
+      <style>{`
+        .ep-header:hover .ep-title { color: #c9a227; }
+        .ep-header:focus-visible { outline: 2px solid #c9a227; outline-offset: -2px; }
+        .eq-item-common    { }
+        .eq-item-uncommon  { text-shadow: 0 0 8px rgba(79,198,106,0.4); }
+        .eq-item-rare      { text-shadow: 0 0 8px rgba(74,127,193,0.5); }
+        .eq-item-legendary { text-shadow: 0 0 10px rgba(201,162,39,0.6); }
+        .ep-inv-btn:hover  { background: #1e1e1e !important; }
+      `}</style>
+      <button style={s.header} className="ep-header" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+        <span style={s.headerTitle} className="ep-title">Equipment</span>
         <span style={s.caret}>{open ? '▲' : '▼'}</span>
       </button>
 
@@ -43,6 +66,7 @@ const EquipmentPanel = ({ character, onEquip, onUnequip }) => {
                   {item ? (
                     <button
                       style={{ ...s.itemBtn, color: RARITY_COLOR[item.rarity] }}
+                      className={`eq-item-${item.rarity || 'common'}`}
                       onMouseEnter={() => setTooltip(item)}
                       onMouseLeave={() => setTooltip(null)}
                       onFocus={() => setTooltip(item)}
@@ -53,7 +77,7 @@ const EquipmentPanel = ({ character, onEquip, onUnequip }) => {
                       {item.name} ×
                     </button>
                   ) : (
-                    <span style={s.emptySlot}>— empty —</span>
+                    <span style={s.emptySlot}>{SLOT_EMPTY[slot] || '· empty ·'}</span>
                   )}
                 </div>
               );
@@ -63,6 +87,12 @@ const EquipmentPanel = ({ character, onEquip, onUnequip }) => {
           {/* Tooltip */}
           {tooltip && (
             <div style={s.tooltip} role="tooltip" aria-live="polite">
+              <div style={{
+                height: '2px',
+                background: RARITY_COLOR[tooltip.rarity] || '#555',
+                borderRadius: '2px 2px 0 0',
+                margin: '-10px -12px 8px',
+              }} />
               <div style={{ ...s.tooltipName, color: RARITY_COLOR[tooltip.rarity] }}>
                 {tooltip.name}
               </div>
@@ -83,6 +113,7 @@ const EquipmentPanel = ({ character, onEquip, onUnequip }) => {
                   return (
                     <button
                       key={item.name}
+                      className="ep-inv-btn"
                       style={{
                         ...s.invBtn,
                         color: eligible ? RARITY_COLOR[item.rarity] : '#555',
@@ -97,7 +128,7 @@ const EquipmentPanel = ({ character, onEquip, onUnequip }) => {
                       onBlur={() => setTooltip(null)}
                       title={eligible ? `Equip ${item.name}` : `${character.class_} cannot equip this`}
                     >
-                      [{SLOT_LABEL[item.slot][0]}] {item.name}
+                      [{SLOT_ABBR[item.slot] || item.slot[0].toUpperCase()}] {item.name}
                     </button>
                   );
                 })}
@@ -141,9 +172,9 @@ const s = {
   slotsGrid: { display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px' },
   slotRow: { display: 'flex', alignItems: 'center', gap: '8px', minHeight: '28px' },
   slotLabel: {
-    width: '64px',
-    fontSize: '0.68rem',
-    color: '#555',
+    width: '80px',
+    fontSize: '0.75rem',
+    color: '#888',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     flexShrink: 0,
@@ -153,12 +184,12 @@ const s = {
     border: 'none',
     cursor: 'pointer',
     fontFamily: 'Georgia, serif',
-    fontSize: '0.78rem',
+    fontSize: '0.85rem',
     padding: '2px 6px',
     borderRadius: '3px',
     transition: 'background 100ms',
   },
-  emptySlot: { fontSize: '0.75rem', color: '#3a3a3a', fontStyle: 'italic' },
+  emptySlot: { fontSize: '0.8rem', color: '#555', fontStyle: 'italic' },
   tooltip: {
     background: '#1c1c1c',
     border: '1px solid #333',
@@ -167,20 +198,20 @@ const s = {
     marginBottom: '10px',
     boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
   },
-  tooltipName: { fontWeight: 700, fontSize: '0.85rem', marginBottom: '4px' },
-  tooltipDesc: { fontSize: '0.75rem', color: '#bbb', lineHeight: 1.5, marginBottom: '4px' },
-  tooltipPassive: { fontSize: '0.72rem', color: '#777', fontStyle: 'italic' },
+  tooltipName: { fontWeight: 700, fontSize: '0.9rem', marginBottom: '4px' },
+  tooltipDesc: { fontSize: '0.82rem', color: '#bbb', lineHeight: 1.5, marginBottom: '4px' },
+  tooltipPassive: { fontSize: '0.78rem', color: '#999', fontStyle: 'italic' },
   invLabel: {
-    fontSize: '0.68rem', color: '#555', textTransform: 'uppercase',
+    fontSize: '0.75rem', color: '#888', textTransform: 'uppercase',
     letterSpacing: '0.06em', marginBottom: '6px', borderTop: '1px solid #222', paddingTop: '10px',
   },
   invList: { display: 'flex', flexDirection: 'column', gap: '2px' },
   invBtn: {
     background: 'none', border: 'none', fontFamily: 'Georgia, serif',
-    fontSize: '0.78rem', padding: '3px 6px', textAlign: 'left', borderRadius: '3px',
+    fontSize: '0.85rem', padding: '3px 6px', textAlign: 'left', borderRadius: '3px',
     transition: 'background 100ms',
   },
-  emptyInv: { fontSize: '0.75rem', color: '#3a3a3a', fontStyle: 'italic', paddingTop: '6px' },
+  emptyInv: { fontSize: '0.82rem', color: '#555', fontStyle: 'italic', paddingTop: '6px' },
 };
 
 export default EquipmentPanel;
