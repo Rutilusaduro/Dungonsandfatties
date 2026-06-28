@@ -6,6 +6,7 @@
 
 import ActiveConditions from './conditions/ActiveConditions.js';
 import { canEquip, SLOTS } from './items/Equipment.js';
+import { clampSlots } from './mechanics/Balance.js';
 import {
   applyBodyWeightChange,
   calculateLivingCalories,
@@ -156,6 +157,7 @@ class Character {
         next[lvl] = (next[lvl] || 0) + bonus;
       }
     }
+    clampSlots(next);
     for (const lvl of Object.keys(next)) {
       const prevMax = this.maxSpellSlots[lvl] || 0;
       const newMax = next[lvl];

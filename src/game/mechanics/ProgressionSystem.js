@@ -1,6 +1,8 @@
 // XP thresholds and level-up mechanics.
 // Levels 1-5 cover a single dungeon run.
 
+import { SLOT_CAP } from './Balance.js';
+
 export const XP_THRESHOLDS = [0, 0, 300, 900, 2100, 4500];
 // index = level, value = XP needed to reach that level. Level 1 = 0.
 
@@ -57,8 +59,11 @@ export function awardXP(character, amount) {
 export function applyLevelBonus(character) {
   const bonus = SLOT_BONUS_BY_CLASS[character.class_]?.[character.level] || {};
   for (const [lvl, n] of Object.entries(bonus)) {
-    character.maxSpellSlots[lvl] = (character.maxSpellSlots[lvl] || 0) + n;
-    character.spellSlots[lvl]    = (character.spellSlots[lvl]    || 0) + n;
+    const cap = SLOT_CAP[lvl] ?? Infinity;
+    const room = cap - (character.maxSpellSlots[lvl] || 0);
+    const grant = Math.max(0, Math.min(n, room));
+    character.maxSpellSlots[lvl] = (character.maxSpellSlots[lvl] || 0) + grant;
+    character.spellSlots[lvl]    = (character.spellSlots[lvl]    || 0) + grant;
   }
 }
 
