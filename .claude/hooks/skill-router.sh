@@ -18,6 +18,7 @@ Route by activity (invoke the Skill, do not merely mention it):
 - writing or editing ANY prose/copy -> fuck-slop before finalizing it
 - brainstorming or stress-testing an idea/plan -> grill-me
 - reviewing code, a plan, or a design -> junior-to-senior
+- game content or mechanics (enemies, spells, floors, combat, equipment, balance, classes) -> gamedev
 TXT
 )"
 
