@@ -12,7 +12,7 @@ const CharacterPanel = ({ character }) => {
       <h2 style={styles.title}>{stats.name}</h2>
 
       <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>Character</h3>
+        <h3 style={styles.sectionTitle}><span style={styles.sectionIcon}>⚔</span> <span style={styles.sectionLabel}>Character</span></h3>
         <div style={styles.stat}>
           <span style={styles.label}>Race:</span>
           <span>{stats.race}</span>
@@ -28,7 +28,7 @@ const CharacterPanel = ({ character }) => {
       </div>
 
       <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>Health</h3>
+        <h3 style={styles.sectionTitle}><span style={styles.sectionIcon}>❤</span> <span style={styles.sectionLabel}>Health</span></h3>
         <div style={styles.healthBar}>
           <div
             style={{
@@ -45,7 +45,7 @@ const CharacterPanel = ({ character }) => {
       </div>
 
       <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>Attributes</h3>
+        <h3 style={styles.sectionTitle}><span style={styles.sectionIcon}>✦</span> <span style={styles.sectionLabel}>Attributes</span></h3>
         {Object.entries(stats.stats).map(([name, value]) => (
           <div key={name} style={styles.stat}>
             <span style={styles.label}>{capitalize(name)}:</span>
@@ -55,7 +55,7 @@ const CharacterPanel = ({ character }) => {
       </div>
 
       <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>Weight</h3>
+        <h3 style={styles.sectionTitle}><span style={styles.sectionIcon}>⚖</span> <span style={styles.sectionLabel}>Weight</span></h3>
         <div style={styles.stat}>
           <span style={styles.label}>Current:</span>
           <span>{stats.weight.current} lbs</span>
@@ -65,10 +65,20 @@ const CharacterPanel = ({ character }) => {
           <span>{stats.weight.base} lbs</span>
         </div>
         {weightDiff > 0 && (
-          <div style={{ ...styles.stat, color: '#ff9800' }}>
-            <span style={styles.label}>Gained:</span>
-            <span>+{weightDiff} lbs</span>
-          </div>
+          <>
+            <div style={styles.weightBar}>
+              <div
+                style={{
+                  ...styles.weightBarFill,
+                  width: `${Math.min(100, (weightDiff / 100) * 100)}%`,
+                }}
+              />
+            </div>
+            <div style={{ ...styles.stat, color: '#e0a030', fontWeight: 600 }}>
+              <span style={styles.label}>Gained:</span>
+              <span>+{weightDiff} lbs</span>
+            </div>
+          </>
         )}
         <div style={styles.stat}>
           <span style={styles.label}>Accumulated:</span>
@@ -77,7 +87,7 @@ const CharacterPanel = ({ character }) => {
       </div>
 
       <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>Nutrition</h3>
+        <h3 style={styles.sectionTitle}><span style={styles.sectionIcon}>🍗</span> <span style={styles.sectionLabel}>Nutrition</span></h3>
         <div style={styles.stat}>
           <span style={styles.label}>Today:</span>
           <span>{stats.nutrition?.caloriesEatenToday || 0} cal</span>
@@ -104,7 +114,7 @@ const styles = {
     backgroundColor: '#1a1a1a',
     padding: '15px',
     borderRadius: '4px',
-    fontSize: '13px',
+    fontSize: '14px',
   },
   title: {
     margin: '0 0 15px 0',
@@ -118,11 +128,19 @@ const styles = {
   },
   sectionTitle: {
     margin: '10px 0 8px 0',
-    fontSize: '13px',
     color: '#aaa',
     textTransform: 'uppercase',
-    borderBottom: '1px solid #333',
+    borderBottom: '1px solid #2a2a2a',
     paddingBottom: '5px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+  },
+  sectionIcon: {
+    fontSize: '14px',
+  },
+  sectionLabel: {
+    fontSize: '12px',
   },
   stat: {
     display: 'flex',
@@ -131,7 +149,7 @@ const styles = {
     borderBottom: '1px solid #2a2a2a',
   },
   label: {
-    color: '#888',
+    color: '#a09a90',
   },
   healthBar: {
     width: '100%',
@@ -143,6 +161,19 @@ const styles = {
   },
   healthBarFill: {
     height: '100%',
+    transition: 'width 0.3s',
+  },
+  weightBar: {
+    width: '100%',
+    height: '8px',
+    backgroundColor: '#2a2a2a',
+    borderRadius: '4px',
+    overflow: 'hidden',
+    margin: '6px 0 4px',
+  },
+  weightBarFill: {
+    height: '100%',
+    backgroundColor: '#c98a2a',
     transition: 'width 0.3s',
   },
 };

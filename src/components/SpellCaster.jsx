@@ -211,6 +211,8 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
               style={{
                 ...styles.schoolTab,
                 backgroundColor: !selectedSchool ? '#6B4423' : '#4a3728',
+                borderColor: !selectedSchool ? '#c9a227' : 'transparent',
+                color: !selectedSchool ? '#ffd700' : '#ccc',
               }}
             >
               All
@@ -222,6 +224,8 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
                 style={{
                   ...styles.schoolTab,
                   backgroundColor: selectedSchool === school ? '#6B4423' : '#4a3728',
+                  borderColor: selectedSchool === school ? '#c9a227' : 'transparent',
+                  color: selectedSchool === school ? '#ffd700' : '#ccc',
                 }}
               >
                 {school.slice(0, 4)}
@@ -472,7 +476,7 @@ const styles = {
     backgroundColor: '#1a1a1a',
     padding: '15px',
     borderRadius: '4px',
-    fontSize: '12px',
+    fontSize: '13px',
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
@@ -498,7 +502,7 @@ const styles = {
     color: '#999',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '12px',
+    fontSize: '13px',
     fontWeight: 'bold',
     transition: 'all 0.2s',
   },
@@ -515,7 +519,7 @@ const styles = {
     color: '#fff',
     border: '1px solid #444',
     borderRadius: '3px',
-    fontSize: '12px',
+    fontSize: '13px',
   },
   schoolTabs: {
     display: 'flex',
@@ -526,11 +530,11 @@ const styles = {
   schoolTab: {
     padding: '6px 10px',
     backgroundColor: '#4a3728',
-    color: '#fff',
-    border: 'none',
+    color: '#ccc',
+    border: '1px solid transparent',
     borderRadius: '3px',
     cursor: 'pointer',
-    fontSize: '11px',
+    fontSize: '12px',
     whiteSpace: 'nowrap',
     transition: 'background-color 0.2s',
   },
@@ -539,7 +543,7 @@ const styles = {
   },
   label: {
     margin: '0 0 8px 0',
-    fontSize: '12px',
+    fontSize: '13px',
     color: '#aaa',
     textTransform: 'uppercase',
   },
@@ -559,19 +563,20 @@ const styles = {
     cursor: 'pointer',
     textAlign: 'left',
     transition: 'background-color 0.2s',
-    fontSize: '12px',
+    fontSize: '13px',
   },
   spellName: {
     fontWeight: 'bold',
     marginBottom: '2px',
   },
   spellLevel: {
-    fontSize: '10px',
+    fontSize: '11px',
     color: '#ccc',
   },
   noSpells: {
     color: '#666',
     fontStyle: 'italic',
+    fontSize: '13px',
   },
   spellDetails: {
     backgroundColor: '#2a2a2a',
@@ -586,7 +591,7 @@ const styles = {
   },
   detailText: {
     margin: '4px 0',
-    fontSize: '12px',
+    fontSize: '13px',
     color: '#ddd',
   },
   themeText: {
@@ -594,7 +599,7 @@ const styles = {
     padding: '8px',
     backgroundColor: '#3a2a1a',
     borderLeft: '3px solid #ffd700',
-    fontSize: '11px',
+    fontSize: '13px',
     color: '#ffeb99',
     fontStyle: 'italic',
   },
@@ -603,7 +608,7 @@ const styles = {
     padding: '7px',
     backgroundColor: '#1f3322',
     borderLeft: '3px solid #5a8a3a',
-    fontSize: '11px',
+    fontSize: '13px',
     color: '#bfe6b8',
   },
   targetSection: {
@@ -623,7 +628,7 @@ const styles = {
   },
   secondaryTargetLabel: {
     margin: '0 0 8px 0',
-    fontSize: '11px',
+    fontSize: '12px',
     color: '#ff9800',
     textTransform: 'uppercase',
     fontWeight: 'bold',
@@ -637,7 +642,7 @@ const styles = {
     cursor: 'pointer',
     textAlign: 'left',
     transition: 'background-color 0.2s',
-    fontSize: '12px',
+    fontSize: '13px',
   },
   optionSection: {
     marginBottom: '10px',
@@ -659,10 +664,10 @@ const styles = {
     display: 'flex',
     gap: '4px',
     alignItems: 'center',
-    fontSize: '11px',
+    fontSize: '12px',
   },
   slotLabel: {
-    color: '#777',
+    color: '#aaa',
   },
   slotCount: {
     fontWeight: 'bold',
@@ -676,7 +681,7 @@ const styles = {
     cursor: 'pointer',
     textAlign: 'left',
     transition: 'all 0.2s',
-    fontSize: '11px',
+    fontSize: '13px',
   },
   optionHeader: {
     display: 'flex',
@@ -686,18 +691,18 @@ const styles = {
   },
   optionName: {
     fontWeight: 'bold',
-    fontSize: '12px',
+    fontSize: '13px',
   },
   slotBadge: {
-    fontSize: '10px',
-    color: '#aaa',
+    fontSize: '11px',
+    color: '#ccc',
     backgroundColor: '#1a1a1a',
     padding: '1px 5px',
     borderRadius: '3px',
     border: '1px solid #444',
   },
   optionDesc: {
-    fontSize: '10px',
+    fontSize: '12px',
     color: '#bbb',
   },
   castButton: {
@@ -717,7 +722,7 @@ const styles = {
     padding: '8px',
     backgroundColor: '#3a2a2a',
     color: '#ff9800',
-    fontSize: '11px',
+    fontSize: '13px',
     borderRadius: '3px',
     textAlign: 'center',
   },
@@ -727,12 +732,12 @@ const styles = {
     backgroundColor: '#2a2a2a',
     borderRadius: '3px',
     textAlign: 'center',
-    fontSize: '12px',
+    fontSize: '13px',
   },
   sceneNote: {
     color: '#888',
     fontStyle: 'italic',
-    fontSize: '12px',
+    fontSize: '13px',
   },
   statsPanel: {
     display: 'flex',
@@ -746,7 +751,7 @@ const styles = {
   },
   statLabel: {
     margin: '0 0 5px 0',
-    fontSize: '11px',
+    fontSize: '12px',
     color: '#aaa',
     textTransform: 'uppercase',
   },
@@ -771,7 +776,7 @@ const styles = {
   conditionList: {
     margin: '0',
     paddingLeft: '15px',
-    fontSize: '11px',
+    fontSize: '13px',
   },
   conditionItem: {
     margin: '4px 0',

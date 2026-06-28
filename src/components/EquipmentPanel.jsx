@@ -142,8 +142,8 @@ const s = {
   slotRow: { display: 'flex', alignItems: 'center', gap: '8px', minHeight: '28px' },
   slotLabel: {
     width: '64px',
-    fontSize: '0.68rem',
-    color: '#555',
+    fontSize: '0.75rem',
+    color: '#888',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     flexShrink: 0,
@@ -153,12 +153,12 @@ const s = {
     border: 'none',
     cursor: 'pointer',
     fontFamily: 'Georgia, serif',
-    fontSize: '0.78rem',
+    fontSize: '0.85rem',
     padding: '2px 6px',
     borderRadius: '3px',
     transition: 'background 100ms',
   },
-  emptySlot: { fontSize: '0.75rem', color: '#3a3a3a', fontStyle: 'italic' },
+  emptySlot: { fontSize: '0.8rem', color: '#555', fontStyle: 'italic' },
   tooltip: {
     background: '#1c1c1c',
     border: '1px solid #333',
@@ -167,20 +167,20 @@ const s = {
     marginBottom: '10px',
     boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
   },
-  tooltipName: { fontWeight: 700, fontSize: '0.85rem', marginBottom: '4px' },
-  tooltipDesc: { fontSize: '0.75rem', color: '#bbb', lineHeight: 1.5, marginBottom: '4px' },
-  tooltipPassive: { fontSize: '0.72rem', color: '#777', fontStyle: 'italic' },
+  tooltipName: { fontWeight: 700, fontSize: '0.9rem', marginBottom: '4px' },
+  tooltipDesc: { fontSize: '0.82rem', color: '#bbb', lineHeight: 1.5, marginBottom: '4px' },
+  tooltipPassive: { fontSize: '0.78rem', color: '#999', fontStyle: 'italic' },
   invLabel: {
-    fontSize: '0.68rem', color: '#555', textTransform: 'uppercase',
+    fontSize: '0.75rem', color: '#888', textTransform: 'uppercase',
     letterSpacing: '0.06em', marginBottom: '6px', borderTop: '1px solid #222', paddingTop: '10px',
   },
   invList: { display: 'flex', flexDirection: 'column', gap: '2px' },
   invBtn: {
     background: 'none', border: 'none', fontFamily: 'Georgia, serif',
-    fontSize: '0.78rem', padding: '3px 6px', textAlign: 'left', borderRadius: '3px',
+    fontSize: '0.85rem', padding: '3px 6px', textAlign: 'left', borderRadius: '3px',
     transition: 'background 100ms',
   },
-  emptyInv: { fontSize: '0.75rem', color: '#3a3a3a', fontStyle: 'italic', paddingTop: '6px' },
+  emptyInv: { fontSize: '0.82rem', color: '#555', fontStyle: 'italic', paddingTop: '6px' },
 };
 
 export default EquipmentPanel;
