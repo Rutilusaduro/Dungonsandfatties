@@ -69,6 +69,13 @@ class ActiveConditions {
   keys() { return [...this._map.keys()]; }
   clear() { this._map.clear(); return this; }
   get size() { return this._map.size; }
+
+  // Save/load: dump full condition objects, restore them verbatim.
+  serialize() { return this.list(); }
+  hydrate(arr = []) {
+    for (const c of arr) if (c?.key) this._map.set(c.key, { ...c });
+    return this;
+  }
 }
 
 export default ActiveConditions;

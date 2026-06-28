@@ -7,6 +7,11 @@ import { CONDITION_KEYS } from '../src/game/conditions/ActiveConditions.js';
 import { getTextEngine } from '../src/textEngine/index.js';
 import SpellLibrary from '../src/game/magic/SpellLibrary.js';
 import { ARCHETYPES } from '../src/game/combat/EnemyController.js';
+import { WEIGHT_STAGES } from '../src/textEngine/stages.js';
+import { ITEMS, FLOOR_LOOT } from '../src/game/items/Equipment.js';
+import * as ENEMY_MODULE from '../src/game/dungeon/Enemies.js';
+import CLASS_REGISTRY from '../src/game/classes/ClassRegistry.js';
+import { LEVEL_UP_SPELLS } from '../src/game/mechanics/ProgressionSystem.js';
 
 // SpellLibrary is pure JS (no React) — load it for names + target validation
 const lib = new SpellLibrary();
@@ -110,9 +115,69 @@ for (const [id, trait] of Object.entries(ARCHETYPES)) {
   }
 }
 
+// Victory-scene coverage (C4): vic.size_payoff must resolve a line at EVERY
+// weight stage (a glut-clear and a floor-win can't share one readout), and the
+// vic.scene composer must render non-empty for both ends of the ladder.
+for (const stage of WEIGHT_STAGES) {
+  const base = 100;
+  const subject = { name: 'Test', baseWeight: base, currentWeight: base * (1 + stage.minPct / 100) };
+  const payoff = engine.render('vic.size_payoff', { subject });
+  if (!payoff) {
+    console.error(`content:lint ERROR [vic.size_payoff] no line resolves at stage ${stage.id} (${stage.key})`);
+    errors++;
+  }
+}
+// The full skeleton must compose end-to-end for a representative win.
+const vicSmoke = engine.render('vic.scene', {
+  subject: { name: 'Test', baseWeight: 100, currentWeight: 400, willingness: 90 },
+  globals: { state: 'consumed', via: 'flesh_to_food' },
+});
+if (!vicSmoke || vicSmoke.split(/\s+/).length < 8) {
+  console.error(`content:lint ERROR [vic.scene] skeleton failed to compose: "${vicSmoke}"`);
+  errors++;
+}
+
+// ── Content refs (Step 1, scale-4x): enemies, loot, class/levelup spell pools ──
+const itemKeys = new Set(Object.keys(ITEMS));
+const spellSet = new Set(knownSpells);
+// All FLOORn_ENEMIES exports, in floor order.
+const ALL_ENEMIES = Object.entries(ENEMY_MODULE)
+  .filter(([k, v]) => /^FLOOR\d+_ENEMIES$/.test(k) && Array.isArray(v))
+  .sort((a, b) => parseInt(a[0].match(/\d+/)[0]) - parseInt(b[0].match(/\d+/)[0]))
+  .flatMap(([, v]) => v);
+
+for (const e of ALL_ENEMIES) {
+  const tag = `[enemy:${e.name || '(no-name)'}]`;
+  if (!e.name) { console.error(`content:lint ERROR ${tag} missing 'name'`); errors++; }
+  if (!ARCHETYPES[e.archetype]) {
+    console.error(`content:lint ERROR ${tag} unknown archetype: '${e.archetype}'`); errors++;
+  }
+  for (const key of e.lootTable || []) {
+    if (!itemKeys.has(key)) { console.error(`content:lint ERROR ${tag} lootTable key not in ITEMS: '${key}'`); errors++; }
+  }
+}
+
+for (const [floor, keys] of Object.entries(FLOOR_LOOT)) {
+  for (const key of keys) {
+    if (!itemKeys.has(key)) { console.error(`content:lint ERROR [FLOOR_LOOT:${floor}] key not in ITEMS: '${key}'`); errors++; }
+  }
+}
+
+for (const [cls, def] of Object.entries(CLASS_REGISTRY)) {
+  for (const name of def.startingSpells || []) {
+    if (!spellSet.has(name)) { console.error(`content:lint ERROR [class:${cls}] startingSpell not in SpellLibrary: '${name}'`); errors++; }
+  }
+}
+
+for (const [cls, pool] of Object.entries(LEVEL_UP_SPELLS)) {
+  for (const name of pool) {
+    if (!spellSet.has(name)) { console.error(`content:lint ERROR [LEVEL_UP_SPELLS:${cls}] spell not in SpellLibrary: '${name}'`); errors++; }
+  }
+}
+
 if (errors > 0) {
   console.error(`\ncontent:lint: ${errors} error(s). Fix before shipping.`);
   process.exit(1);
 } else {
-  console.log(`content:lint: ${TABLE.length} entries, ${ids.size} unique IDs, ${knownSpells.length} spells — clean.`);
+  console.log(`content:lint: ${TABLE.length} combos, ${ALL_ENEMIES.length} enemies, ${itemKeys.size} items, ${knownSpells.length} spells — clean.`);
 }

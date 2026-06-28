@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { optionSlotCost } from '../game/magic/slotUtils.js';
 
-const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) => {
-  const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'scene', 'you'
+const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, playerStats }) => {
+  const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'you'
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [selectedSecondaryTarget, setSelectedSecondaryTarget] = useState(null);
@@ -10,7 +11,8 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSchool, setSelectedSchool] = useState(null);
 
-  const spells = spellLibrary ? spellLibrary.getAllSpells() : [];
+  const spells = (spellLibrary ? spellLibrary.getAllSpells() : [])
+    .filter(s => !knownSpells || knownSpells.has(s.name));
 
   // School filtering
   const schools = [...new Set(spells.map(s => s.school))];
@@ -125,18 +127,9 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
       selectedOption: selectedOption,
     });
 
-    setCastResult({
-      success: true,
-      message: `Cast ${selectedSpell.name}!`,
-    });
-
-    setTimeout(() => {
-      setSelectedSpell(null);
-      setSelectedTarget(null);
-      setSelectedSecondaryTarget(null);
-      setSelectedOption(null);
-      setCastResult(null);
-    }, 2000);
+    // Flash "Cast!" then clear it — keep spell selection so player can cast again.
+    setCastResult({ success: true });
+    setTimeout(() => setCastResult(null), 1200);
   };
 
   const validTargets = getValidTargets();
@@ -164,17 +157,6 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
           Cast
         </button>
         <button
-          onClick={() => setActiveTab('scene')}
-          style={{
-            ...styles.tabButton,
-            backgroundColor: activeTab === 'scene' ? '#1a3a1a' : '#3a2a1a',
-            color: activeTab === 'scene' ? '#5a8a3a' : '#999',
-            borderBottom: activeTab === 'scene' ? '3px solid #5a8a3a' : 'none',
-          }}
-        >
-          Scene
-        </button>
-        <button
           onClick={() => setActiveTab('you')}
           style={{
             ...styles.tabButton,
@@ -186,6 +168,25 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
           You
         </button>
       </div>
+
+      {/* Spell Slot Bar */}
+      {playerStats?.spellSlots && (
+        <div style={styles.slotBar}>
+          {[1, 2, 3].map(lvl => {
+            const cur = playerStats.spellSlots[lvl] ?? 0;
+            const max = playerStats.maxSpellSlots?.[lvl] ?? 0;
+            if (max === 0) return null;
+            return (
+              <div key={lvl} style={styles.slotGroup}>
+                <span style={styles.slotLabel}>L{lvl}</span>
+                <span style={{ ...styles.slotCount, color: cur === 0 ? '#666' : '#ffd700' }}>
+                  {cur}/{max}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Cast Tab */}
       {activeTab === 'cast' && (
@@ -361,20 +362,29 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
                 <div style={styles.optionSection}>
                   <p style={styles.label}>How to Cast:</p>
                   <div style={styles.optionList}>
-                    {availableOptions.map((option, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedOption(option)}
-                        style={{
-                          ...styles.optionButton,
-                          backgroundColor:
-                            selectedOption === option ? '#5a8a3a' : '#3a5a2a',
-                        }}
-                      >
-                        <div style={styles.optionName}>{option.name}</div>
-                        <div style={styles.optionDesc}>{option.description}</div>
-                      </button>
-                    ))}
+                    {availableOptions.map((option, idx) => {
+                      const cost = optionSlotCost(selectedSpell, option);
+                      const hasSlot = (playerStats?.spellSlots?.[cost] ?? 0) > 0;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => hasSlot && setSelectedOption(option)}
+                          style={{
+                            ...styles.optionButton,
+                            backgroundColor: !hasSlot ? '#2a2a2a'
+                              : selectedOption === option ? '#5a8a3a' : '#3a5a2a',
+                            opacity: hasSlot ? 1 : 0.45,
+                            cursor: hasSlot ? 'pointer' : 'not-allowed',
+                          }}
+                        >
+                          <div style={styles.optionHeader}>
+                            <div style={styles.optionName}>{option.name}</div>
+                            <div style={styles.slotBadge}>L{cost}</div>
+                          </div>
+                          <div style={styles.optionDesc}>{option.description}</div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -391,25 +401,13 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
                 Cast Spell
               </button>
 
-              {castResult && (
-                <div
-                  style={{
-                    ...styles.resultMessage,
-                    color: castResult.success ? '#4CAF50' : '#f44336',
-                  }}
-                >
-                  {castResult.message}
+              {castResult?.success && (
+                <div style={{ ...styles.resultMessage, color: '#4CAF50' }}>
+                  ✓
                 </div>
               )}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Scene Tab */}
-      {activeTab === 'scene' && (
-        <div style={styles.tabContent}>
-          <p style={styles.sceneNote}>Scene information displays in the main log.</p>
         </div>
       )}
 
@@ -445,14 +443,12 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
                 </p>
               </div>
 
-              {playerStats.conditions && Object.keys(playerStats.conditions).length > 0 && (
+              {playerStats.conditions?.length > 0 && (
                 <div style={styles.statGroup}>
                   <p style={styles.statLabel}>Conditions</p>
                   <ul style={styles.conditionList}>
-                    {Object.entries(playerStats.conditions).map(([key, val]) => (
-                      <li key={key} style={styles.conditionItem}>
-                        {key}
-                      </li>
+                    {playerStats.conditions.map(key => (
+                      <li key={key} style={styles.conditionItem}>{key}</li>
                     ))}
                   </ul>
                 </div>
@@ -647,6 +643,27 @@ const styles = {
     flexDirection: 'column',
     gap: '6px',
   },
+  slotBar: {
+    display: 'flex',
+    gap: '12px',
+    padding: '6px 10px',
+    backgroundColor: '#111',
+    borderBottom: '1px solid #333',
+    marginBottom: '8px',
+  },
+  slotGroup: {
+    display: 'flex',
+    gap: '4px',
+    alignItems: 'center',
+    fontSize: '11px',
+  },
+  slotLabel: {
+    color: '#777',
+  },
+  slotCount: {
+    fontWeight: 'bold',
+    fontVariantNumeric: 'tabular-nums',
+  },
   optionButton: {
     padding: '8px 10px',
     color: '#fff',
@@ -657,10 +674,23 @@ const styles = {
     transition: 'all 0.2s',
     fontSize: '11px',
   },
+  optionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '2px',
+  },
   optionName: {
     fontWeight: 'bold',
-    marginBottom: '2px',
     fontSize: '12px',
+  },
+  slotBadge: {
+    fontSize: '10px',
+    color: '#aaa',
+    backgroundColor: '#1a1a1a',
+    padding: '1px 5px',
+    borderRadius: '3px',
+    border: '1px solid #444',
   },
   optionDesc: {
     fontSize: '10px',

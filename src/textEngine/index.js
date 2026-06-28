@@ -13,6 +13,7 @@ import { registerBodyLexicon } from './lexicon/body.js';
 import { registerGrowthLexicon } from './lexicon/growth.js';
 import registerNPCModules from './scenes/npc.js';
 import registerSpellModules from './scenes/spell.js';
+import registerCombatModules from './scenes/combat.js';
 import registerNPCPersonas from './scenes/personas.js';
 
 // Wrap a raw dims object / {subject,...} / full ctx into an engine context.
@@ -80,6 +81,7 @@ export function initializeTextEngine() {
     registerGrowthLexicon(engine);
     registerNPCModules(engine, lexicon);
     registerSpellModules(engine);
+    registerCombatModules(engine);
     registerNPCPersonas(engine);
     globalEngine = engine;
   }

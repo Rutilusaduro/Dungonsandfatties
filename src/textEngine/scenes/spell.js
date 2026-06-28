@@ -469,7 +469,6 @@ export function registerSpellModules(engine) {
       text: 'The candy vines move with alarming speed, coiling around the target\'s head and forcing her mouth open with surprising strength. She makes a muffled sound of protest before the first wave of food is pushed past her lips. The vine pumps steadily. Her throat works involuntarily. She has to swallow or choke, and the vine gives her no pause to choose.',
     },
   ]);
-
   // Option 4: Mouth Suction
   engine.registerModule('spell.scene.confection_snare.mouth_suction', [
     {

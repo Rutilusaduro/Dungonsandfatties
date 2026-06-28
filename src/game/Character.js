@@ -5,6 +5,8 @@
  */
 
 import ActiveConditions from './conditions/ActiveConditions.js';
+import { canEquip, SLOTS, itemByKey } from './items/Equipment.js';
+import { clampSlots } from './mechanics/Balance.js';
 import {
   applyBodyWeightChange,
   calculateLivingCalories,
@@ -39,6 +41,8 @@ class Character {
     // Weight gain mechanics
     this.baseWeight = options.baseWeight || 150; // in lbs
     this.currentWeight = this.baseWeight;
+    this.stomachCapacity = options.stomachCapacity ?? Math.round(this.baseWeight * 0.6);
+    this.fullness = 0;
     this.weightGainThreshold = options.weightGainThreshold || 10; // cumulative gain that triggers effects
     this.weightGainAccumulated = 0;
     this.caloriesPerPound = options.caloriesPerPound || 900;
@@ -51,8 +55,15 @@ class Character {
       other: 0,
     };
 
-    // Equipment and inventory refs
-    this.equippedItems = [];
+    // Equipment slots: weapon | offhand | armor | accessory
+    this.equippedItems = { weapon: null, offhand: null, armor: null, accessory: null };
+    this.inventory = []; // unequipped items
+
+    // DnD-style spell slots { 1: N, 2: N, 3: N }
+    const defaultSlots = options.spellSlots || { 1: 3, 2: 2, 3: 1 };
+    this.spellSlots = { ...defaultSlots };
+    this.maxSpellSlots = { ...defaultSlots };
+    this._baseSpellSlots = { ...defaultSlots }; // frozen base; equip bonuses layer on top
 
     // Spell status + conditions (so the player can also be a narration subject)
     this.restrainedBy = null;
@@ -120,6 +131,64 @@ class Character {
     return this.addWeight(amount);
   }
 
+  // Equipment ──────────────────────────────────────────────────
+
+  equip(item) {
+    if (!canEquip(item, this)) return { ok: false, reason: `${this.class_} cannot equip ${item.name}` };
+    const prev = this.equippedItems[item.slot];
+    this.equippedItems[item.slot] = item;
+    this._applyEquipmentBonuses();
+    return { ok: true, replaced: prev };
+  }
+
+  unequip(slot) {
+    if (!SLOTS.includes(slot)) return null;
+    const item = this.equippedItems[slot];
+    this.equippedItems[slot] = null;
+    this._applyEquipmentBonuses();
+    return item;
+  }
+
+  _applyEquipmentBonuses() {
+    const next = { ...this._baseSpellSlots };
+    for (const item of Object.values(this.equippedItems)) {
+      if (!item) continue;
+      for (const [lvl, bonus] of Object.entries(item.bonusSlots || {})) {
+        next[lvl] = (next[lvl] || 0) + bonus;
+      }
+    }
+    clampSlots(next);
+    for (const lvl of Object.keys(next)) {
+      const prevMax = this.maxSpellSlots[lvl] || 0;
+      const newMax = next[lvl];
+      const diff = newMax - prevMax;
+      this.maxSpellSlots[lvl] = newMax;
+      if (diff > 0) {
+        this.spellSlots[lvl] = (this.spellSlots[lvl] || 0) + diff;
+      } else if (diff < 0) {
+        this.spellSlots[lvl] = Math.max(0, (this.spellSlots[lvl] || 0) + diff);
+      }
+    }
+  }
+
+  get feedBonusMultiplier() {
+    let bonus = 0;
+    for (const item of Object.values(this.equippedItems)) {
+      if (item) bonus += (item.feedBonus || 0);
+    }
+    return 1 + bonus / 100;
+  }
+
+  // Fraction (0..0.6) by which equipped feedCling reduces a target's per-round
+  // fullness drain — makes your feeding "stick" against purgers.
+  get feedClingFactor() {
+    let pct = 0;
+    for (const item of Object.values(this.equippedItems)) {
+      if (item) pct += (item.feedCling || 0);
+    }
+    return Math.min(0.6, pct / 100);
+  }
+
   consumeCalories(calories, source = 'Food', options = {}) {
     return recordCalorieConsumption(this, calories, source, options);
   }
@@ -135,6 +204,35 @@ class Character {
 
   getCalorieValue(options = {}) {
     return calculateLivingCalories(this, options);
+  }
+
+  // ── Save / load ──────────────────────────────────────────────
+  // Equipment instances → keys; conditions → plain dump. Everything else
+  // is plain numbers/strings/objects and survives JSON round-trip as-is.
+  serialize() {
+    const out = {};
+    for (const [k, v] of Object.entries(this)) {
+      if (k === 'equippedItems' || k === 'inventory' || k === 'conditions') continue;
+      out[k] = v;
+    }
+    out.equippedItems = Object.fromEntries(
+      Object.entries(this.equippedItems).map(([slot, it]) => [slot, it?.key ?? null]),
+    );
+    out.inventory  = this.inventory.map(it => it.key).filter(Boolean);
+    out.conditions = this.conditions.serialize();
+    return out;
+  }
+
+  static hydrate(data) {
+    const c = new Character(data.name, { race: data.race, class: data.class_ });
+    Object.assign(c, data);
+    c.equippedItems = { weapon: null, offhand: null, armor: null, accessory: null };
+    for (const [slot, key] of Object.entries(data.equippedItems || {})) {
+      if (key) c.equippedItems[slot] = itemByKey(key);
+    }
+    c.inventory   = (data.inventory || []).map(itemByKey).filter(Boolean);
+    c.conditions  = new ActiveConditions().hydrate(data.conditions || []);
+    return c;
   }
 
   // Get character description
@@ -172,6 +270,8 @@ Weight: ${this.currentWeight} lbs (${weightStatus})
         retentionMultiplier: this.calorieRetentionMultiplier,
         edibleCalories: this.getCalorieValue(),
       },
+      spellSlots: { ...this.spellSlots },
+      maxSpellSlots: { ...this.maxSpellSlots },
     };
   }
 }

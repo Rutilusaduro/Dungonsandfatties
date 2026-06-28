@@ -64,6 +64,52 @@ export const ARCHETYPES = {
       while (b-- > 0) api.forceFeed();
     },
   },
+
+  // Leech — races BOTH gauges: gorges itself (creeping toward its own succumb)
+  // while still force-feeding you. Greedy and self-destructive; punish by out-
+  // pacing it, or let it overfeed itself. Denies nothing.
+  leech: {
+    id: 'leech',
+    denies: [],
+    feedRate: 0.20,
+    gorgeRate: 0.15,
+    gorgeWill: 8,
+    script: (api) => {
+      let b = api.actions;
+      if (b > 0) { api.gorge(); b--; }   // feeds its own appetite first
+      while (b-- > 0) api.forceFeed();
+    },
+  },
+
+  // Warden — a tougher dispeller. Purges its own fullness AND closes to feed,
+  // and its enchantment resists the satiated finisher. Beat it via a different
+  // open path (buried/restrained/asleep) or simply out-throttle the purge.
+  warden: {
+    id: 'warden',
+    denies: ['satiated'],
+    feedRate: 0.22,
+    script: (api) => {
+      let b = api.actions;
+      if (b > 0) { api.purgeSelf(); b--; }
+      if (b > 0 && api.distance() > 0) { api.close(); b--; }
+      while (b-- > 0) api.forceFeed();
+    },
+  },
+
+  // Trickster — pure evasion. Kites out of reach and purges to stall the
+  // throttle, feeding little. Raw fattening crawls; it's built to be finished
+  // with a combo, not a gauge race. Denies bury (never grounded).
+  trickster: {
+    id: 'trickster',
+    denies: ['buried'],
+    feedRate: 0.08,
+    script: (api) => {
+      let b = api.actions;
+      if (b > 0 && api.distance() < 2) { api.kite(); b--; }
+      if (b > 0) { api.purgeSelf(); b--; }
+      while (b-- > 0) api.forceFeed();
+    },
+  },
 };
 
 export function deniesCondition(traitId, key) {

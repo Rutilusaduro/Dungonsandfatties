@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TextDisplay from './TextDisplay';
 import CharacterPanel from './CharacterPanel';
 import SpellCaster from './SpellCaster';
 import ZoneDisplay from './ZoneDisplay';
 import NPCInteraction from './NPCInteraction';
+import CharacterCreation from './CharacterCreation';
 import GameState from '../game/GameState';
 import Character from '../game/Character';
 import TextEngine from '../engine/TextEngine';
@@ -15,6 +16,17 @@ import { RESTRAINT_MATERIAL } from '../game/conditions/ActiveConditions.js';
 import { applyPreRestSharing } from '../game/mechanics/NutritionSystem.js';
 import { applyFeastExile } from '../game/mechanics/SwellSystem.js';
 import World from '../game/world/World';
+import CLASS_REGISTRY from '../game/classes/ClassRegistry.js';
+import { optionSlotCost } from '../game/magic/slotUtils.js';
+import EquipmentPanel from './EquipmentPanel';
+import LevelUpPanel from './LevelUpPanel';
+import { ITEMS } from '../game/items/Equipment.js';
+import { awardXP, applyLevelBonus, levelUpChoices, xpToNextLevel } from '../game/mechanics/ProgressionSystem.js';
+import CombatScreen from './CombatScreen';
+import { DungeonState } from '../game/dungeon/DungeonState.js';
+import { Combat, fillUp, checkWinState, actionsAvailable } from '../game/combat/Combat.js';
+import { controllerFor } from '../game/combat/EnemyController.js';
+import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -64,14 +76,58 @@ const Game = () => {
   const [currentZone, setCurrentZone] = useState(null);
   const [textBuffer, setTextBuffer] = useState([]);
   const [selectedNPC, setSelectedNPC] = useState(null);
+  const [knownSpells, setKnownSpells] = useState(null);
+  const [levelUpState, setLevelUpState] = useState(null); // { level, choices }
+  const [dungeon, setDungeon] = useState(null);        // DungeonState instance
+  const [combatState, setCombatState] = useState(null); // { combat, enemies, round, status, log }
+  const [savedRunExists] = useState(() => hasSave());
+
+  // Autosave: persist the run whenever progress-bearing state changes.
+  // Combat isn't restored (enemies respawn on resume) so we don't save combatState itself.
+  useEffect(() => {
+    if (!gameStarted) return;
+    const player = gameState.getPlayer();
+    if (player) saveGame({ player, dungeon, knownSpells });
+  }, [gameStarted, dungeon, knownSpells, combatState, levelUpState]);
+
+  // Resume a saved run.
+  const resumeGame = () => {
+    const run = loadGame();
+    if (!run) return;
+    gameState.setPlayer(run.player);
+    setKnownSpells(run.knownSpells);
+    setDungeon(run.dungeon);
+    textEngine.clearBuffer();
+    textEngine.addText(`Welcome back, ${run.player.name}.`);
+    textEngine.addText('Your run resumes where you left it.');
+    setTextBuffer(textEngine.getBuffer());
+    setCurrentZone(world.getCurrentZone());
+    setGameStarted(true);
+  };
 
   // Initialize game
-  const startGame = (playerName) => {
+  const startGame = (playerName, classKey) => {
+    const classDef = CLASS_REGISTRY[classKey];
+    if (!classDef) throw new Error(`Unknown class: ${classKey}`);
+    clearSave(); // fresh run abandons any prior save
     const character = new Character(playerName, {
       race: 'Human',
-      class: 'Adventurer',
-      baseWeight: 150,
+      class: classKey,
+      baseWeight: classDef.baseWeight,
+      spellSlots: { ...classDef.spellSlots },
     });
+    setKnownSpells(new Set(classDef.startingSpells));
+
+    // Starting gear by class offhand type
+    const startingGear = {
+      shield: ITEMS.divine_platter,
+      tome:   ITEMS.gluttons_tome,
+      focus:  ITEMS.hunger_focus,
+    };
+    const startWeapon = ITEMS.feeding_fork;
+    character.equip(startWeapon);
+    const offhand = startingGear[classDef.offHand];
+    if (offhand) character.equip(offhand);
 
     gameState.setPlayer(character);
     textEngine.clearBuffer();
@@ -79,6 +135,7 @@ const Game = () => {
     // Add initial message
     textEngine.addText(`Welcome, ${playerName}!`);
     textEngine.addText('You find yourself in The Bloated Boar Tavern...');
+    textEngine.addText('Barkeep Boris leans across the bar, voice hushed: "Listen close, adventurer. There\'s a dungeon beneath this very tavern — three floors of cursed kitchens, haunted feasting halls, and the Grand Gourmand himself at the bottom. Sealed himself in there centuries ago and never stopped eating. Every soul who went down came back changed, if they came back at all. Trapdoor\'s behind the staircase. Use the \'Enter Dungeon\' button when you\'re ready. Don\'t say I didn\'t warn you."')
     setTextBuffer(textEngine.getBuffer());
 
     // Set starting zone
@@ -88,20 +145,33 @@ const Game = () => {
     setGameStarted(true);
   };
 
+  const addEntry = (text, type) => textEngine.addText(text, type ? { type } : {});
+
   const handleCastSpell = ({ spell, target, secondaryTarget, zone, selectedOption }) => {
     if (!spell || !zone) return;
 
     const caster = gameState.getPlayer();
     if (!caster) return;
 
+    const slotLevel = optionSlotCost(spell, selectedOption);
+    const available = caster.spellSlots[slotLevel] ?? 0;
+    if (available <= 0) {
+      addEntry(`— ${spell.name} —`, 'divider');
+      addEntry(`No level ${slotLevel} spell slots remaining. Long rest to restore.`, 'error');
+      setTextBuffer(textEngine.getBuffer());
+      return;
+    }
+    caster.spellSlots[slotLevel] -= 1;
+
     const { result } = SpellResolver.cast({ spell, caster, target, secondaryTarget, zone, selectedOption });
 
-    textEngine.clearBuffer();
+    // Append to history (no clearBuffer) — add a divider to separate actions.
+    addEntry(`— ${spell.name}${selectedOption ? ` (${selectedOption.name})` : ''} —`, 'divider');
 
     if (result.success) {
       // Single cohesive scene narrative
       const scene = SpellNarrator.narrateSpellScene(spell, caster, target, selectedOption);
-      textEngine.addText(scene);
+      addEntry(scene);
 
       if (result.interactions?.length > 0) {
         result.interactions.forEach(interaction => {
@@ -119,30 +189,25 @@ const Game = () => {
               }),
             );
           }
-          textEngine.addText(`Synergy: ${interactionText || interaction.description}`);
+          const text = interactionText || interaction.description;
+          if (text) addEntry(text, 'synergy');
         });
       }
 
       if (result.environmentalChanges?.length > 0) {
         result.environmentalChanges.forEach(change => {
-          if (change.description) textEngine.addText(`Environment: ${change.description}`);
-        });
-      }
-
-      if (result.appliedModifiers?.length > 0) {
-        result.appliedModifiers.forEach(modifier => {
-          textEngine.addText(`Resonance: ${modifier.label}`);
+          if (change.description) addEntry(change.description, 'info');
         });
       }
 
       if (result.createdFoods?.length > 0) {
         const foodNames = result.createdFoods.map(food => food.name).join(', ');
-        textEngine.addText(`Created food now persists here: ${foodNames}.`);
+        addEntry(`${foodNames} ${result.createdFoods.length === 1 ? 'appears' : 'appear'} here.`, 'info');
       }
 
       if (result.summonedCreatures?.length > 0) {
-        const creatureNames = result.summonedCreatures.map(creature => creature.name).join(', ');
-        textEngine.addText(`Summoned creatures now occupy this area: ${creatureNames}.`);
+        const creatureNames = result.summonedCreatures.map(c => c.name).join(', ');
+        addEntry(`${creatureNames} ${result.summonedCreatures.length === 1 ? 'arrives' : 'arrive'}.`, 'info');
       }
 
       const totalImmediateWeightGain = SpellResolver.totalImmediateWeightGain(result);
@@ -155,49 +220,40 @@ const Game = () => {
         if (knowledgeEffect.loves?.length) parts.push(`Loves: ${knowledgeEffect.loves.join(', ')}`);
         if (knowledgeEffect.likes?.length) parts.push(`Likes: ${knowledgeEffect.likes.join(', ')}`);
         if (knowledgeEffect.dislikes?.length) parts.push(`Dislikes: ${knowledgeEffect.dislikes.join(', ')}`);
-        if (parts.length) textEngine.addText(parts.join(' • '));
+        if (parts.length) addEntry(parts.join(' • '), 'info');
       }
 
       // NPC reactions (weight gain + restraint status)
       if (target && target._createContext) {
-        if (totalCaloriesLogged > 0) {
-          const pendingGain = target.pendingWeightGain || 0;
-          textEngine.addText(
-            `Nutrition: ${target.name} has taken in ${totalCaloriesLogged} calories today. Estimated long-rest gain: +${pendingGain} lbs.`,
-          );
-        }
-
         if (totalImmediateWeightGain > 0) {
-          // Check if target is suspended — render special suspended weight gain scene
           if (target.suspensionState === 'ceiling') {
             const engine = getTextEngine();
-            const ctx = target._createContext();
-            const suspendedScene = engine.render('spell.weight_gain.suspended', ctx);
-            if (suspendedScene) {
-              textEngine.addText(suspendedScene);
-            }
+            const suspendedScene = engine.render('spell.weight_gain.suspended', target._createContext());
+            if (suspendedScene) addEntry(suspendedScene);
           } else {
-            // Normal weight gain reaction
             const weightReaction = SpellNarrator.triggerNPCReactions(target, 'weight_gain', totalImmediateWeightGain);
-            if (weightReaction) textEngine.addText(weightReaction);
+            if (weightReaction) addEntry(weightReaction);
           }
         }
 
-        // Persist lingering spell conditions so examine / dialogue / body.desc
-        // and future spell interactions reflect them.
+        // Show pending rest gain only if the spell fed the target (not for restraints etc.)
+        if (totalCaloriesLogged > 0 && totalImmediateWeightGain === 0) {
+          const pendingGain = target.pendingWeightGain || 0;
+          if (pendingGain > 0) addEntry(`${target.name} will gain an estimated +${pendingGain} lbs after rest.`, 'info');
+        }
+
         applySpellConditions(spell, target, selectedOption);
 
-        // Restraint spells get an immediate panic reaction.
         const isRestraintSpell = spell.tags && (
           spell.tags.includes('restraint') || spell.tags.includes('paralysis')
         );
         if (isRestraintSpell) {
           const restraintReaction = SpellNarrator.triggerNPCReactions(target, 'restrained');
-          if (restraintReaction) textEngine.addText(restraintReaction);
+          if (restraintReaction) addEntry(restraintReaction);
         }
       }
     } else {
-      textEngine.addText(`${result.message}`);
+      addEntry(result.message, 'error');
     }
 
     setTextBuffer(textEngine.getBuffer());
@@ -213,35 +269,34 @@ const Game = () => {
       ...currentZone.getCreatures(),
     ].filter(Boolean);
 
-    textEngine.clearBuffer();
-    textEngine.addText('You take a long rest. The day\'s meals and magic settle into lasting changes.');
+    addEntry('— Long Rest —', 'divider');
+    addEntry('The day\'s meals and magic settle into lasting changes.');
 
-    // Apply pre-rest sharing (bonds and auras) before processing individual rests
+    // Restore spell slots
+    if (player) player.spellSlots = { ...player.maxSpellSlots };
+
     const sharingNotes = applyPreRestSharing(restTargets, currentZone);
-    sharingNotes.forEach(note => textEngine.addText(note));
+    sharingNotes.forEach(note => addEntry(note, 'info'));
 
-    // Feast Exile lifecycle: exile countdown, return engorged, swell fade
     const exileNotes = applyFeastExile(restTargets);
-    exileNotes.forEach(note => textEngine.addText(note));
+    exileNotes.forEach(note => addEntry(note, 'info'));
 
     const summaries = restTargets
-      // Exiled entities aren't here to eat; the swell system handles them.
       .filter(entity => !entity.isExiled)
       .map(entity => ({ entity, result: entity.processLongRestNutrition?.() }))
       .filter(({ result }) => result && (result.rawCalories > 0 || result.weightGain > 0));
 
     if (summaries.length === 0) {
-      textEngine.addText('No one has eaten enough today for the rest to change their weight.');
+      addEntry('No one has eaten enough today for the rest to change their weight.', 'info');
     }
 
     summaries.forEach(({ entity, result }) => {
-      textEngine.addText(
-        `${entity.name}: ${result.rawCalories} calories eaten, ${result.effectiveCalories} effective calories, +${result.weightGain} lbs after rest.`,
-      );
-
       if (result.weightGain > 0 && entity._createContext) {
         const reaction = SpellNarrator.triggerNPCReactions(entity, 'weight_gain', result.weightGain);
-        if (reaction) textEngine.addText(reaction);
+        if (reaction) addEntry(reaction);
+        else addEntry(`${entity.name} gains +${result.weightGain} lbs.`);
+      } else if (result.rawCalories > 0) {
+        addEntry(`${entity.name} ate today but doesn't gain weight yet.`, 'info');
       }
     });
 
@@ -253,9 +308,8 @@ const Game = () => {
       const nextZone = world.moveToZone(direction);
       if (nextZone) {
         setCurrentZone(nextZone);
-        textEngine.clearBuffer();
-        textEngine.addText(`You move ${direction}...`);
-        textEngine.addText(nextZone.description);
+        addEntry(`— You move ${direction} —`, 'divider');
+        addEntry(nextZone.description);
         setTextBuffer(textEngine.getBuffer());
       }
     }
@@ -282,8 +336,189 @@ const Game = () => {
     setSelectedNPC(null);
   };
 
+  const handleEquip = (item, invIndex) => {
+    const player = gameState.getPlayer();
+    if (!player) return;
+    const result = player.equip(item);
+    if (!result.ok) return;
+    player.inventory.splice(invIndex, 1);
+    if (result.replaced) player.inventory.push(result.replaced);
+    setTextBuffer(textEngine.getBuffer()); // force re-render
+  };
+
+  const handleUnequip = (slot) => {
+    const player = gameState.getPlayer();
+    if (!player) return;
+    const item = player.unequip(slot);
+    if (item) player.inventory.push(item);
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const gainXP = (amount) => {
+    const player = gameState.getPlayer();
+    if (!player) return;
+    const { leveledUp, newLevel } = awardXP(player, amount);
+    addEntry(`+${amount} XP`, 'info');
+    if (leveledUp) {
+      const choices = levelUpChoices(player, knownSpells);
+      setLevelUpState({ level: newLevel, choices });
+    }
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleLevelUpChoice = (spellName) => {
+    const player = gameState.getPlayer();
+    applyLevelBonus(player);
+    if (spellName) {
+      setKnownSpells(prev => new Set([...(prev || []), spellName]));
+      addEntry(`— Level ${player.level} —`, 'divider');
+      addEntry(`You learned ${spellName}!`);
+    }
+    setLevelUpState(null);
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  // ── Dungeon / Combat ─────────────────────────────────────────
+
+  const handleEnterDungeon = () => {
+    const player = gameState.getPlayer();
+    if (!player) return;
+    const ds = new DungeonState();
+    const enemies = ds.spawnEnemies();
+    const combat = new Combat([
+      { entity: player, initiative: 10 },
+      ...enemies.map(e => ({ entity: e, initiative: 5 })),
+    ]);
+    setDungeon(ds);
+    const floor = ds.currentFloor;
+    const intro = floor?.modifier ? ` (${floor.biomeLabel})` : '';
+    setCombatState({ combat, enemies, round: 1, status: 'active', modifier: floor?.modifier || null,
+      log: [`${floor?.name || 'The dungeon'}${intro}: ${enemies[0]?.name} appears!`] });
+  };
+
+  const doCombatPlayerAction = (actionFn) => {
+    setCombatState(prev => {
+      if (!prev || prev.status !== 'active') return prev;
+      const player = gameState.getPlayer();
+      if (!player) return prev;
+      const { combat, enemies } = prev;
+      const enemy = enemies[0];
+      const mod = prev.modifier || {};
+      const newLog = [...prev.log];
+
+      // Player action (biome feedScale resists/eases fattening)
+      const msg = actionFn(player, enemy, mod);
+      if (msg) newLog.push(msg);
+
+      // Check enemy defeat after player action
+      const enemyDefeated = checkWinState(enemy);
+      if (enemyDefeated) {
+        newLog.push(`${enemy.name} is defeated!`);
+        return { ...prev, round: prev.round + 1, status: 'won', log: newLog.slice(-8) };
+      }
+
+      // Enemy turn
+      const selfPos = combat.combatants.find(c => c.entity === enemy);
+      const oppPos  = combat.combatants.find(c => c.entity === player);
+      const actions = actionsAvailable(enemy);
+      const ctrl = controllerFor(enemy._trait);
+      ctrl({ self: enemy, opponent: player, selfPos, oppPos, actions, combat });
+      newLog.push(`${enemy.name} retaliates.`);
+
+      // Biome willDrift: tempting air nudges the enemy toward succumb each round.
+      if (mod.willDrift) enemy.willingness = Math.min(100, (enemy.willingness ?? 50) + mod.willDrift);
+
+      // Per-round fullness drain (mirrors Combat.nextRound drainRate=0.1).
+      // Player's feedCling makes the ENEMY drain less; biome drainScale scales both.
+      const drainScale = mod.drainScale ?? 1;
+      const enemyDrain = 0.1 * (1 - player.feedClingFactor) * drainScale;
+      for (const [e, rate] of [[player, 0.1 * drainScale], [enemy, enemyDrain]]) {
+        const cap = e.stomachCapacity || 0;
+        if (cap) e.fullness = Math.max(0, (e.fullness || 0) - cap * rate);
+      }
+
+      // Check player defeat
+      const playerDefeated = checkWinState(player);
+      if (playerDefeated) {
+        newLog.push('You have been overwhelmed!');
+        return { ...prev, round: prev.round + 1, status: 'lost', log: newLog.slice(-8) };
+      }
+
+      return { ...prev, round: prev.round + 1, log: newLog.slice(-8) };
+    });
+  };
+
+  const handleCombatCastSpell = (spell) => {
+    doCombatPlayerAction((player, enemy, mod) => {
+      const lvl = spell.level ?? 1;
+      const cost = lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
+      if ((player.spellSlots[cost] ?? 0) <= 0) return `No L${cost} slots — ${spell.name} fizzles.`;
+      player.spellSlots[cost] -= 1;
+      const pct = cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
+      fillUp(enemy, pct * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
+      return `You cast ${spell.name} on ${enemy.name}.`;
+    });
+  };
+
+  const handleForceFeed = () => {
+    doCombatPlayerAction((player, enemy, mod) => {
+      fillUp(enemy, 0.15 * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
+      return `You force-feed ${enemy.name}.`;
+    });
+  };
+
+  const handleFlee = () => {
+    setCombatState(null);
+    setDungeon(null);
+    addEntry('— Fled —', 'divider');
+    addEntry('You escape into the shadows, heart pounding.');
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleCombatContinue = () => {
+    if (!combatState || !dungeon) return;
+    const { enemies, status } = combatState;
+
+    if (status === 'won') {
+      const enemy = enemies[0];
+      if (enemy.bossEvent) addEntry(enemy.bossEvent);
+
+      // Advance dungeon + spawn next BEFORE gainXP so level-up modal doesn't race
+      const { loot, floorComplete, dungeonComplete } = dungeon.advance(enemies);
+      const player = gameState.getPlayer();
+      loot.forEach(item => player.inventory.push(item));
+      if (loot.length) addEntry(`Loot: ${loot.map(i => i.name).join(', ')}.`, 'info');
+
+      if (dungeonComplete) {
+        addEntry('— Dungeon Cleared! —', 'divider');
+        addEntry('You have conquered the dungeon. A legend is born.');
+        setCombatState(null);
+        setDungeon(null);
+        clearSave(); // run finished — don't resurrect it
+      } else {
+        const floor = dungeon.currentFloor;
+        if (floorComplete) addEntry(`Floor complete! Entering ${floor?.name || 'next floor'} — ${floor?.description || ''}`);
+        const nextEnemies = dungeon.spawnEnemies();
+        const nextCombat = new Combat([
+          { entity: player, initiative: 10 },
+          ...nextEnemies.map(e => ({ entity: e, initiative: 5 })),
+        ]);
+        setCombatState({ combat: nextCombat, enemies: nextEnemies, round: 1, status: 'active', modifier: floor?.modifier || null,
+          log: [`${nextEnemies[0]?.name} appears!`] });
+      }
+      gainXP(enemy.xpValue || 100);
+    } else {
+      // lost — retreat
+      setCombatState(null);
+      setDungeon(null);
+      addEntry('— Defeated —', 'divider');
+      addEntry('You retreat, licking your wounds.');
+    }
+    setTextBuffer(textEngine.getBuffer());
+  };
+
   if (!gameStarted) {
-    return <StartScreen onStart={startGame} />;
+    return <CharacterCreation onStart={startGame} onResume={savedRunExists ? resumeGame : null} />;
   }
 
   const player = gameState.getPlayer();
@@ -300,6 +535,11 @@ const Game = () => {
             <button onClick={handleLongRest} style={styles.restButton}>
               Long Rest
             </button>
+            {!combatState && (
+              <button onClick={handleEnterDungeon} style={styles.dungeonButton}>
+                Enter Dungeon
+              </button>
+            )}
           </div>
           {currentZone && (
             <div style={styles.zoneSection}>
@@ -318,8 +558,17 @@ const Game = () => {
           </div>
 
           <div style={styles.panelSection}>
+            <EquipmentPanel
+              character={player}
+              onEquip={handleEquip}
+              onUnequip={handleUnequip}
+            />
+          </div>
+
+          <div style={styles.panelSection}>
             <SpellCaster
               spellLibrary={spellLibrary}
+              knownSpells={knownSpells}
               availableTargets={availableTargets}
               onCastSpell={handleCastSpell}
               currentZone={currentZone}
@@ -328,7 +577,9 @@ const Game = () => {
                 baseWeight: player.baseWeight,
                 gravity: player.gravity,
                 caloriesEatenToday: player.caloriesEatenToday,
-                conditions: player.conditions?.active || {},
+                conditions: player.conditions?.keys?.() || [],
+                spellSlots: { ...player.spellSlots },
+                maxSpellSlots: { ...player.maxSpellSlots },
               } : null}
             />
           </div>
@@ -342,34 +593,31 @@ const Game = () => {
           onAction={handleNPCAction}
         />
       )}
-    </div>
-  );
-};
 
-const StartScreen = ({ onStart }) => {
-  const [playerName, setPlayerName] = useState('');
+      {levelUpState && (
+        <LevelUpPanel
+          level={levelUpState.level}
+          choices={levelUpState.choices}
+          onChoose={handleLevelUpChoice}
+        />
+      )}
 
-  const handleStart = () => {
-    if (playerName.trim()) {
-      onStart(playerName);
-    }
-  };
-
-  return (
-    <div style={styles.startScreen}>
-      <h1>Dungeons & Fatties</h1>
-      <p>A Text-Based Adventure</p>
-      <input
-        type="text"
-        placeholder="Enter your character name"
-        value={playerName}
-        onChange={(e) => setPlayerName(e.target.value)}
-        onKeyPress={(e) => e.key === 'Enter' && handleStart()}
-        style={styles.input}
-      />
-      <button onClick={handleStart} style={styles.button}>
-        Start Adventure
-      </button>
+      {combatState && (
+        <CombatScreen
+          player={player}
+          enemies={combatState.enemies}
+          round={combatState.round}
+          status={combatState.status}
+          combatLog={combatState.log}
+          knownSpells={knownSpells}
+          spellLibrary={spellLibrary}
+          playerStats={{ actionsLeft: actionsAvailable(player), spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
+          onCastSpell={handleCombatCastSpell}
+          onForceFeed={handleForceFeed}
+          onFlee={handleFlee}
+          onContinue={handleCombatContinue}
+        />
+      )}
     </div>
   );
 };
@@ -429,32 +677,14 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 'bold',
   },
-  startScreen: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    backgroundColor: '#1a1a1a',
-    color: '#e0e0e0',
-  },
-  input: {
-    padding: '10px',
-    fontSize: '16px',
-    marginBottom: '20px',
-    backgroundColor: '#2a2a2a',
-    color: '#e0e0e0',
-    border: '1px solid #444',
-    borderRadius: '4px',
-  },
-  button: {
-    padding: '12px 24px',
-    fontSize: '16px',
-    backgroundColor: '#8B4513',
+  dungeonButton: {
+    padding: '8px 14px',
+    backgroundColor: '#6a2a2a',
     color: '#fff',
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
+    fontWeight: 'bold',
   },
 };
 

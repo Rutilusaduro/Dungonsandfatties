@@ -1495,7 +1495,7 @@ class SpellLibrary {
             movementAllowed: 0,
             feedingPossible: true,
             description: 'Candy vines wrap around limbs',
-          }))
+          })).atSlot(1)
         )
         .addOption(
           new SpellOption('Ceiling Suspension', 'Suspend from above', (caster, target, context) => {
@@ -1512,16 +1512,16 @@ class SpellLibrary {
               gravityCheck: targetGravity <= vineCapacity,
               description: 'Vines suspend target from above',
             };
-          })
+          }).atSlot(2)
         )
         .addOption(
-          new SpellOption('Forced Feeding Gullet', 'Force feed via vines', (caster, target) => ({
+          new SpellOption('Forced Feeding', 'Force feed via vines', (caster, target) => ({
             type: 'forced_feeding',
             feedingMethod: 'gullet',
             weightGainPerRound: 30,
             canResist: false,
             description: 'Vines pump food directly down throat',
-          }))
+          })).atSlot(3)
         )
         .addOption(
           new SpellOption('Mouth Suction', 'Pull objects into mouth', (caster, target) => ({
@@ -1531,7 +1531,7 @@ class SpellLibrary {
             weightGainPerObject: 50,
             canResist: false,
             description: 'Vines pull food/objects into mouth',
-          }))
+          })).atSlot(3)
         )
         .addOption(
           new SpellOption('Sticky Entanglement', 'Wrap entire body', (caster, target) => ({
@@ -1541,7 +1541,7 @@ class SpellLibrary {
             feedingPossible: true,
             escapeAllowed: false,
             description: 'Vines wrap target completely',
-          }))
+          })).atSlot(2)
         )
         .addEffect(
           new SpellEffect('Snare', 'Confection vines trap target', (caster, target, context, selectedOption) => {

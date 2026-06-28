@@ -1,0 +1,66 @@
+const CLASS_REGISTRY = {
+  Paladin: {
+    name: 'Paladin',
+    offHand: 'shield',
+    description: 'Divine warrior who compels foes to overindulge. Excels at close range with protective auras and holy sustenance.',
+    passive: 'Divine Sustenance: Goodberry heals double; Command compels targets to eat immediately.',
+    startingSpells: ['Goodberry', 'Command', 'Enlarge Person', 'Enhance Gravity', 'Rooting Glut'],
+    spellSlots: { 1: 4, 2: 2, 3: 1 },
+    baseWeight: 180,
+    accentColor: '#c9a227',
+  },
+  Mage: {
+    name: 'Mage',
+    offHand: 'tome',
+    description: 'Arcane scholar who conjures endless feasts and transmutes flesh. Master of area saturation.',
+    passive: 'Arcane Appetite: Conjured food has +25% caloric density.',
+    startingSpells: ['Prestidigitation', 'Mage Hand', 'Detect Cravings', 'Grease', 'Conjure Food', 'Oozing Abundance'],
+    spellSlots: { 1: 3, 2: 3, 3: 1 },
+    baseWeight: 140,
+    accentColor: '#4a7fc1',
+  },
+  Warlock: {
+    name: 'Warlock',
+    offHand: 'focus',
+    description: 'Pact-bound summoner who curses enemies with insatiable hunger. Commands eldritch creatures to do the feeding.',
+    passive: "Pact of Gluttony: Siphoned weight persists across rests.",
+    startingSpells: ['Feast of Shadows', 'Bottomless Gullet', 'Float', 'Covetous Siphon', 'Summon Cattle'],
+    spellSlots: { 1: 2, 2: 3, 3: 2 },
+    baseWeight: 150,
+    accentColor: '#8b5cf6',
+  },
+
+  // ── Scale-4x: three more classes for replay variety ──
+  Cleric: {
+    name: 'Cleric',
+    offHand: 'shield',
+    description: 'Devout provider who answers hunger with holy abundance. Buffs the feast and shields the faithful while the unworthy are filled to bursting.',
+    passive: 'Blessed Bounty: Ambrosial Aura lingers an extra round; Goodberry never runs dry.',
+    startingSpells: ['Goodberry', 'Command', 'Ambrosial Aura', 'Create Food and Water', "Feeder's Devotion"],
+    spellSlots: { 1: 4, 2: 2, 3: 1 },
+    baseWeight: 170,
+    accentColor: '#e0c060',
+  },
+  Druid: {
+    name: 'Druid',
+    offHand: 'focus',
+    description: 'Keeper of the wild harvest who grows food from bare earth and swells flesh like fruit on the vine. Patient, overwhelming, inevitable.',
+    passive: 'Wild Harvest: Plant Growth also conjures food; growth spells cost no extra slot in natural zones.',
+    startingSpells: ['Goodberry', 'Shape Wood', 'Enlarge Person', 'Conjure Food', 'Plant Growth', 'Sylvan Bounty'],
+    spellSlots: { 1: 3, 2: 3, 3: 1 },
+    baseWeight: 155,
+    accentColor: '#5fa45f',
+  },
+  Bard: {
+    name: 'Bard',
+    offHand: 'tome',
+    description: 'Silver-tongued tempter who talks foes into one more bite, and another. Weakest raw power, strongest at bending willingness.',
+    passive: 'Honeyed Words: Suggestion and Command raise target willingness twice as fast.',
+    startingSpells: ['Suggestion', 'Command', 'Sleep', 'Detect Cravings', 'Sympathetic Bond'],
+    spellSlots: { 1: 3, 2: 2, 3: 2 },
+    baseWeight: 145,
+    accentColor: '#c264a0',
+  },
+};
+
+export default CLASS_REGISTRY;

@@ -21,9 +21,12 @@ import {
   distance,
   canReach,
   move,
+  lineOfSight,
   BANDS,
   WILLINGNESS_SUCCUMB,
 } from '../game/combat/Combat.js';
+import { computeReward } from '../game/combat/Reward.js';
+import { getTextEngine } from '../textEngine/index.js';
 
 // A player that force-feeds the enemy with every available action.
 function playerFeeder(rate) {
@@ -563,5 +566,95 @@ describe('deterministic encounters (C3)', () => {
     expect(result.loser).toBe('Dispeller');
     expect(result.winState.state).toBe('consumed');
     expect(result.round).toBe(1);
+  });
+});
+
+// ── C4: rewards + victory scene skeleton ──────────────────────
+
+describe('computeReward (C4)', () => {
+  it('scales with the loser final stage — a glut-clear dwarfs a floor-win', () => {
+    const floor = computeReward(entity('Floor', 100, 5), { state: 'immobilized' });  // stage 1
+    const glut  = computeReward(entity('Glut', 100, 300), { state: 'succumbed' });   // stage 9
+    expect(floor.stage).toBe(1);
+    expect(glut.stage).toBe(9);
+    expect(glut.xp).toBeGreaterThan(floor.xp * 5);
+    expect(glut.calorieBank).toBeGreaterThan(floor.calorieBank);
+    expect(glut.loot).toBeGreaterThan(floor.loot);
+  });
+
+  it('consuming the enemy doubles the calorie bank vs an equal-stage non-consume win', () => {
+    const eaten   = computeReward(entity('A', 100, 300), { state: 'consumed' });
+    const pinned  = computeReward(entity('B', 100, 300), { state: 'succumbed' });
+    expect(eaten.stage).toBe(pinned.stage);
+    expect(eaten.calorieBank).toBe(pinned.calorieBank * 2);
+  });
+});
+
+describe('vic.* scene skeleton (C4)', () => {
+  const engine = getTextEngine();
+
+  it('size_payoff resolves a line at every weight stage', () => {
+    for (const pct of [0, 5, 30, 75, 150, 300, 500]) {
+      const subject = entity('S', 100, pct);
+      expect(engine.render('vic.size_payoff', { subject })).toBeTruthy();
+    }
+  });
+
+  it('floor-win and glut-clear produce visibly different prose', () => {
+    const floor = engine.render('vic.scene', {
+      subject: entity('Mira', 100, 5),
+      globals: { state: 'immobilized', via: 'throttle' },
+    });
+    const glut = engine.render('vic.scene', {
+      subject: withFullness(entity('Mira', 100, 300), 100, 0),
+      globals: { state: 'consumed', via: 'flesh_to_food' },
+    });
+    expect(floor).toBeTruthy();
+    expect(glut).toBeTruthy();
+    expect(floor).not.toBe(glut);
+    // The small loser reads as barely-softened; the big one does not.
+    expect(floor).toMatch(/little spoil|barely softened/);
+  });
+
+  it('the bespoke boss override wins on priority regardless of willingness', () => {
+    const gert = entity('Gertrude', 100, 150);
+    gert.persona = 'gertrude';
+    gert.willingness = 30; // would otherwise hit the "furious" aftermath line
+    const out = engine.render('vic.aftermath', { subject: gert });
+    expect(out).toMatch(/butter/);
+  });
+});
+
+// ── C5: grid-backed position (bands are the y=0 lane) ─────────
+
+describe('grid position (C5)', () => {
+  it('grid coords reproduce the band distances exactly', () => {
+    // engaged/near/far == x 0/1/2 on y=0; Chebyshev == old indexOf math.
+    expect(distance({ x: 0, y: 0 }, { x: 2, y: 0 })).toBe(2);
+    expect(distance({ band: 'engaged' }, { x: 1, y: 0 })).toBe(1);
+  });
+
+  it('diagonal movement costs one (Chebyshev)', () => {
+    expect(distance({ x: 0, y: 0 }, { x: 3, y: 3 })).toBe(3);
+    expect(distance({ x: 0, y: 0 }, { x: 1, y: 3 })).toBe(3);
+  });
+
+  it('moves through the y dimension and clamps to the field', () => {
+    const c = { x: 1, y: 0 };
+    move(c, 'down', { maxY: 2 });
+    expect(c).toMatchObject({ x: 1, y: 1 });
+    move(c, 'down', { maxY: 2 });
+    move(c, 'down', { maxY: 2 });
+    expect(c.y).toBe(2); // clamped at maxY
+    move(c, 'up', { maxY: 2 });
+    expect(c.y).toBe(1);
+  });
+
+  it('line of sight is clear with no obstacles and blocked by a wall between', () => {
+    const a = { x: 0, y: 0 }, b = { x: 4, y: 0 };
+    expect(lineOfSight(a, b)).toBe(true);
+    expect(lineOfSight(a, b, (x, y) => x === 2 && y === 0)).toBe(false);
+    // a wall off the line doesn't block.
+    expect(lineOfSight(a, b, (x, y) => x === 2 && y === 1)).toBe(true);
   });
 });

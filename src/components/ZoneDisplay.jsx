@@ -55,6 +55,11 @@ const ZoneDisplay = ({ zone, onZoneAction, onNPCInteract }) => {
                           {(npc.calorieRetentionMultiplier || 1) !== 1 ? ` - retention x${(npc.calorieRetentionMultiplier || 1).toFixed(2)}` : ''}
                         </div>
                       )}
+                      {npc.conditions?.size > 0 && (
+                        <div style={styles.conditionState}>
+                          {npc.conditions.keys().map(k => k.replace(/_/g, ' ')).join(' · ')}
+                        </div>
+                      )}
                       {(npc.gravityMultiplier !== 1 || npc.isFloating || npc.floorTethered || npc.positionedOn) && (
                         <div style={styles.gravityState}>
                           Gravity x{(npc.gravityMultiplier || 1).toFixed(2)}
@@ -259,6 +264,12 @@ const styles = {
   gainedWeight: {
     color: '#ff9800',
     fontWeight: 'bold',
+  },
+  conditionState: {
+    marginTop: '3px',
+    fontSize: '11px',
+    color: '#f0c060',
+    fontStyle: 'italic',
   },
   gravityState: {
     marginTop: '3px',

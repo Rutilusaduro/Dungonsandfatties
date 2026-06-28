@@ -97,22 +97,70 @@ export function checkWinState(entity, opts = {}) {
   return null;
 }
 
-// ── Range-band position interface (C0, grid swaps in at C5) ──
+// ── Position interface — grid-backed (C5) ────────────────────
+// The C0 range-bands turned out to be the x-axis of a grid: engaged/near/far
+// are cells (0,0)/(1,0)/(2,0) on the y=0 lane. So every legacy {band} reads as
+// a grid cell, Chebyshev distance reproduces the old band numbers exactly, and
+// none of the win-logic above had to change. The grid just adds the y
+// dimension, diagonal movement, and line-of-sight on top.
+// ponytail: no obstacle map / rendering here — this is the pure-logic seam;
+// the text game has no canvas, and obstacles land with the encounter editor.
 
 export const BANDS = ['engaged', 'near', 'far'];
 
+// A position is {x, y}; legacy callers pass {band}, mapped to x on the y=0 lane.
+function coords(p) {
+  if (p.x != null) return { x: p.x, y: p.y ?? 0 };
+  return { x: Math.max(0, BANDS.indexOf(p.band)), y: 0 };
+}
+
+// Chebyshev distance — a diagonal step costs 1, matching grid movement. On the
+// band lane (same y) this is |dx|, identical to the old indexOf subtraction.
 export function distance(a, b) {
-  return Math.abs(BANDS.indexOf(a.band) - BANDS.indexOf(b.band));
+  const pa = coords(a), pb = coords(b);
+  return Math.max(Math.abs(pa.x - pb.x), Math.abs(pa.y - pb.y));
 }
 
 export function canReach(a, b, reach = 1) {
   return distance(a, b) <= reach;
 }
 
-export function move(combatant, dir) {
-  const idx = BANDS.indexOf(combatant.band);
-  const next = dir === 'closer' ? idx - 1 : idx + 1;
-  combatant.band = BANDS[Math.max(0, Math.min(BANDS.length - 1, next))];
+const DIRS = {
+  closer:  { dx: -1, dy:  0 }, // legacy band axis
+  further: { dx: +1, dy:  0 },
+  up:      { dx:  0, dy: -1 }, // grid lanes
+  down:    { dx:  0, dy: +1 },
+};
+
+// move(combatant, dir, opts) — opts.maxX/maxY bound the field (default: band lane).
+export function move(combatant, dir, opts = {}) {
+  const step = DIRS[dir];
+  if (!step) return;
+  const cur = coords(combatant);
+  const maxX = opts.maxX ?? (BANDS.length - 1);
+  const maxY = opts.maxY ?? 0;
+  combatant.x = Math.max(0, Math.min(maxX, cur.x + step.dx));
+  combatant.y = Math.max(0, Math.min(maxY, cur.y + step.dy));
+  // Keep the legacy band view in sync while on the band lane.
+  if (combatant.y === 0 && combatant.x < BANDS.length) combatant.band = BANDS[combatant.x];
+}
+
+// Line of sight via Bresenham: clear unless a blocked cell sits between a and b.
+// blocked(x, y) -> true if that cell stops sight (default: nothing blocks).
+export function lineOfSight(a, b, blocked = () => false) {
+  let { x: x0, y: y0 } = coords(a);
+  const { x: x1, y: y1 } = coords(b);
+  const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx - dy;
+  while (x0 !== x1 || y0 !== y1) {
+    const e2 = 2 * err;
+    if (e2 > -dy) { err -= dy; x0 += sx; }
+    if (e2 <  dx) { err += dx; y0 += sy; }
+    if (x0 === x1 && y0 === y1) break;      // endpoint is the target, not an obstacle
+    if (blocked(x0, y0)) return false;
+  }
+  return true;
 }
 
 // ── Combat class ──────────────────────────────────────────────
@@ -121,7 +169,7 @@ function makeCombatant(entity, initiative) {
   // Ensure fullness fields exist — entities created outside combat may lack them.
   if (!entity.stomachCapacity) entity.stomachCapacity = 0;
   if (entity.fullness == null) entity.fullness = 0;
-  return { entity, initiative, band: 'near' };
+  return { entity, initiative, band: 'near', x: 1, y: 0 };
 }
 
 export class Combat {
