@@ -29,7 +29,7 @@ export function xpForFloor(floorIndex, base = 80) {
 }
 
 // ── self-check: node src/game/mechanics/Balance.js ──
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (typeof process !== 'undefined' && process.argv?.[1] && import.meta.url === `file://${process.argv[1]}`) {
   console.assert(clampSlots({ 1: 99, 2: 1, 3: 99 })[1] === 6, 'L1 cap');
   console.assert(clampSlots({ 1: 99, 2: 1, 3: 99 })[2] === 1, 'under-cap untouched');
   console.assert(floorScale(0) === 1, 'floor 1 baseline');
