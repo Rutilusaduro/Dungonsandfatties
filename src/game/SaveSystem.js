@@ -6,26 +6,44 @@ import Character from './Character.js';
 import { DungeonState } from './dungeon/DungeonState.js';
 
 const KEY = 'daf_save';
-const VERSION = 1;
+const VERSION = 2;
 
 // Pack the run into a versioned plain blob.
-export function packSave({ player, dungeon, knownSpells }) {
+// `discovery` is an already-serialized plain object (Discovery.serialize()) or null;
+// kept as a passthrough here so SaveSystem doesn't depend on the Discovery class.
+export function packSave({ player, dungeon, knownSpells, discovery }) {
   return {
     v: VERSION,
     savedAt: Date.now(),
     player: player.serialize(),
     dungeon: dungeon ? dungeon.serialize() : null,
     knownSpells: [...(knownSpells || [])],
+    discovery: discovery || null,
   };
 }
 
-// Reconstruct live objects from a blob (returns null on version mismatch).
+// Forward-migrate an older blob to the current shape. v1 had no discovery and a
+// linear dungeon; both are tolerated downstream (Discovery starts empty, the
+// dungeon hydrates without rooms and regenerates on resume).
+function migrate(blob) {
+  if (blob.v === 1) {
+    return { ...blob, v: 2, discovery: null };
+  }
+  return blob;
+}
+
+// Reconstruct plain run data from a blob (returns null on unmigratable version).
+// `discovery` stays a plain object here; the caller (Game.jsx) wraps it with
+// Discovery.hydrate so this module stays Discovery-agnostic.
 export function unpackSave(blob) {
-  if (!blob || blob.v !== VERSION) return null;
+  if (!blob) return null;
+  if (blob.v !== VERSION) blob = migrate(blob);
+  if (blob.v !== VERSION) return null; // still mismatched → unrecoverable
   return {
     player: Character.hydrate(blob.player),
     dungeon: blob.dungeon ? DungeonState.hydrate(blob.dungeon) : null,
     knownSpells: new Set(blob.knownSpells || []),
+    discovery: blob.discovery || null,
     savedAt: blob.savedAt,
   };
 }
@@ -75,7 +93,29 @@ if (typeof process !== 'undefined' && process.argv?.[1] && import.meta.url === `
   console.assert(run.dungeon.floorIndex === 1 && run.dungeon.encounterIndex === 2, 'dungeon progress survives');
   console.assert(run.dungeon.lootPile[0]?.key === 'feast_plate', 'lootPile restored by key');
   console.assert(run.knownSpells.has('Fireball'), 'known spells survive');
-  // version mismatch → null
-  console.assert(unpackSave({ v: 999, player: {} }) === null, 'version mismatch rejected');
+  console.assert(run.discovery === null, 'discovery defaults null');
+
+  // discovery passthrough round-trips
+  const disco = { tavern: ['npc_1', 'obj_2'] };
+  const blob2 = JSON.parse(JSON.stringify(packSave({ player: p, dungeon, knownSpells: new Set(), discovery: disco })));
+  const run2 = unpackSave(blob2);
+  console.assert(run2.discovery?.tavern?.includes('obj_2'), 'discovery survives round-trip');
+
+  // v1 blob migrates to v2 (no discovery field) instead of being rejected
+  const v1 = JSON.parse(JSON.stringify(packSave({ player: p, dungeon, knownSpells: new Set(['Grease']) })));
+  v1.v = 1; delete v1.discovery;
+  const migrated = unpackSave(v1);
+  console.assert(migrated !== null, 'v1 blob migrates, not rejected');
+  console.assert(migrated.discovery === null, 'migrated v1 has null discovery');
+  console.assert(migrated.knownSpells.has('Grease'), 'v1 fields survive migration');
+
+  // unmigratable future version → null
+  console.assert(unpackSave({ v: 999, player: {} }) === null, 'future version rejected');
+
+  // enemy ids are unique per instance
+  const { makeEnemy, FLOOR1_ENEMIES } = await import('./dungeon/Enemies.js');
+  const e1 = makeEnemy(FLOOR1_ENEMIES[0]), e2 = makeEnemy(FLOOR1_ENEMIES[0]);
+  console.assert(e1.id && e2.id && e1.id !== e2.id, 'enemy instances get distinct ids');
+
   console.log('SaveSystem self-check OK');
 }

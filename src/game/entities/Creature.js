@@ -52,8 +52,9 @@ class Creature {
     this.caloriesPerPound = options.caloriesPerPound || 900;
     this.edibleYieldRatio = options.edibleYieldRatio || 0.55;
 
-    // Unique ID
-    this.id = options.id || Math.random().toString(36).substr(2, 9);
+    // Deterministic id from name so discovery/save state survives a world rebuild
+    // on reload (names are unique within a zone). Explicit options.id still wins.
+    this.id = options.id || `creature_${name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
 
     // Spell status (mirrors NPC so the text engine can narrate creatures too)
     this.restrainedBy = null;

@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { optionSlotCost } from '../game/magic/slotUtils.js';
+import { idOf } from '../game/discovery/Discovery.js';
 
-const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, playerStats }) => {
+const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, playerStats, discovery }) => {
+  // Fog-of-war: only things you've "looked around" and seen are targetable.
+  const seen = (entity) => !discovery || !currentZone || discovery.has(currentZone.id, idOf(entity));
   const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'you'
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [selectedTarget, setSelectedTarget] = useState(null);
@@ -42,23 +45,23 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
 
     const validTargets = [];
 
-    // Check objects
+    // Check objects (only ones you've seen)
     zone.getEnvironmentalObjects?.().forEach(obj => {
-      if (selectedSpell.canTargetEntity(obj)) {
+      if (seen(obj) && selectedSpell.canTargetEntity(obj)) {
         validTargets.push(obj);
       }
     });
 
     // Check creatures (exiled ones are away in the feast realm — not targetable)
     zone.getCreatures?.().forEach(creature => {
-      if (!creature.isExiled && selectedSpell.canTargetEntity(creature)) {
+      if (!creature.isExiled && seen(creature) && selectedSpell.canTargetEntity(creature)) {
         validTargets.push(creature);
       }
     });
 
     // Check NPCs
     zone.getNPCs?.().forEach(npc => {
-      if (!npc.isExiled && selectedSpell.canTargetEntity(npc)) {
+      if (!npc.isExiled && seen(npc) && selectedSpell.canTargetEntity(npc)) {
         validTargets.push(npc);
       }
     });
@@ -87,7 +90,7 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
     if (secondaryType === 'creature' || secondaryType === 'entity') {
       const creatures = zone.getCreatures?.() || [];
       creatures.forEach(creature => {
-        if (creature.isExiled) return;
+        if (creature.isExiled || !seen(creature)) return;
         if (selectedTarget && creature === selectedTarget) return;
         validSecondaryTargets.push(creature);
       });
@@ -96,7 +99,7 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
     if (secondaryType === 'npc' || secondaryType === 'entity') {
       const npcs = zone.getNPCs?.() || [];
       npcs.forEach(npc => {
-        if (npc.isExiled) return;
+        if (npc.isExiled || !seen(npc)) return;
         if (selectedTarget && npc === selectedTarget) return;
         validSecondaryTargets.push(npc);
       });
@@ -105,6 +108,7 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
     if (secondaryType === 'entity') {
       const objects = zone.getEnvironmentalObjects?.() || [];
       objects.forEach(obj => {
+        if (!seen(obj)) return;
         if (selectedTarget && obj === selectedTarget) return;
         validSecondaryTargets.push(obj);
       });

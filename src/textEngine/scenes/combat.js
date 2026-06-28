@@ -48,6 +48,19 @@ export function registerCombatModules(engine) {
     { when: { stageMin: 10 }, text: 'She is past scale entirely — an immense, drowning mass where an enemy used to stand.' },
   ]);
 
+  // ── in-fight fattening — keyed on fullnessRatio bands (combat moves fullness,
+  // not weight), fired when a foe crosses a fullness threshold mid-battle.
+  // Reuses the body.* slots so the flavor scales with how big she already is.
+  engine.registerPool('combat.fattening', [
+    { when: {}, text: '{subject.name} swells a little fuller, packing down what you forced on her.' },
+    { when: { fullnessMin: 0.5, fullnessMax: 0.69 }, text: '{subject.name} sloshes audibly, {body.belly} pushing out as she fills past comfortable.' },
+    { when: { fullnessMin: 0.5, fullnessMax: 0.69 }, text: 'A soft groan escapes {subject.name}; {body.jiggle}, and her stuffed middle rounds further.' },
+    { when: { fullnessMin: 0.7, fullnessMax: 0.84 }, text: '{subject.name} is slowing now, heavy and overfull, {body.belly} taut and straining.' },
+    { when: { fullnessMin: 0.7, fullnessMax: 0.84 }, text: 'Each movement costs {subject.name} more — {body.jiggle} as her gorged bulk fights her.' },
+    { when: { fullnessMin: 0.85, fullnessMax: 0.99 }, text: '{subject.name} sways, packed to bursting, barely able to keep her feet under all of herself.' },
+    { when: { fullnessMin: 1.0 }, text: '{subject.name} can no longer move — wedged in place under {body.belly}, too stuffed to fight on.' },
+  ]);
+
   // ── aftermath — keyed on willingness, plus a bespoke boss override ──
   engine.registerPool('vic.aftermath', [
     { when: {}, text: 'She lies where she settled, spent.' },

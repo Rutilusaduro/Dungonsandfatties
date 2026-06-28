@@ -4,8 +4,15 @@
 
 import { ARCHETYPES } from '../combat/EnemyController.js';
 
+// Per-instance counter so two copies of the same enemy in one encounter get
+// distinct ids (needed for multi-enemy combat + discovery keying). Enemies are
+// never serialized (they respawn on resume), so this need not survive a save.
+let _enemyInstance = 0;
+const slug = (s = '') => s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
 export function makeEnemy(def) {
   return {
+    id:              def.id || `${def.archetype}_${slug(def.name)}_${_enemyInstance++}`,
     name:            def.name,
     _trait:          def.archetype,
     archetype:       ARCHETYPES[def.archetype],

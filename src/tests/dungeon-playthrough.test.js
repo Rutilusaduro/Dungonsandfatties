@@ -54,24 +54,42 @@ describe('full dungeon playthrough is winnable for every class', () => {
       player.stomachCapacity = 100000; // ignore incoming feeding for this harness
 
       const dungeon = new DungeonState();
-      let encounters = 0;
+      let combats = 0;
       let lastWinRound = 0;
       let guard = 0;
 
-      while (!dungeon.completed && guard++ < 100) {
-        const [enemy] = dungeon.spawnEnemies();
-        expect(enemy, `floor ${dungeon.floorIndex + 1} spawned an enemy`).toBeTruthy();
-        const winRound = simEncounter(player, enemy, dungeon.currentFloor?.modifier);
-        expect(winRound, `${classKey} should defeat ${enemy.name}`).not.toBeNull();
-        lastWinRound = winRound;
-        encounters++;
-        awardXP(player, enemy.xpValue || 100);
-        applyLevelBonus(player);
-        dungeon.advance([enemy]);
-      }
+      // Traverse a floor's room graph: fight every combat room, take loot, then
+      // descend the stairs. Teleporting via currentRoomId is fine for a
+      // winnability harness (it tests outcomes, not movement legality).
+      const clearFloor = () => {
+        const visited = new Set();
+        const dfs = (roomId) => {
+          visited.add(roomId);
+          dungeon.currentRoomId = roomId;
+          const room = dungeon.rooms[roomId];
+          if (room.contents.kind === 'combat' && !room.cleared) {
+            const [enemy] = dungeon.roomEnemies(room);
+            const winRound = simEncounter(player, enemy, dungeon.currentFloor?.modifier);
+            expect(winRound, `${classKey} should defeat ${enemy.name}`).not.toBeNull();
+            lastWinRound = winRound;
+            combats++;
+            dungeon.clearRoom(roomId);
+            awardXP(player, enemy.xpValue || 100);
+            applyLevelBonus(player);
+          } else if (room.contents.kind === 'loot') {
+            dungeon.clearRoom(roomId);
+          }
+          for (const nid of Object.values(room.exits)) if (!visited.has(nid)) dfs(nid);
+        };
+        dfs(dungeon.currentRoomId);
+        dungeon.currentRoomId = dungeon.stairsId;
+        return dungeon.descend();
+      };
+
+      while (!dungeon.completed && guard++ < 20) clearFloor();
 
       expect(dungeon.completed, `${classKey} run completed`).toBe(true);
-      expect(encounters).toBe(36); // 12 floors x 3 encounters
+      expect(combats).toBe(36); // 12 floors x 3 combat rooms (2 regular + gate)
       expect(lastWinRound, 'final boss is not a round-1 auto-win').toBeGreaterThan(1);
 
       // Slot caps held across the whole level run.

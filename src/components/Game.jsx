@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import TextDisplay from './TextDisplay';
 import CharacterPanel from './CharacterPanel';
 import SpellCaster from './SpellCaster';
-import ZoneDisplay from './ZoneDisplay';
+import LocationView from './LocationView';
+import { zoneToLocation, roomToLocation } from '../game/discovery/locationAdapter.js';
 import NPCInteraction from './NPCInteraction';
 import CharacterCreation from './CharacterCreation';
 import GameState from '../game/GameState';
@@ -24,9 +25,10 @@ import { ITEMS } from '../game/items/Equipment.js';
 import { awardXP, applyLevelBonus, levelUpChoices, xpToNextLevel } from '../game/mechanics/ProgressionSystem.js';
 import CombatScreen from './CombatScreen';
 import { DungeonState } from '../game/dungeon/DungeonState.js';
-import { Combat, fillUp, checkWinState, actionsAvailable } from '../game/combat/Combat.js';
+import { Combat, fillUp, checkWinState, actionsAvailable, canReach, lineOfSight, move as moveCombatant, distance } from '../game/combat/Combat.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
+import { Discovery, idOf } from '../game/discovery/Discovery.js';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -66,6 +68,9 @@ function applySpellConditions(spell, target, selectedOption) {
   }
 }
 
+// Combat field dimensions (cells are 0-indexed). 5 wide x 3 tall.
+const FIELD = { maxX: 4, maxY: 2 };
+
 const Game = () => {
   const [gameState] = useState(() => new GameState());
   const [textEngine] = useState(() => new TextEngine());
@@ -79,16 +84,67 @@ const Game = () => {
   const [knownSpells, setKnownSpells] = useState(null);
   const [levelUpState, setLevelUpState] = useState(null); // { level, choices }
   const [dungeon, setDungeon] = useState(null);        // DungeonState instance
+  const [dungeonTick, setDungeonTick] = useState(0);   // bump to re-render after in-place room mutation
   const [combatState, setCombatState] = useState(null); // { combat, enemies, round, status, log }
   const [savedRunExists] = useState(() => hasSave());
+  const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
+  const [discoveryTick, setDiscoveryTick] = useState(0); // bump to force re-render after reveal
+
+  // All discoverable things present in a zone, with their entity refs.
+  const zonePresent = (zone) => [
+    ...(zone.getNPCs?.() || []),
+    ...(zone.getCreatures?.() || []),
+    ...(zone.getEnvironmentalObjects?.() || []),
+    ...(zone.getFoods?.() || []),
+  ];
+
+  const findEntity = (zone, id) => zonePresent(zone).find(e => idOf(e) === id) || null;
+
+  // "Look around": reveal everything present and narrate what you notice.
+  const handleLookAround = () => {
+    if (!currentZone) return;
+    const present = zonePresent(currentZone);
+    const before = discovery.forLocation(currentZone.id).size;
+    discovery.revealAll(currentZone.id, present);
+    const after = discovery.forLocation(currentZone.id).size;
+    addEntry('— You look around —', 'divider');
+    if (present.length === 0) {
+      addEntry('Nothing here but you and the quiet.');
+    } else if (after === before) {
+      addEntry('You\'ve already taken in everything here.', 'info');
+    } else {
+      const names = present.map(e => e.name).join(', ');
+      addEntry(`You take in your surroundings. You notice: ${names}.`);
+    }
+    setDiscoveryTick(t => t + 1);
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  // "Examine X": render the entity's detailed description into the log.
+  const handleExamine = (row) => {
+    const entity = currentZone && findEntity(currentZone, row.id);
+    if (!entity) return;
+    addEntry(`— You examine ${entity.name} —`, 'divider');
+    const detail = entity.examine?.() || entity.description || `${entity.name}. Nothing more to note.`;
+    addEntry(detail);
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  // "Talk to X" from the location list → existing NPC flow (still fog-gated).
+  const handleTalkRow = (row) => {
+    const npc = currentZone && findEntity(currentZone, row.id);
+    if (npc) handleNPCInteract(npc);
+  };
+
+  // Arrive blind: entering a zone reveals nothing until you "Look around".
 
   // Autosave: persist the run whenever progress-bearing state changes.
   // Combat isn't restored (enemies respawn on resume) so we don't save combatState itself.
   useEffect(() => {
     if (!gameStarted) return;
     const player = gameState.getPlayer();
-    if (player) saveGame({ player, dungeon, knownSpells });
-  }, [gameStarted, dungeon, knownSpells, combatState, levelUpState]);
+    if (player) saveGame({ player, dungeon, knownSpells, discovery: discovery.serialize() });
+  }, [gameStarted, dungeon, knownSpells, combatState, levelUpState, discoveryTick, dungeonTick]);
 
   // Resume a saved run.
   const resumeGame = () => {
@@ -97,6 +153,7 @@ const Game = () => {
     gameState.setPlayer(run.player);
     setKnownSpells(run.knownSpells);
     setDungeon(run.dungeon);
+    setDiscovery(Discovery.hydrate(run.discovery));
     textEngine.clearBuffer();
     textEngine.addText(`Welcome back, ${run.player.name}.`);
     textEngine.addText('Your run resumes where you left it.');
@@ -316,6 +373,12 @@ const Game = () => {
   };
 
   const handleNPCInteract = (npc) => {
+    // Fog-of-war: can't talk to someone you haven't seen.
+    if (currentZone && !discovery.has(currentZone.id, npc.id)) {
+      addEntry('You haven\'t noticed anyone like that here. Try looking around first.', 'info');
+      setTextBuffer(textEngine.getBuffer());
+      return;
+    }
     setSelectedNPC(npc);
   };
 
@@ -380,90 +443,227 @@ const Game = () => {
 
   // ── Dungeon / Combat ─────────────────────────────────────────
 
+  // Enter the dungeon → drop into the first room (traversal, not instant combat).
   const handleEnterDungeon = () => {
     const player = gameState.getPlayer();
     if (!player) return;
     const ds = new DungeonState();
-    const enemies = ds.spawnEnemies();
-    const combat = new Combat([
-      { entity: player, initiative: 10 },
-      ...enemies.map(e => ({ entity: e, initiative: 5 })),
-    ]);
     setDungeon(ds);
-    const floor = ds.currentFloor;
-    const intro = floor?.modifier ? ` (${floor.biomeLabel})` : '';
-    setCombatState({ combat, enemies, round: 1, status: 'active', modifier: floor?.modifier || null,
-      log: [`${floor?.name || 'The dungeon'}${intro}: ${enemies[0]?.name} appears!`] });
+    setDungeonTick(t => t + 1);
+    addEntry(`— ${ds.currentFloor?.name} —`, 'divider');
+    addEntry(ds.currentFloor?.description || 'You descend into the dark.');
+    setTextBuffer(textEngine.getBuffer());
   };
 
-  const doCombatPlayerAction = (actionFn) => {
+  // Build a combat from the current room's enemies.
+  const startRoomCombat = (ds) => {
+    const player = gameState.getPlayer();
+    const enemies = ds.roomEnemies();
+    if (!enemies.length) return;
+    enemies.forEach(e => { e._dead = false; });
+    // Player anchors left-center; enemies spread along the right edge.
+    const combat = new Combat([
+      { entity: player, initiative: 10, x: 0, y: 1 },
+      ...enemies.map((e, i) => ({ entity: e, initiative: 5, x: FIELD.maxX, y: Math.min(i, FIELD.maxY) })),
+    ]);
+    const floor = ds.currentFloor;
+    setCombatState({
+      combat, enemies, round: 1, status: 'active', modifier: floor?.modifier || null,
+      selectedEnemyId: enemies[0].id, field: FIELD,
+      log: [enemies.length > 1 ? `${enemies.length} foes block your way!` : `${enemies[0]?.name} blocks your way!`],
+    });
+  };
+
+  // ── Dungeon traversal ────────────────────────────────────────
+
+  const handleDungeonLook = () => {
+    if (!dungeon) return;
+    const room = dungeon.look();
+    setDungeonTick(t => t + 1);
+    addEntry('— You look around —', 'divider');
+    const k = room?.contents?.kind;
+    if (room?.cleared) addEntry('This room is quiet now. Nothing left here.');
+    else if (k === 'combat') addEntry(`${room.contents.enemyDefs[0]?.name} ${room.contents.isGate ? 'looms between you and the way down' : 'lurks here'}.`);
+    else if (k === 'loot') addEntry('A cache of supplies sits within reach.');
+    else if (k === 'stairs') addEntry('A stairwell spirals down into deeper dark.');
+    else addEntry('An empty room. Only exits and dust.');
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleDungeonMove = (dir) => {
+    if (!dungeon) return;
+    const room = dungeon.move(dir);
+    if (!room) return;
+    setDungeonTick(t => t + 1);
+    addEntry(`— You go ${dir} —`, 'divider');
+    addEntry(dungeon.currentFloor?.name + '. The passage opens into another room.');
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleDungeonExamine = (row) => {
+    if (!dungeon) return;
+    const room = dungeon.currentRoom;
+    if (row.id.endsWith('_foe')) {
+      const foe = room.contents.enemyDefs[0];
+      addEntry(`— You size up ${foe.name} —`, 'divider');
+      addEntry(foe.description || `${foe.name}.`);
+    } else if (row.id.endsWith('_loot')) {
+      addEntry('— You inspect the cache —', 'divider');
+      addEntry('Glints of gear amid the supplies — gather it to find out what.');
+    }
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleRoomPrompt = (id) => {
+    if (!dungeon) return;
+    if (id === 'engage') {
+      startRoomCombat(dungeon);
+    } else if (id === 'take') {
+      const items = dungeon.clearRoom();
+      const player = gameState.getPlayer();
+      items.forEach(it => player.inventory.push(it));
+      addEntry('— You gather the loot —', 'divider');
+      addEntry(items.length ? `You pocket: ${items.map(i => i.name).join(', ')}.` : 'The cache was bare.');
+      setDungeonTick(t => t + 1);
+      setTextBuffer(textEngine.getBuffer());
+    } else if (id === 'descend') {
+      const { dungeonComplete } = dungeon.descend();
+      if (dungeonComplete) {
+        addEntry('— Dungeon Cleared! —', 'divider');
+        addEntry('You have conquered the dungeon. A legend is born.');
+        setDungeon(null);
+        clearSave();
+      } else {
+        addEntry(`— ${dungeon.currentFloor?.name} —`, 'divider');
+        addEntry(dungeon.currentFloor?.description || 'You descend deeper.');
+        setDungeonTick(t => t + 1);
+      }
+      setTextBuffer(textEngine.getBuffer());
+    } else if (id === 'leave') {
+      addEntry('— You retreat to the surface —', 'divider');
+      addEntry('The dungeon will be waiting when you return.');
+      setDungeon(null);
+      setTextBuffer(textEngine.getBuffer());
+    }
+  };
+
+  const handleSelectEnemy = (enemyId) => {
+    setCombatState(prev => prev ? { ...prev, selectedEnemyId: enemyId } : prev);
+  };
+
+  // Run one combat turn: the player's chosen action, then every living enemy
+  // acts (you-then-all-enemies), then drain + win checks. `mutate(ctx)` returns
+  // { ok, msg }: if ok is false the turn is aborted (no enemy turn, no round
+  // spent) so a misjudged reach just costs a message, not the round.
+  const runPlayerTurn = (mutate) => {
     setCombatState(prev => {
       if (!prev || prev.status !== 'active') return prev;
       const player = gameState.getPlayer();
       if (!player) return prev;
-      const { combat, enemies } = prev;
-      const enemy = enemies[0];
+      const { combat } = prev;
       const mod = prev.modifier || {};
-      const newLog = [...prev.log];
+      const log = [...prev.log];
+      const playerPos = combat.playerCombatant();
+      const selEnemyC = combat.combatants.find(c => c.entity.id === prev.selectedEnemyId && c.entity.isEnemy);
 
-      // Player action (biome feedScale resists/eases fattening)
-      const msg = actionFn(player, enemy, mod);
-      if (msg) newLog.push(msg);
-
-      // Check enemy defeat after player action
-      const enemyDefeated = checkWinState(enemy);
-      if (enemyDefeated) {
-        newLog.push(`${enemy.name} is defeated!`);
-        return { ...prev, round: prev.round + 1, status: 'won', log: newLog.slice(-8) };
+      const res = mutate({ player, combat, mod, log, playerPos, selEnemy: selEnemyC?.entity, selEnemyPos: selEnemyC });
+      if (res?.msg) log.push(res.msg);
+      if (res && res.ok === false) {
+        return { ...prev, log: log.slice(-10) }; // aborted — no turn spent
       }
 
-      // Enemy turn
-      const selfPos = combat.combatants.find(c => c.entity === enemy);
-      const oppPos  = combat.combatants.find(c => c.entity === player);
-      const actions = actionsAvailable(enemy);
-      const ctrl = controllerFor(enemy._trait);
-      ctrl({ self: enemy, opponent: player, selfPos, oppPos, actions, combat });
-      newLog.push(`${enemy.name} retaliates.`);
+      // Mark any enemies defeated by the player's action.
+      const living = combat.livingEnemies().map(c => c.entity);
+      for (const e of prev.enemies) {
+        if (!e._dead && !living.includes(e)) { e._dead = true; log.push(`${e.name} is defeated!`); }
+      }
+      if (combat.encounterWon()) {
+        return { ...prev, round: prev.round + 1, status: 'won', log: log.slice(-10) };
+      }
 
-      // Biome willDrift: tempting air nudges the enemy toward succumb each round.
-      if (mod.willDrift) enemy.willingness = Math.min(100, (enemy.willingness ?? 50) + mod.willDrift);
+      // Enemy turns: each living foe acts on the player.
+      for (const ec of combat.livingEnemies()) {
+        const ctrl = controllerFor(ec.entity._trait);
+        ctrl({ self: ec.entity, opponent: player, selfPos: ec, oppPos: playerPos, actions: actionsAvailable(ec.entity), combat, field: prev.field || FIELD });
+        if (mod.willDrift) ec.entity.willingness = Math.min(100, (ec.entity.willingness ?? 50) + mod.willDrift);
+      }
+      log.push('The foes press in.');
 
-      // Per-round fullness drain (mirrors Combat.nextRound drainRate=0.1).
-      // Player's feedCling makes the ENEMY drain less; biome drainScale scales both.
+      // Per-round fullness drain for everyone (biome drainScale scales it).
       const drainScale = mod.drainScale ?? 1;
-      const enemyDrain = 0.1 * (1 - player.feedClingFactor) * drainScale;
-      for (const [e, rate] of [[player, 0.1 * drainScale], [enemy, enemyDrain]]) {
-        const cap = e.stomachCapacity || 0;
-        if (cap) e.fullness = Math.max(0, (e.fullness || 0) - cap * rate);
+      for (const c of combat.combatants) {
+        const rate = (c.entity === player) ? 0.1 * drainScale : 0.1 * (1 - player.feedClingFactor) * drainScale;
+        const cap = c.entity.stomachCapacity || 0;
+        if (cap) c.entity.fullness = Math.max(0, (c.entity.fullness || 0) - cap * rate);
       }
 
-      // Check player defeat
-      const playerDefeated = checkWinState(player);
-      if (playerDefeated) {
-        newLog.push('You have been overwhelmed!');
-        return { ...prev, round: prev.round + 1, status: 'lost', log: newLog.slice(-8) };
+      if (checkWinState(player)) {
+        log.push('You collapse, too stuffed to fight on!');
+        return { ...prev, round: prev.round + 1, status: 'lost', log: log.slice(-10) };
       }
 
-      return { ...prev, round: prev.round + 1, log: newLog.slice(-8) };
+      // Keep the selected target valid (jump to a living foe if the old one fell).
+      let sel = prev.selectedEnemyId;
+      if (!combat.livingEnemies().some(c => c.entity.id === sel)) sel = combat.livingEnemies()[0]?.entity.id ?? null;
+      return { ...prev, round: prev.round + 1, selectedEnemyId: sel, log: log.slice(-10) };
     });
   };
 
+  // Spell reach: ranged with a per-spell range (cells) + line of sight.
+  const spellRange = (spell) => spell.combatRange ?? ((spell.level ?? 1) <= 2 ? 2 : 4);
+
+  // When a fill pushes a foe across a fullness band, narrate her swelling.
+  const FATTEN_BANDS = [0.5, 0.7, 0.85, 1.0];
+  const narrateFatten = (enemy, beforeFull, log) => {
+    const cap = enemy.stomachCapacity || 0;
+    if (!cap) return;
+    const before = beforeFull / cap, after = (enemy.fullness || 0) / cap;
+    if (FATTEN_BANDS.some(bnd => before < bnd && after >= bnd)) {
+      const line = getTextEngine().render('combat.fattening', enemy._createContext());
+      if (line) log.push(line);
+    }
+  };
+
   const handleCombatCastSpell = (spell) => {
-    doCombatPlayerAction((player, enemy, mod) => {
+    runPlayerTurn(({ player, mod, selEnemy, selEnemyPos, playerPos }) => {
+      if (!selEnemy || !selEnemyPos) return { ok: false, msg: 'No target — pick a foe first.' };
+      const range = spellRange(spell);
+      if (distance(playerPos, selEnemyPos) > range || !lineOfSight(playerPos, selEnemyPos)) {
+        return { ok: false, msg: `${selEnemy.name} is out of range for ${spell.name}. Move closer or pick a nearer foe.` };
+      }
       const lvl = spell.level ?? 1;
       const cost = lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
-      if ((player.spellSlots[cost] ?? 0) <= 0) return `No L${cost} slots — ${spell.name} fizzles.`;
+      if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `No L${cost} slots — ${spell.name} fizzles.` };
       player.spellSlots[cost] -= 1;
       const pct = cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
-      fillUp(enemy, pct * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
-      return `You cast ${spell.name} on ${enemy.name}.`;
+      const before = selEnemy.fullness || 0;
+      fillUp(selEnemy, pct * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
+      log.push(`You cast ${spell.name} on ${selEnemy.name}.`);
+      narrateFatten(selEnemy, before, log);
+      return { ok: true };
     });
   };
 
   const handleForceFeed = () => {
-    doCombatPlayerAction((player, enemy, mod) => {
-      fillUp(enemy, 0.15 * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
-      return `You force-feed ${enemy.name}.`;
+    runPlayerTurn(({ player, mod, selEnemy, selEnemyPos, playerPos }) => {
+      if (!selEnemy || !selEnemyPos) return { ok: false, msg: 'No target — pick a foe first.' };
+      if (!canReach(playerPos, selEnemyPos, 1)) {
+        return { ok: false, msg: `${selEnemy.name} is too far to force-feed. Move adjacent first.` };
+      }
+      const before = selEnemy.fullness || 0;
+      fillUp(selEnemy, 0.15 * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
+      log.push(`You force-feed ${selEnemy.name}.`);
+      narrateFatten(selEnemy, before, log);
+      return { ok: true };
+    });
+  };
+
+  const handleCombatMove = (dir) => {
+    runPlayerTurn(({ combat, playerPos }) => {
+      const before = `${playerPos.x},${playerPos.y}`;
+      moveCombatant(playerPos, dir, { maxX: FIELD.maxX, maxY: FIELD.maxY });
+      if (`${playerPos.x},${playerPos.y}` === before) return { ok: false, msg: 'You can\'t move that way — the field edge stops you.' };
+      return { ok: true, msg: `You reposition ${dir}.` };
     });
   };
 
@@ -483,36 +683,25 @@ const Game = () => {
       const enemy = enemies[0];
       if (enemy.bossEvent) addEntry(enemy.bossEvent);
 
-      // Advance dungeon + spawn next BEFORE gainXP so level-up modal doesn't race
-      const { loot, floorComplete, dungeonComplete } = dungeon.advance(enemies);
+      // Clear the room (banks loot), drop combat → back to traversal. Award XP last
+      // so a level-up modal doesn't race the room transition.
+      const items = dungeon.clearRoom();
       const player = gameState.getPlayer();
-      loot.forEach(item => player.inventory.push(item));
-      if (loot.length) addEntry(`Loot: ${loot.map(i => i.name).join(', ')}.`, 'info');
-
-      if (dungeonComplete) {
-        addEntry('— Dungeon Cleared! —', 'divider');
-        addEntry('You have conquered the dungeon. A legend is born.');
-        setCombatState(null);
-        setDungeon(null);
-        clearSave(); // run finished — don't resurrect it
-      } else {
-        const floor = dungeon.currentFloor;
-        if (floorComplete) addEntry(`Floor complete! Entering ${floor?.name || 'next floor'} — ${floor?.description || ''}`);
-        const nextEnemies = dungeon.spawnEnemies();
-        const nextCombat = new Combat([
-          { entity: player, initiative: 10 },
-          ...nextEnemies.map(e => ({ entity: e, initiative: 5 })),
-        ]);
-        setCombatState({ combat: nextCombat, enemies: nextEnemies, round: 1, status: 'active', modifier: floor?.modifier || null,
-          log: [`${nextEnemies[0]?.name} appears!`] });
-      }
+      items.forEach(item => player.inventory.push(item));
+      addEntry(`— ${enemy.name} defeated —`, 'divider');
+      if (items.length) addEntry(`Loot: ${items.map(i => i.name).join(', ')}.`, 'info');
+      addEntry(dungeon.canDescend || dungeon.currentRoom?.contents?.isGate
+        ? 'The way deeper is clear.'
+        : 'The room falls quiet. You may move on.');
+      setCombatState(null);
+      setDungeonTick(t => t + 1);
       gainXP(enemy.xpValue || 100);
     } else {
-      // lost — retreat
+      // lost — flee the dungeon, keep the character
       setCombatState(null);
       setDungeon(null);
       addEntry('— Defeated —', 'divider');
-      addEntry('You retreat, licking your wounds.');
+      addEntry('You retreat to the surface, licking your wounds.');
     }
     setTextBuffer(textEngine.getBuffer());
   };
@@ -532,21 +721,40 @@ const Game = () => {
         <div style={styles.primaryPanel}>
           <TextDisplay textBuffer={textBuffer} />
           <div style={styles.actionBar}>
-            <button onClick={handleLongRest} style={styles.restButton}>
-              Long Rest
-            </button>
-            {!combatState && (
-              <button onClick={handleEnterDungeon} style={styles.dungeonButton}>
-                Enter Dungeon
+            {!dungeon && (
+              <button onClick={handleLongRest} style={styles.restButton}>
+                Long Rest
               </button>
             )}
           </div>
-          {currentZone && (
+          {dungeon && !combatState ? (
             <div style={styles.zoneSection}>
-              <ZoneDisplay
-                zone={currentZone}
-                onZoneAction={handleZoneAction}
-                onNPCInteract={handleNPCInteract}
+              <LocationView
+                location={(() => {
+                  const loc = roomToLocation(dungeon);
+                  return loc ? { ...loc, prompts: [...loc.prompts, { id: 'leave', label: 'Retreat to the surface', tone: 'neutral' }] } : loc;
+                })()}
+                onLookAround={handleDungeonLook}
+                onExamine={handleDungeonExamine}
+                onMove={handleDungeonMove}
+                onPrompt={handleRoomPrompt}
+              />
+            </div>
+          ) : currentZone && !combatState && (
+            <div style={styles.zoneSection}>
+              <LocationView
+                location={(() => {
+                  const loc = zoneToLocation(currentZone, discovery);
+                  if (loc && currentZone.id === 'dungeon') {
+                    return { ...loc, prompts: [...loc.prompts, { id: 'enter_dungeon', label: 'Descend into the depths', tone: 'danger' }] };
+                  }
+                  return loc;
+                })()}
+                onLookAround={handleLookAround}
+                onExamine={handleExamine}
+                onTalk={handleTalkRow}
+                onMove={(dir) => handleZoneAction({ type: 'move', direction: dir })}
+                onPrompt={(id) => { if (id === 'enter_dungeon') handleEnterDungeon(); }}
               />
             </div>
           )}
@@ -572,6 +780,7 @@ const Game = () => {
               availableTargets={availableTargets}
               onCastSpell={handleCastSpell}
               currentZone={currentZone}
+              discovery={discovery}
               playerStats={player ? {
                 currentWeight: player.currentWeight,
                 baseWeight: player.baseWeight,
@@ -605,15 +814,20 @@ const Game = () => {
       {combatState && (
         <CombatScreen
           player={player}
+          combat={combatState.combat}
           enemies={combatState.enemies}
+          field={combatState.field || FIELD}
+          selectedEnemyId={combatState.selectedEnemyId}
           round={combatState.round}
           status={combatState.status}
           combatLog={combatState.log}
           knownSpells={knownSpells}
           spellLibrary={spellLibrary}
-          playerStats={{ actionsLeft: actionsAvailable(player), spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
+          playerStats={{ spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
+          onSelectEnemy={handleSelectEnemy}
           onCastSpell={handleCombatCastSpell}
           onForceFeed={handleForceFeed}
+          onMove={handleCombatMove}
           onFlee={handleFlee}
           onContinue={handleCombatContinue}
         />
