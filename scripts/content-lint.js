@@ -9,7 +9,7 @@ import SpellLibrary from '../src/game/magic/SpellLibrary.js';
 import { ARCHETYPES } from '../src/game/combat/EnemyController.js';
 import { WEIGHT_STAGES } from '../src/textEngine/stages.js';
 import { ITEMS, FLOOR_LOOT } from '../src/game/items/Equipment.js';
-import { FLOOR1_ENEMIES, FLOOR2_ENEMIES, FLOOR3_ENEMIES } from '../src/game/dungeon/Enemies.js';
+import * as ENEMY_MODULE from '../src/game/dungeon/Enemies.js';
 import CLASS_REGISTRY from '../src/game/classes/ClassRegistry.js';
 import { LEVEL_UP_SPELLS } from '../src/game/mechanics/ProgressionSystem.js';
 
@@ -140,7 +140,11 @@ if (!vicSmoke || vicSmoke.split(/\s+/).length < 8) {
 // ── Content refs (Step 1, scale-4x): enemies, loot, class/levelup spell pools ──
 const itemKeys = new Set(Object.keys(ITEMS));
 const spellSet = new Set(knownSpells);
-const ALL_ENEMIES = [...FLOOR1_ENEMIES, ...FLOOR2_ENEMIES, ...FLOOR3_ENEMIES];
+// All FLOORn_ENEMIES exports, in floor order.
+const ALL_ENEMIES = Object.entries(ENEMY_MODULE)
+  .filter(([k, v]) => /^FLOOR\d+_ENEMIES$/.test(k) && Array.isArray(v))
+  .sort((a, b) => parseInt(a[0].match(/\d+/)[0]) - parseInt(b[0].match(/\d+/)[0]))
+  .flatMap(([, v]) => v);
 
 for (const e of ALL_ENEMIES) {
   const tag = `[enemy:${e.name || '(no-name)'}]`;
