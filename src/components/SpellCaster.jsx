@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) => {
-  const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'scene', 'you'
+  const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'you'
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [selectedSecondaryTarget, setSelectedSecondaryTarget] = useState(null);
@@ -125,18 +125,9 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
       selectedOption: selectedOption,
     });
 
-    setCastResult({
-      success: true,
-      message: `Cast ${selectedSpell.name}!`,
-    });
-
-    setTimeout(() => {
-      setSelectedSpell(null);
-      setSelectedTarget(null);
-      setSelectedSecondaryTarget(null);
-      setSelectedOption(null);
-      setCastResult(null);
-    }, 2000);
+    // Flash "Cast!" then clear it — keep spell selection so player can cast again.
+    setCastResult({ success: true });
+    setTimeout(() => setCastResult(null), 1200);
   };
 
   const validTargets = getValidTargets();
@@ -162,17 +153,6 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
           }}
         >
           Cast
-        </button>
-        <button
-          onClick={() => setActiveTab('scene')}
-          style={{
-            ...styles.tabButton,
-            backgroundColor: activeTab === 'scene' ? '#1a3a1a' : '#3a2a1a',
-            color: activeTab === 'scene' ? '#5a8a3a' : '#999',
-            borderBottom: activeTab === 'scene' ? '3px solid #5a8a3a' : 'none',
-          }}
-        >
-          Scene
         </button>
         <button
           onClick={() => setActiveTab('you')}
@@ -391,25 +371,13 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
                 Cast Spell
               </button>
 
-              {castResult && (
-                <div
-                  style={{
-                    ...styles.resultMessage,
-                    color: castResult.success ? '#4CAF50' : '#f44336',
-                  }}
-                >
-                  {castResult.message}
+              {castResult?.success && (
+                <div style={{ ...styles.resultMessage, color: '#4CAF50' }}>
+                  ✓
                 </div>
               )}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Scene Tab */}
-      {activeTab === 'scene' && (
-        <div style={styles.tabContent}>
-          <p style={styles.sceneNote}>Scene information displays in the main log.</p>
         </div>
       )}
 
@@ -445,14 +413,12 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
                 </p>
               </div>
 
-              {playerStats.conditions && Object.keys(playerStats.conditions).length > 0 && (
+              {playerStats.conditions?.length > 0 && (
                 <div style={styles.statGroup}>
                   <p style={styles.statLabel}>Conditions</p>
                   <ul style={styles.conditionList}>
-                    {Object.entries(playerStats.conditions).map(([key, val]) => (
-                      <li key={key} style={styles.conditionItem}>
-                        {key}
-                      </li>
+                    {playerStats.conditions.map(key => (
+                      <li key={key} style={styles.conditionItem}>{key}</li>
                     ))}
                   </ul>
                 </div>

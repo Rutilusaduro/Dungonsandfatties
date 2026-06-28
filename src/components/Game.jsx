@@ -88,6 +88,8 @@ const Game = () => {
     setGameStarted(true);
   };
 
+  const addEntry = (text, type) => textEngine.addText(text, type ? { type } : {});
+
   const handleCastSpell = ({ spell, target, secondaryTarget, zone, selectedOption }) => {
     if (!spell || !zone) return;
 
@@ -96,12 +98,13 @@ const Game = () => {
 
     const { result } = SpellResolver.cast({ spell, caster, target, secondaryTarget, zone, selectedOption });
 
-    textEngine.clearBuffer();
+    // Append to history (no clearBuffer) — add a divider to separate actions.
+    addEntry(`— ${spell.name}${selectedOption ? ` (${selectedOption.name})` : ''} —`, 'divider');
 
     if (result.success) {
       // Single cohesive scene narrative
       const scene = SpellNarrator.narrateSpellScene(spell, caster, target, selectedOption);
-      textEngine.addText(scene);
+      addEntry(scene);
 
       if (result.interactions?.length > 0) {
         result.interactions.forEach(interaction => {
@@ -119,30 +122,25 @@ const Game = () => {
               }),
             );
           }
-          textEngine.addText(`Synergy: ${interactionText || interaction.description}`);
+          const text = interactionText || interaction.description;
+          if (text) addEntry(text, 'synergy');
         });
       }
 
       if (result.environmentalChanges?.length > 0) {
         result.environmentalChanges.forEach(change => {
-          if (change.description) textEngine.addText(`Environment: ${change.description}`);
-        });
-      }
-
-      if (result.appliedModifiers?.length > 0) {
-        result.appliedModifiers.forEach(modifier => {
-          textEngine.addText(`Resonance: ${modifier.label}`);
+          if (change.description) addEntry(change.description, 'info');
         });
       }
 
       if (result.createdFoods?.length > 0) {
         const foodNames = result.createdFoods.map(food => food.name).join(', ');
-        textEngine.addText(`Created food now persists here: ${foodNames}.`);
+        addEntry(`${foodNames} ${result.createdFoods.length === 1 ? 'appears' : 'appear'} here.`, 'info');
       }
 
       if (result.summonedCreatures?.length > 0) {
-        const creatureNames = result.summonedCreatures.map(creature => creature.name).join(', ');
-        textEngine.addText(`Summoned creatures now occupy this area: ${creatureNames}.`);
+        const creatureNames = result.summonedCreatures.map(c => c.name).join(', ');
+        addEntry(`${creatureNames} ${result.summonedCreatures.length === 1 ? 'arrives' : 'arrive'}.`, 'info');
       }
 
       const totalImmediateWeightGain = SpellResolver.totalImmediateWeightGain(result);
@@ -155,49 +153,40 @@ const Game = () => {
         if (knowledgeEffect.loves?.length) parts.push(`Loves: ${knowledgeEffect.loves.join(', ')}`);
         if (knowledgeEffect.likes?.length) parts.push(`Likes: ${knowledgeEffect.likes.join(', ')}`);
         if (knowledgeEffect.dislikes?.length) parts.push(`Dislikes: ${knowledgeEffect.dislikes.join(', ')}`);
-        if (parts.length) textEngine.addText(parts.join(' • '));
+        if (parts.length) addEntry(parts.join(' • '), 'info');
       }
 
       // NPC reactions (weight gain + restraint status)
       if (target && target._createContext) {
-        if (totalCaloriesLogged > 0) {
-          const pendingGain = target.pendingWeightGain || 0;
-          textEngine.addText(
-            `Nutrition: ${target.name} has taken in ${totalCaloriesLogged} calories today. Estimated long-rest gain: +${pendingGain} lbs.`,
-          );
-        }
-
         if (totalImmediateWeightGain > 0) {
-          // Check if target is suspended — render special suspended weight gain scene
           if (target.suspensionState === 'ceiling') {
             const engine = getTextEngine();
-            const ctx = target._createContext();
-            const suspendedScene = engine.render('spell.weight_gain.suspended', ctx);
-            if (suspendedScene) {
-              textEngine.addText(suspendedScene);
-            }
+            const suspendedScene = engine.render('spell.weight_gain.suspended', target._createContext());
+            if (suspendedScene) addEntry(suspendedScene);
           } else {
-            // Normal weight gain reaction
             const weightReaction = SpellNarrator.triggerNPCReactions(target, 'weight_gain', totalImmediateWeightGain);
-            if (weightReaction) textEngine.addText(weightReaction);
+            if (weightReaction) addEntry(weightReaction);
           }
         }
 
-        // Persist lingering spell conditions so examine / dialogue / body.desc
-        // and future spell interactions reflect them.
+        // Show pending rest gain only if the spell fed the target (not for restraints etc.)
+        if (totalCaloriesLogged > 0 && totalImmediateWeightGain === 0) {
+          const pendingGain = target.pendingWeightGain || 0;
+          if (pendingGain > 0) addEntry(`${target.name} will gain an estimated +${pendingGain} lbs after rest.`, 'info');
+        }
+
         applySpellConditions(spell, target, selectedOption);
 
-        // Restraint spells get an immediate panic reaction.
         const isRestraintSpell = spell.tags && (
           spell.tags.includes('restraint') || spell.tags.includes('paralysis')
         );
         if (isRestraintSpell) {
           const restraintReaction = SpellNarrator.triggerNPCReactions(target, 'restrained');
-          if (restraintReaction) textEngine.addText(restraintReaction);
+          if (restraintReaction) addEntry(restraintReaction);
         }
       }
     } else {
-      textEngine.addText(`${result.message}`);
+      addEntry(result.message, 'error');
     }
 
     setTextBuffer(textEngine.getBuffer());
@@ -213,35 +202,31 @@ const Game = () => {
       ...currentZone.getCreatures(),
     ].filter(Boolean);
 
-    textEngine.clearBuffer();
-    textEngine.addText('You take a long rest. The day\'s meals and magic settle into lasting changes.');
+    addEntry('— Long Rest —', 'divider');
+    addEntry('The day\'s meals and magic settle into lasting changes.');
 
-    // Apply pre-rest sharing (bonds and auras) before processing individual rests
     const sharingNotes = applyPreRestSharing(restTargets, currentZone);
-    sharingNotes.forEach(note => textEngine.addText(note));
+    sharingNotes.forEach(note => addEntry(note, 'info'));
 
-    // Feast Exile lifecycle: exile countdown, return engorged, swell fade
     const exileNotes = applyFeastExile(restTargets);
-    exileNotes.forEach(note => textEngine.addText(note));
+    exileNotes.forEach(note => addEntry(note, 'info'));
 
     const summaries = restTargets
-      // Exiled entities aren't here to eat; the swell system handles them.
       .filter(entity => !entity.isExiled)
       .map(entity => ({ entity, result: entity.processLongRestNutrition?.() }))
       .filter(({ result }) => result && (result.rawCalories > 0 || result.weightGain > 0));
 
     if (summaries.length === 0) {
-      textEngine.addText('No one has eaten enough today for the rest to change their weight.');
+      addEntry('No one has eaten enough today for the rest to change their weight.', 'info');
     }
 
     summaries.forEach(({ entity, result }) => {
-      textEngine.addText(
-        `${entity.name}: ${result.rawCalories} calories eaten, ${result.effectiveCalories} effective calories, +${result.weightGain} lbs after rest.`,
-      );
-
       if (result.weightGain > 0 && entity._createContext) {
         const reaction = SpellNarrator.triggerNPCReactions(entity, 'weight_gain', result.weightGain);
-        if (reaction) textEngine.addText(reaction);
+        if (reaction) addEntry(reaction);
+        else addEntry(`${entity.name} gains +${result.weightGain} lbs.`);
+      } else if (result.rawCalories > 0) {
+        addEntry(`${entity.name} ate today but doesn't gain weight yet.`, 'info');
       }
     });
 
@@ -253,9 +238,8 @@ const Game = () => {
       const nextZone = world.moveToZone(direction);
       if (nextZone) {
         setCurrentZone(nextZone);
-        textEngine.clearBuffer();
-        textEngine.addText(`You move ${direction}...`);
-        textEngine.addText(nextZone.description);
+        addEntry(`— You move ${direction} —`, 'divider');
+        addEntry(nextZone.description);
         setTextBuffer(textEngine.getBuffer());
       }
     }
@@ -328,7 +312,7 @@ const Game = () => {
                 baseWeight: player.baseWeight,
                 gravity: player.gravity,
                 caloriesEatenToday: player.caloriesEatenToday,
-                conditions: player.conditions?.active || {},
+                conditions: player.conditions?.keys?.() || [],
               } : null}
             />
           </div>

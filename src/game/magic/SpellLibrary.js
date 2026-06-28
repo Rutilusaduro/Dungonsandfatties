@@ -1515,7 +1515,7 @@ class SpellLibrary {
           })
         )
         .addOption(
-          new SpellOption('Forced Feeding Gullet', 'Force feed via vines', (caster, target) => ({
+          new SpellOption('Forced Feeding', 'Force feed via vines', (caster, target) => ({
             type: 'forced_feeding',
             feedingMethod: 'gullet',
             weightGainPerRound: 30,
