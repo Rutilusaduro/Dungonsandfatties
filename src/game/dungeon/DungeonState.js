@@ -1,11 +1,12 @@
 // Dungeon progression state machine.
-// Twelve floors across four biomes; each floor is 2 encounters + a (mini-)boss.
-// Each biome carries a combat modifier (the anti-monotony lever) — see Game.jsx
-// doCombatPlayerAction for the consuming sites.
+// Twelve floors across four biomes. Each floor is a seeded ROOM GRAPH you
+// traverse (RoomGraph.js): entry -> combat rooms -> a (mini-)boss room that
+// gates the stairs -> stairs down. Biome modifiers (the anti-monotony lever)
+// ride on the floor and are read in Game.jsx combat.
 
-import * as ENEMIES from './Enemies.js';
 import { makeEnemy } from './Enemies.js';
 import { ITEMS, FLOOR_LOOT, itemByKey } from '../items/Equipment.js';
+import { generateFloor } from './RoomGraph.js';
 
 // Biome modifiers. null = vanilla. Each non-null field is read in combat:
 //   drainScale  — multiplies per-round fullness drain (rich air keeps fights long)
@@ -38,71 +39,86 @@ const FLOOR_DEFS = [
   { id: 12, name: 'The Undergorge Throne', biome: 'undergorge', description: 'At the very bottom: a throne grown around the thing that has been eating since before the dungeon was built.' },
 ];
 
-const FLOORS = FLOOR_DEFS.map(d => {
-  const enemies = ENEMIES[`FLOOR${d.id}_ENEMIES`] || [];
-  return {
-    ...d,
-    biomeLabel: BIOMES[d.biome]?.label || d.name,
-    modifier: BIOMES[d.biome]?.modifier || null,
-    encounters: enemies.map(en => [en]), // one enemy per encounter (1v1 combat)
-  };
-});
+const FLOOR_META = FLOOR_DEFS.map(d => ({
+  ...d,
+  biomeLabel: BIOMES[d.biome]?.label || d.name,
+  modifier: BIOMES[d.biome]?.modifier || null,
+}));
+
+const randSeed = () => (Math.random() * 1e9) | 0;
 
 export class DungeonState {
-  constructor() {
-    this.floorIndex    = 0;
-    this.encounterIndex = 0;
-    this.completed     = false;
-    this.lootPile      = []; // items awarded but not yet picked up
+  constructor(seed = randSeed()) {
+    this.seed       = seed;
+    this.floorIndex = 0;
+    this.completed  = false;
+    this.lootPile   = []; // items banked but not yet picked up
+    this._loadFloor(0);
   }
 
-  get currentFloor() { return FLOORS[this.floorIndex] || null; }
-
-  get currentEncounterDefs() {
-    const floor = this.currentFloor;
-    if (!floor) return null;
-    return floor.encounters[this.encounterIndex] || null;
+  _loadFloor(idx) {
+    const { rooms, entryId, stairsId } = generateFloor(idx, this.seed);
+    this.rooms        = rooms;
+    this.entryId      = entryId;
+    this.stairsId     = stairsId;
+    this.currentRoomId = entryId;
+    rooms[entryId].discovered = true;
   }
 
-  // Build live enemy objects for the current encounter.
-  spawnEnemies() {
-    const defs = this.currentEncounterDefs;
-    if (!defs) return [];
-    return defs.map(makeEnemy);
+  get currentFloor() { return FLOOR_META[this.floorIndex] || null; }
+  get currentRoom()  { return this.rooms[this.currentRoomId] || null; }
+  get modifier()     { return this.currentFloor?.modifier || null; }
+  get canDescend()   { return this.currentRoom?.contents?.kind === 'stairs'; }
+
+  exits() { return Object.keys(this.currentRoom?.exits || {}); }
+
+  // "Look around" the current room — reveals its contents (foe/loot/stairs).
+  look() { if (this.currentRoom) this.currentRoom.looked = true; return this.currentRoom; }
+
+  // Move through an exit; reveals the room. Returns the new room or null.
+  move(dir) {
+    const nextId = this.currentRoom?.exits?.[dir];
+    if (!nextId) return null;
+    this.currentRoomId = nextId;
+    this.rooms[nextId].discovered = true;
+    return this.rooms[nextId];
   }
 
-  // Call after winning an encounter: generate loot + advance.
-  // Returns { loot, floorComplete, dungeonComplete }
-  advance(enemies) {
-    // Collect loot from defeated enemies
-    const floorNum = this.floorIndex + 1;
-    const pool     = FLOOR_LOOT[floorNum] || [];
-    const loot     = [];
-    for (const enemy of enemies) {
-      const drops = enemy.lootTable || [];
-      for (const key of drops) {
-        if (pool.includes(key) && ITEMS[key]) loot.push(ITEMS[key]);
+  // Live enemy objects for a combat room.
+  roomEnemies(room = this.currentRoom) {
+    return (room?.contents?.enemyDefs || []).map(makeEnemy);
+  }
+
+  // Mark a room handled; bank + return any loot (combat drops or loot-room items).
+  clearRoom(roomId = this.currentRoomId) {
+    const room = this.rooms[roomId];
+    if (!room || room.cleared) return [];
+    room.cleared = true;
+    let items = [];
+    if (room.contents.kind === 'loot') {
+      items = (room.contents.lootKeys || []).map(itemByKey).filter(Boolean);
+    } else if (room.contents.kind === 'combat') {
+      const pool = FLOOR_LOOT[this.floorIndex + 1] || [];
+      const drops = [];
+      for (const def of room.contents.enemyDefs || []) {
+        for (const k of def.lootTable || []) if (pool.includes(k) && ITEMS[k]) drops.push(ITEMS[k]);
       }
+      items = [...new Map(drops.map(i => [i.name, i])).values()].slice(0, 2);
     }
-    // Pick at most 2 unique drops per encounter (don't flood inventory)
-    const unique = [...new Map(loot.map(i => [i.name, i])).values()].slice(0, 2);
-    this.lootPile.push(...unique);
+    this.lootPile.push(...items);
+    return items;
+  }
 
-    this.encounterIndex += 1;
-    const floor = this.currentFloor;
-
-    if (!floor || this.encounterIndex >= floor.encounters.length) {
-      // Floor complete
-      this.floorIndex    += 1;
-      this.encounterIndex = 0;
-      if (this.floorIndex >= FLOORS.length) {
-        this.completed = true;
-        return { loot: unique, floorComplete: true, dungeonComplete: true };
-      }
-      return { loot: unique, floorComplete: true, dungeonComplete: false };
+  // Descend the stairs → next floor, or complete the dungeon.
+  descend() {
+    if (!this.canDescend) return { floorComplete: false, dungeonComplete: false };
+    this.floorIndex += 1;
+    if (this.floorIndex >= FLOOR_META.length) {
+      this.completed = true;
+      return { floorComplete: true, dungeonComplete: true };
     }
-
-    return { loot: unique, floorComplete: false, dungeonComplete: false };
+    this._loadFloor(this.floorIndex);
+    return { floorComplete: true, dungeonComplete: false };
   }
 
   drainLoot() {
@@ -111,22 +127,30 @@ export class DungeonState {
     return items;
   }
 
-  // Save/load: enemies respawn fresh on resume, so only progress + loot persist.
+  // Save/load: rooms regenerate from (seed, floorIndex); only flags + position persist.
   serialize() {
+    const roomFlags = {};
+    for (const [id, r] of Object.entries(this.rooms)) roomFlags[id] = { cleared: r.cleared, discovered: r.discovered, looked: r.looked };
     return {
-      floorIndex:     this.floorIndex,
-      encounterIndex: this.encounterIndex,
-      completed:      this.completed,
-      lootPile:       this.lootPile.map(it => it.key).filter(Boolean),
+      seed:          this.seed,
+      floorIndex:    this.floorIndex,
+      currentRoomId: this.currentRoomId,
+      completed:     this.completed,
+      lootPile:      this.lootPile.map(it => it.key).filter(Boolean),
+      roomFlags,
     };
   }
 
   static hydrate(data = {}) {
-    const ds = new DungeonState();
-    ds.floorIndex     = data.floorIndex ?? 0;
-    ds.encounterIndex = data.encounterIndex ?? 0;
-    ds.completed      = data.completed ?? false;
-    ds.lootPile       = (data.lootPile || []).map(itemByKey).filter(Boolean);
+    const ds = new DungeonState(data.seed ?? randSeed());
+    ds.floorIndex = data.floorIndex ?? 0;
+    ds._loadFloor(ds.floorIndex); // regenerate this floor from the seed
+    if (data.currentRoomId && ds.rooms[data.currentRoomId]) ds.currentRoomId = data.currentRoomId;
+    for (const [id, f] of Object.entries(data.roomFlags || {})) {
+      if (ds.rooms[id]) { ds.rooms[id].cleared = f.cleared; ds.rooms[id].discovered = f.discovered; ds.rooms[id].looked = f.looked; }
+    }
+    ds.completed = data.completed ?? false;
+    ds.lootPile  = (data.lootPile || []).map(itemByKey).filter(Boolean);
     return ds;
   }
 }

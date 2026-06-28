@@ -10,10 +10,10 @@ const KIND = {
   food:     { label: 'Food',     accent: '#d7a23a' },
 };
 
-const LocationView = ({ location, onLookAround, onExamine, onTalk, onMove }) => {
+const LocationView = ({ location, onLookAround, onExamine, onTalk, onMove, onPrompt }) => {
   if (!location) return <div style={s.empty}>Nowhere to be found.</div>;
 
-  const { name, description, discovered = [], hiddenCount = 0, exits = [] } = location;
+  const { name, description, discovered = [], hiddenCount = 0, exits = [], prompts = [] } = location;
   const nothingSeen = discovered.length === 0;
 
   return (
@@ -66,6 +66,21 @@ const LocationView = ({ location, onLookAround, onExamine, onTalk, onMove }) => 
         </ul>
       )}
 
+      {prompts.length > 0 && (
+        <div style={s.prompts}>
+          {prompts.map(pr => (
+            <button
+              key={pr.id}
+              className={`lv-btn ${pr.tone === 'danger' ? 'lv-danger' : 'lv-good'}`}
+              style={{ ...s.promptBtn, ...(pr.tone === 'danger' ? s.promptDanger : s.promptGood) }}
+              onClick={() => onPrompt?.(pr.id)}
+            >
+              {pr.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {exits.length > 0 && (
         <nav style={s.exits} aria-label="Exits">
           <span style={s.exitsLabel}>Exits</span>
@@ -90,6 +105,8 @@ const css = `
     .lv-look:hover { background: #6a531f; }
     .lv-exit:hover { background: #5a8a3a; }
     .lv-talk:hover { background: #a8538a; }
+    .lv-danger:hover { background: #8f3232; }
+    .lv-good:hover { background: #4a6a2f; }
     .lv-btn:hover { border-color: #555; }
   }
   @media (prefers-reduced-motion: reduce) { .lv-btn { transition: none; } }
@@ -133,6 +150,14 @@ const s = {
   },
   talkBtn: { background: '#3a1f33', borderColor: '#5a3050', color: '#f0d6e8' },
   moreHint: { fontSize: '0.78rem', color: '#666', fontStyle: 'italic', paddingLeft: '4px' },
+  prompts: { display: 'flex', flexWrap: 'wrap', gap: '10px' },
+  promptBtn: {
+    padding: '12px 20px', color: '#fff', border: 'none', borderRadius: '8px',
+    cursor: 'pointer', fontFamily: 'Georgia, serif', fontSize: '0.95rem', fontWeight: 700,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+  },
+  promptDanger: { background: '#7a2a2a' },
+  promptGood: { background: '#3f5a28' },
   exits: { borderTop: '1px solid #2a2a2a', paddingTop: '14px' },
   exitsLabel: {
     fontSize: '0.68rem', color: '#666', textTransform: 'uppercase',

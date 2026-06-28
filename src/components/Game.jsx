@@ -3,7 +3,7 @@ import TextDisplay from './TextDisplay';
 import CharacterPanel from './CharacterPanel';
 import SpellCaster from './SpellCaster';
 import LocationView from './LocationView';
-import { zoneToLocation } from '../game/discovery/locationAdapter.js';
+import { zoneToLocation, roomToLocation } from '../game/discovery/locationAdapter.js';
 import NPCInteraction from './NPCInteraction';
 import CharacterCreation from './CharacterCreation';
 import GameState from '../game/GameState';
@@ -81,6 +81,7 @@ const Game = () => {
   const [knownSpells, setKnownSpells] = useState(null);
   const [levelUpState, setLevelUpState] = useState(null); // { level, choices }
   const [dungeon, setDungeon] = useState(null);        // DungeonState instance
+  const [dungeonTick, setDungeonTick] = useState(0);   // bump to re-render after in-place room mutation
   const [combatState, setCombatState] = useState(null); // { combat, enemies, round, status, log }
   const [savedRunExists] = useState(() => hasSave());
   const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
@@ -140,7 +141,7 @@ const Game = () => {
     if (!gameStarted) return;
     const player = gameState.getPlayer();
     if (player) saveGame({ player, dungeon, knownSpells, discovery: discovery.serialize() });
-  }, [gameStarted, dungeon, knownSpells, combatState, levelUpState, discoveryTick]);
+  }, [gameStarted, dungeon, knownSpells, combatState, levelUpState, discoveryTick, dungeonTick]);
 
   // Resume a saved run.
   const resumeGame = () => {
@@ -439,20 +440,103 @@ const Game = () => {
 
   // ── Dungeon / Combat ─────────────────────────────────────────
 
+  // Enter the dungeon → drop into the first room (traversal, not instant combat).
   const handleEnterDungeon = () => {
     const player = gameState.getPlayer();
     if (!player) return;
     const ds = new DungeonState();
-    const enemies = ds.spawnEnemies();
+    setDungeon(ds);
+    setDungeonTick(t => t + 1);
+    addEntry(`— ${ds.currentFloor?.name} —`, 'divider');
+    addEntry(ds.currentFloor?.description || 'You descend into the dark.');
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  // Build a combat from the current room's enemies.
+  const startRoomCombat = (ds) => {
+    const player = gameState.getPlayer();
+    const enemies = ds.roomEnemies();
+    if (!enemies.length) return;
     const combat = new Combat([
       { entity: player, initiative: 10 },
       ...enemies.map(e => ({ entity: e, initiative: 5 })),
     ]);
-    setDungeon(ds);
     const floor = ds.currentFloor;
-    const intro = floor?.modifier ? ` (${floor.biomeLabel})` : '';
     setCombatState({ combat, enemies, round: 1, status: 'active', modifier: floor?.modifier || null,
-      log: [`${floor?.name || 'The dungeon'}${intro}: ${enemies[0]?.name} appears!`] });
+      log: [`${enemies[0]?.name} blocks your way!`] });
+  };
+
+  // ── Dungeon traversal ────────────────────────────────────────
+
+  const handleDungeonLook = () => {
+    if (!dungeon) return;
+    const room = dungeon.look();
+    setDungeonTick(t => t + 1);
+    addEntry('— You look around —', 'divider');
+    const k = room?.contents?.kind;
+    if (room?.cleared) addEntry('This room is quiet now. Nothing left here.');
+    else if (k === 'combat') addEntry(`${room.contents.enemyDefs[0]?.name} ${room.contents.isGate ? 'looms between you and the way down' : 'lurks here'}.`);
+    else if (k === 'loot') addEntry('A cache of supplies sits within reach.');
+    else if (k === 'stairs') addEntry('A stairwell spirals down into deeper dark.');
+    else addEntry('An empty room. Only exits and dust.');
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleDungeonMove = (dir) => {
+    if (!dungeon) return;
+    const room = dungeon.move(dir);
+    if (!room) return;
+    setDungeonTick(t => t + 1);
+    addEntry(`— You go ${dir} —`, 'divider');
+    addEntry(dungeon.currentFloor?.name + '. The passage opens into another room.');
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleDungeonExamine = (row) => {
+    if (!dungeon) return;
+    const room = dungeon.currentRoom;
+    if (row.id.endsWith('_foe')) {
+      const foe = room.contents.enemyDefs[0];
+      addEntry(`— You size up ${foe.name} —`, 'divider');
+      addEntry(foe.description || `${foe.name}.`);
+    } else if (row.id.endsWith('_loot')) {
+      addEntry('— You inspect the cache —', 'divider');
+      addEntry('Glints of gear amid the supplies — gather it to find out what.');
+    }
+    setTextBuffer(textEngine.getBuffer());
+  };
+
+  const handleRoomPrompt = (id) => {
+    if (!dungeon) return;
+    if (id === 'engage') {
+      startRoomCombat(dungeon);
+    } else if (id === 'take') {
+      const items = dungeon.clearRoom();
+      const player = gameState.getPlayer();
+      items.forEach(it => player.inventory.push(it));
+      addEntry('— You gather the loot —', 'divider');
+      addEntry(items.length ? `You pocket: ${items.map(i => i.name).join(', ')}.` : 'The cache was bare.');
+      setDungeonTick(t => t + 1);
+      setTextBuffer(textEngine.getBuffer());
+    } else if (id === 'descend') {
+      const { dungeonComplete } = dungeon.descend();
+      if (dungeonComplete) {
+        addEntry('— Dungeon Cleared! —', 'divider');
+        addEntry('You have conquered the dungeon. A legend is born.');
+        setDungeon(null);
+        clearSave();
+      } else {
+        addEntry(`— ${dungeon.currentFloor?.name} —`, 'divider');
+        addEntry(dungeon.currentFloor?.description || 'You descend deeper.');
+        setDungeonTick(t => t + 1);
+      }
+      setTextBuffer(textEngine.getBuffer());
+    } else if (id === 'leave') {
+      addEntry('— You retreat to the surface —', 'divider');
+      addEntry('The dungeon will be waiting when you return.');
+      setDungeon(null);
+      setTextBuffer(textEngine.getBuffer());
+    }
   };
 
   const doCombatPlayerAction = (actionFn) => {
@@ -542,36 +626,25 @@ const Game = () => {
       const enemy = enemies[0];
       if (enemy.bossEvent) addEntry(enemy.bossEvent);
 
-      // Advance dungeon + spawn next BEFORE gainXP so level-up modal doesn't race
-      const { loot, floorComplete, dungeonComplete } = dungeon.advance(enemies);
+      // Clear the room (banks loot), drop combat → back to traversal. Award XP last
+      // so a level-up modal doesn't race the room transition.
+      const items = dungeon.clearRoom();
       const player = gameState.getPlayer();
-      loot.forEach(item => player.inventory.push(item));
-      if (loot.length) addEntry(`Loot: ${loot.map(i => i.name).join(', ')}.`, 'info');
-
-      if (dungeonComplete) {
-        addEntry('— Dungeon Cleared! —', 'divider');
-        addEntry('You have conquered the dungeon. A legend is born.');
-        setCombatState(null);
-        setDungeon(null);
-        clearSave(); // run finished — don't resurrect it
-      } else {
-        const floor = dungeon.currentFloor;
-        if (floorComplete) addEntry(`Floor complete! Entering ${floor?.name || 'next floor'} — ${floor?.description || ''}`);
-        const nextEnemies = dungeon.spawnEnemies();
-        const nextCombat = new Combat([
-          { entity: player, initiative: 10 },
-          ...nextEnemies.map(e => ({ entity: e, initiative: 5 })),
-        ]);
-        setCombatState({ combat: nextCombat, enemies: nextEnemies, round: 1, status: 'active', modifier: floor?.modifier || null,
-          log: [`${nextEnemies[0]?.name} appears!`] });
-      }
+      items.forEach(item => player.inventory.push(item));
+      addEntry(`— ${enemy.name} defeated —`, 'divider');
+      if (items.length) addEntry(`Loot: ${items.map(i => i.name).join(', ')}.`, 'info');
+      addEntry(dungeon.canDescend || dungeon.currentRoom?.contents?.isGate
+        ? 'The way deeper is clear.'
+        : 'The room falls quiet. You may move on.');
+      setCombatState(null);
+      setDungeonTick(t => t + 1);
       gainXP(enemy.xpValue || 100);
     } else {
-      // lost — retreat
+      // lost — flee the dungeon, keep the character
       setCombatState(null);
       setDungeon(null);
       addEntry('— Defeated —', 'divider');
-      addEntry('You retreat, licking your wounds.');
+      addEntry('You retreat to the surface, licking your wounds.');
     }
     setTextBuffer(textEngine.getBuffer());
   };
@@ -591,23 +664,40 @@ const Game = () => {
         <div style={styles.primaryPanel}>
           <TextDisplay textBuffer={textBuffer} />
           <div style={styles.actionBar}>
-            <button onClick={handleLongRest} style={styles.restButton}>
-              Long Rest
-            </button>
-            {!combatState && (
-              <button onClick={handleEnterDungeon} style={styles.dungeonButton}>
-                Enter Dungeon
+            {!dungeon && (
+              <button onClick={handleLongRest} style={styles.restButton}>
+                Long Rest
               </button>
             )}
           </div>
-          {currentZone && (
+          {dungeon && !combatState ? (
             <div style={styles.zoneSection}>
               <LocationView
-                location={zoneToLocation(currentZone, discovery)}
+                location={(() => {
+                  const loc = roomToLocation(dungeon);
+                  return loc ? { ...loc, prompts: [...loc.prompts, { id: 'leave', label: 'Retreat to the surface', tone: 'neutral' }] } : loc;
+                })()}
+                onLookAround={handleDungeonLook}
+                onExamine={handleDungeonExamine}
+                onMove={handleDungeonMove}
+                onPrompt={handleRoomPrompt}
+              />
+            </div>
+          ) : currentZone && !combatState && (
+            <div style={styles.zoneSection}>
+              <LocationView
+                location={(() => {
+                  const loc = zoneToLocation(currentZone, discovery);
+                  if (loc && currentZone.id === 'dungeon') {
+                    return { ...loc, prompts: [...loc.prompts, { id: 'enter_dungeon', label: 'Descend into the depths', tone: 'danger' }] };
+                  }
+                  return loc;
+                })()}
                 onLookAround={handleLookAround}
                 onExamine={handleExamine}
                 onTalk={handleTalkRow}
                 onMove={(dir) => handleZoneAction({ type: 'move', direction: dir })}
+                onPrompt={(id) => { if (id === 'enter_dungeon') handleEnterDungeon(); }}
               />
             </div>
           )}
