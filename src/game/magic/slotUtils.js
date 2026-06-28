@@ -1,5 +1,6 @@
-/** Maps a spell level (0–9) to the slot tier (1, 2, or 3) used in this game's compressed slot system. */
+/** Maps a spell level to the slot tier. Level 0 = cantrip = 0 (free, at-will). */
 export function spellLevelToSlot(spellLevel) {
+  if (spellLevel <= 0) return 0; // cantrip — costs no slot
   return spellLevel <= 1 ? 1 : spellLevel <= 3 ? 2 : 3;
 }
 

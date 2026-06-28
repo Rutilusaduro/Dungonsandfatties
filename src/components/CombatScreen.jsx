@@ -40,8 +40,8 @@ const CombatScreen = ({
   const spells = spellLibrary
     ? spellLibrary.getAllSpells().filter(s => !knownSpells || knownSpells.size === 0 || knownSpells.has(s.name))
     : [];
-  const spellCost = (sp) => { const l = sp.level ?? 1; return l <= 1 ? 1 : l <= 3 ? 2 : 3; };
-  const spellReach = (sp) => sp.combatRange ?? ((sp.level ?? 1) <= 2 ? 2 : 4);
+  const spellCost = (sp) => { const l = sp.level ?? 1; return l <= 0 ? 0 : l <= 1 ? 1 : l <= 3 ? 2 : 3; };
+  const spellReach = (sp) => sp.combatRange ?? ((sp.level ?? 1) <= 2 ? 4 : 6);
 
   return (
     <div style={s.overlay}>
@@ -159,8 +159,9 @@ const CombatScreen = ({
                 </div>
                 {spells.map(spell => {
                   const cost = spellCost(spell);
+                  const isCantrip = cost === 0;
                   const reach = spellReach(spell);
-                  const hasSlot = (playerStats?.spellSlots?.[cost] ?? 0) > 0;
+                  const hasSlot = isCantrip || (playerStats?.spellSlots?.[cost] ?? 0) > 0;
                   const inRange = selDist != null && selDist <= reach;
                   const ok = hasSlot && inRange;
                   return (
@@ -173,7 +174,7 @@ const CombatScreen = ({
                       title={!hasSlot ? 'No slots' : !inRange ? `Out of range (reach ${reach})` : `Range ${reach}`}
                     >
                       <span>{spell.name}</span>
-                      <span style={s.spellMeta}>L{cost} · rng {reach}{!inRange ? ' ✕' : ''}</span>
+                      <span style={s.spellMeta}>{isCantrip ? 'cantrip' : `L${cost}`} · rng {reach}{!inRange ? ' ✕' : ''}</span>
                     </button>
                   );
                 })}

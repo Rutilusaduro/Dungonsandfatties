@@ -60,6 +60,75 @@ class SpellLibrary {
         )
     );
 
+    // Conjure Morsel — an at-will conjuring trick that lobs a rich tidbit.
+    this.registerSpell(
+      new Spell('Conjure Morsel', {
+        level: 0,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous',
+        description: 'Conjure a small, rich morsel and send it to a willing mouth.',
+        weightGainTheme: 'A buttery little morsel winks into being and drifts to its target — never much at once, but you can do it all day.',
+        tags: ['cantrip', 'conjuration', 'feeding'],
+      })
+        .addValidTarget('creature')
+        .addValidTarget('npc')
+        .addEffect(
+          new SpellEffect('Conjured Morsel', 'A rich morsel appears and is eaten', (caster, target) => ({
+            type: 'cantrip_feed',
+            calories: 120,
+            description: `A warm, buttery morsel winks into the air and tumbles toward ${target?.name || 'the air'}.`,
+          }))
+        )
+    );
+
+    // Sating Spark — a mote of cozy warmth that settles heavy in the belly.
+    this.registerSpell(
+      new Spell('Sating Spark', {
+        level: 0,
+        school: 'Evocation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous',
+        description: 'Loose a mote of cozy warmth that settles, heavy and full, in the belly.',
+        weightGainTheme: 'A spark of hearth-warmth drifts into the target and unspools into the deep, sleepy fullness of a finished meal.',
+        tags: ['cantrip', 'evocation', 'feeding'],
+      })
+        .addValidTarget('creature')
+        .addValidTarget('npc')
+        .addEffect(
+          new SpellEffect('Warm Glow', 'A sated warmth blooms in the target', (caster, target) => ({
+            type: 'cantrip_feed',
+            calories: 100,
+            description: `A mote of hearth-warmth drifts into ${target?.name || 'the air'} and blooms into heavy, sleepy fullness.`,
+          }))
+        )
+    );
+
+    // Greasy Flick — flick a glob of conjured drippings at a target.
+    this.registerSpell(
+      new Spell('Greasy Flick', {
+        level: 0,
+        school: 'Conjuration',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous',
+        description: 'Flick a glob of rich, conjured drippings that clings and soaks in.',
+        weightGainTheme: 'A fat bead of golden drippings flicks off your fingertips and splatters home, clinging and soaking in warm.',
+        tags: ['cantrip', 'conjuration', 'feeding'],
+      })
+        .addValidTarget('creature')
+        .addValidTarget('npc')
+        .addEffect(
+          new SpellEffect('Dripping Flick', 'A glob of rich grease clings and soaks in', (caster, target) => ({
+            type: 'cantrip_feed',
+            calories: 110,
+            description: `A fat golden bead of drippings flicks out and splatters across ${target?.name || 'the ground'}, clinging warm.`,
+          }))
+        )
+    );
+
     // LEVEL 1
 
     // Enlarge Person - adapted for weight gain
