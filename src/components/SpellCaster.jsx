@@ -2,6 +2,20 @@ import { useState } from 'react';
 import { optionSlotCost } from '../game/magic/slotUtils.js';
 import { idOf } from '../game/discovery/Discovery.js';
 
+const SCHOOL_COLORS = {
+  Transmutation: '#5fa45f',
+  Conjuration:   '#9a6abf',
+  Enchantment:   '#c264a0',
+  Divination:    '#4a9abf',
+  Abjuration:    '#c9a227',
+  Evocation:     '#c94a4a',
+  Necromancy:    '#6a8a3a',
+  Illusion:      '#bf9a4a',
+};
+
+const LEVEL_COLORS = { 1: '#9a9a9a', 2: '#5fa45f', 3: '#c9a227' };
+const levelColor = (lvl) => LEVEL_COLORS[lvl] || '#c94a4a';
+
 const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, playerStats, discovery }) => {
   // Fog-of-war: only things you've "looked around" and seen are targetable.
   const seen = (entity) => !discovery || !currentZone || discovery.has(currentZone.id, idOf(entity));
@@ -145,6 +159,13 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
 
   return (
     <div style={styles.container}>
+      <style>{`
+        .sc-search:focus {
+          border-color: #c9a22780 !important;
+          box-shadow: 0 0 0 2px rgba(201,162,39,0.12);
+          outline: none;
+        }
+      `}</style>
       <h3 style={styles.title}>⚡ Magic</h3>
 
       {/* Tab Navigation */}
@@ -180,12 +201,14 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
             const cur = playerStats.spellSlots[lvl] ?? 0;
             const max = playerStats.maxSpellSlots?.[lvl] ?? 0;
             if (max === 0) return null;
+            const dots = Array.from({ length: max }, (_, i) => i < cur
+              ? <span key={i} style={{ color: '#c9a227' }}>●</span>
+              : <span key={i} style={{ color: '#444' }}>○</span>
+            );
             return (
               <div key={lvl} style={styles.slotGroup}>
-                <span style={styles.slotLabel}>L{lvl}</span>
-                <span style={{ ...styles.slotCount, color: cur === 0 ? '#666' : '#ffd700' }}>
-                  {cur}/{max}
-                </span>
+                <span style={{ ...styles.slotLabel, color: levelColor(lvl) }}>L{lvl}</span>
+                <span style={{ ...styles.slotCount, letterSpacing: '2px' }}>{dots}</span>
               </div>
             );
           })}
@@ -202,6 +225,7 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={styles.searchInput}
+            className="sc-search"
           />
 
           {/* School Tabs */}
@@ -217,20 +241,24 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
             >
               All
             </button>
-            {schools.map(school => (
-              <button
-                key={school}
-                onClick={() => setSelectedSchool(school)}
-                style={{
-                  ...styles.schoolTab,
-                  backgroundColor: selectedSchool === school ? '#6B4423' : '#4a3728',
-                  borderColor: selectedSchool === school ? '#c9a227' : 'transparent',
-                  color: selectedSchool === school ? '#ffd700' : '#ccc',
-                }}
-              >
-                {school.slice(0, 4)}
-              </button>
-            ))}
+            {schools.map(school => {
+              const schoolCol = SCHOOL_COLORS[school] || '#c9a227';
+              const isActive = selectedSchool === school;
+              return (
+                <button
+                  key={school}
+                  onClick={() => setSelectedSchool(school)}
+                  style={{
+                    ...styles.schoolTab,
+                    backgroundColor: isActive ? '#6B4423' : '#4a3728',
+                    borderColor: isActive ? schoolCol : 'transparent',
+                    color: isActive ? schoolCol : '#ccc',
+                  }}
+                >
+                  {school.slice(0, 4)}
+                </button>
+              );
+            })}
           </div>
 
           {/* Spell List */}
@@ -238,20 +266,28 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
             <p style={styles.label}>Spells:</p>
             <div style={styles.spellList}>
               {filteredSpells.length > 0 ? (
-                filteredSpells.map(spell => (
-                  <button
-                    key={spell.name}
-                    onClick={() => handleSpellSelect(spell)}
-                    style={{
-                      ...styles.spellButton,
-                      backgroundColor:
-                        selectedSpell?.name === spell.name ? '#6B4423' : '#4a3728',
-                    }}
-                  >
-                    <div style={styles.spellName}>{spell.name}</div>
-                    <div style={styles.spellLevel}>Lvl {spell.level}</div>
-                  </button>
-                ))
+                filteredSpells.map(spell => {
+                  const isSelected = selectedSpell?.name === spell.name;
+                  const schoolAccent = SCHOOL_COLORS[spell.school] || '#555';
+                  return (
+                    <button
+                      key={spell.name}
+                      onClick={() => handleSpellSelect(spell)}
+                      style={{
+                        ...styles.spellButton,
+                        backgroundColor: isSelected ? '#6B4423' : '#4a3728',
+                        borderLeft: isSelected
+                          ? '3px solid ' + schoolAccent
+                          : '3px solid #2a2a2a',
+                      }}
+                    >
+                      <div style={styles.spellName}>{spell.name}</div>
+                      <div style={{ ...styles.spellLevel, color: levelColor(spell.level) }}>
+                        L{spell.level}
+                      </div>
+                    </button>
+                  );
+                })
               ) : (
                 <p style={styles.noSpells}>No spells found</p>
               )}
@@ -261,7 +297,10 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
           {/* Spell Details */}
           {selectedSpell && (
             <div style={styles.section}>
-              <div style={styles.spellDetails}>
+              <div style={{
+                ...styles.spellDetails,
+                background: (SCHOOL_COLORS[selectedSpell.school] || '#9a9a9a') + '18',
+              }}>
                 <h4 style={styles.detailTitle}>{selectedSpell.name}</h4>
                 <p style={styles.detailText}>
                   <strong>School:</strong> {selectedSpell.school}
@@ -403,6 +442,10 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
                 style={{
                   ...styles.castButton,
                   opacity: validTargets.length === 0 && selectedSpell.validTargets.length > 0 ? 0.5 : 1,
+                  background: 'linear-gradient(135deg, #7a3a10 0%, #a85520 50%, #7a3a10 100%)',
+                  border: '1px solid #c9a227',
+                  letterSpacing: '0.06em',
+                  boxShadow: '0 0 8px ' + (SCHOOL_COLORS[selectedSpell.school] || '#c9a227') + '40, inset 0 1px 0 rgba(255,215,0,0.1)',
                 }}
                 disabled={validTargets.length === 0 && selectedSpell.validTargets.length > 0}
               >
@@ -720,11 +763,12 @@ const styles = {
   noValidTargets: {
     marginTop: '10px',
     padding: '8px',
-    backgroundColor: '#3a2a2a',
-    color: '#ff9800',
+    backgroundColor: '#2a2218',
+    color: '#7a6a50',
     fontSize: '13px',
     borderRadius: '3px',
     textAlign: 'center',
+    fontStyle: 'italic',
   },
   resultMessage: {
     marginTop: '10px',
