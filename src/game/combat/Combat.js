@@ -165,25 +165,31 @@ export function lineOfSight(a, b, blocked = () => false) {
 
 // ── Combat class ──────────────────────────────────────────────
 
-function makeCombatant(entity, initiative) {
+function makeCombatant(entity, initiative, pos = {}) {
   // Ensure fullness fields exist — entities created outside combat may lack them.
   if (!entity.stomachCapacity) entity.stomachCapacity = 0;
   if (entity.fullness == null) entity.fullness = 0;
-  return { entity, initiative, band: 'near', x: 1, y: 0 };
+  const x = pos.x ?? 1, y = pos.y ?? 0;
+  return { entity, initiative, band: BANDS[Math.min(x, BANDS.length - 1)] || 'near', x, y };
 }
 
 export class Combat {
   constructor(entries, opts = {}) {
-    // entries: [{ entity, initiative }]
+    // entries: [{ entity, initiative, x?, y? }]
     // opts: { drainRate (0-1, default 0.1), succumbAt (0-100, default 75) }
     this._drainRate = opts.drainRate ?? 0.1;
     this._opts = opts;
     this.combatants = entries
-      .map(e => makeCombatant(e.entity, e.initiative))
+      .map(e => makeCombatant(e.entity, e.initiative, { x: e.x, y: e.y }))
       .sort((a, b) => b.initiative - a.initiative);
     this.round = 0;
     this.log = [];
   }
+
+  // The player combatant (kind !== enemy) and the living enemy combatants.
+  playerCombatant() { return this.combatants.find(c => !c.entity.isEnemy) || null; }
+  livingEnemies() { return this.combatants.filter(c => c.entity.isEnemy && !checkWinState(c.entity, this._opts)); }
+  encounterWon() { return this.combatants.some(c => c.entity.isEnemy) && this.livingEnemies().length === 0; }
 
   // Advance one round.
   // Calls onTurn(combatant, actionsThisRound, combat) for each living actor.

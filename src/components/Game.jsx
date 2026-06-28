@@ -25,7 +25,7 @@ import { ITEMS } from '../game/items/Equipment.js';
 import { awardXP, applyLevelBonus, levelUpChoices, xpToNextLevel } from '../game/mechanics/ProgressionSystem.js';
 import CombatScreen from './CombatScreen';
 import { DungeonState } from '../game/dungeon/DungeonState.js';
-import { Combat, fillUp, checkWinState, actionsAvailable } from '../game/combat/Combat.js';
+import { Combat, fillUp, checkWinState, actionsAvailable, canReach, lineOfSight, move as moveCombatant, distance } from '../game/combat/Combat.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 import { Discovery, idOf } from '../game/discovery/Discovery.js';
@@ -67,6 +67,9 @@ function applySpellConditions(spell, target, selectedOption) {
     target.conditions?.add('ravenous', {});
   }
 }
+
+// Combat field dimensions (cells are 0-indexed). 5 wide x 3 tall.
+const FIELD = { maxX: 4, maxY: 2 };
 
 const Game = () => {
   const [gameState] = useState(() => new GameState());
@@ -457,13 +460,18 @@ const Game = () => {
     const player = gameState.getPlayer();
     const enemies = ds.roomEnemies();
     if (!enemies.length) return;
+    enemies.forEach(e => { e._dead = false; });
+    // Player anchors left-center; enemies spread along the right edge.
     const combat = new Combat([
-      { entity: player, initiative: 10 },
-      ...enemies.map(e => ({ entity: e, initiative: 5 })),
+      { entity: player, initiative: 10, x: 0, y: 1 },
+      ...enemies.map((e, i) => ({ entity: e, initiative: 5, x: FIELD.maxX, y: Math.min(i, FIELD.maxY) })),
     ]);
     const floor = ds.currentFloor;
-    setCombatState({ combat, enemies, round: 1, status: 'active', modifier: floor?.modifier || null,
-      log: [`${enemies[0]?.name} blocks your way!`] });
+    setCombatState({
+      combat, enemies, round: 1, status: 'active', modifier: floor?.modifier || null,
+      selectedEnemyId: enemies[0].id, field: FIELD,
+      log: [enemies.length > 1 ? `${enemies.length} foes block your way!` : `${enemies[0]?.name} blocks your way!`],
+    });
   };
 
   // ── Dungeon traversal ────────────────────────────────────────
@@ -539,74 +547,105 @@ const Game = () => {
     }
   };
 
-  const doCombatPlayerAction = (actionFn) => {
+  const handleSelectEnemy = (enemyId) => {
+    setCombatState(prev => prev ? { ...prev, selectedEnemyId: enemyId } : prev);
+  };
+
+  // Run one combat turn: the player's chosen action, then every living enemy
+  // acts (you-then-all-enemies), then drain + win checks. `mutate(ctx)` returns
+  // { ok, msg }: if ok is false the turn is aborted (no enemy turn, no round
+  // spent) so a misjudged reach just costs a message, not the round.
+  const runPlayerTurn = (mutate) => {
     setCombatState(prev => {
       if (!prev || prev.status !== 'active') return prev;
       const player = gameState.getPlayer();
       if (!player) return prev;
-      const { combat, enemies } = prev;
-      const enemy = enemies[0];
+      const { combat } = prev;
       const mod = prev.modifier || {};
-      const newLog = [...prev.log];
+      const log = [...prev.log];
+      const playerPos = combat.playerCombatant();
+      const selEnemyC = combat.combatants.find(c => c.entity.id === prev.selectedEnemyId && c.entity.isEnemy);
 
-      // Player action (biome feedScale resists/eases fattening)
-      const msg = actionFn(player, enemy, mod);
-      if (msg) newLog.push(msg);
-
-      // Check enemy defeat after player action
-      const enemyDefeated = checkWinState(enemy);
-      if (enemyDefeated) {
-        newLog.push(`${enemy.name} is defeated!`);
-        return { ...prev, round: prev.round + 1, status: 'won', log: newLog.slice(-8) };
+      const res = mutate({ player, combat, mod, log, playerPos, selEnemy: selEnemyC?.entity, selEnemyPos: selEnemyC });
+      if (res?.msg) log.push(res.msg);
+      if (res && res.ok === false) {
+        return { ...prev, log: log.slice(-10) }; // aborted — no turn spent
       }
 
-      // Enemy turn
-      const selfPos = combat.combatants.find(c => c.entity === enemy);
-      const oppPos  = combat.combatants.find(c => c.entity === player);
-      const actions = actionsAvailable(enemy);
-      const ctrl = controllerFor(enemy._trait);
-      ctrl({ self: enemy, opponent: player, selfPos, oppPos, actions, combat });
-      newLog.push(`${enemy.name} retaliates.`);
+      // Mark any enemies defeated by the player's action.
+      const living = combat.livingEnemies().map(c => c.entity);
+      for (const e of prev.enemies) {
+        if (!e._dead && !living.includes(e)) { e._dead = true; log.push(`${e.name} is defeated!`); }
+      }
+      if (combat.encounterWon()) {
+        return { ...prev, round: prev.round + 1, status: 'won', log: log.slice(-10) };
+      }
 
-      // Biome willDrift: tempting air nudges the enemy toward succumb each round.
-      if (mod.willDrift) enemy.willingness = Math.min(100, (enemy.willingness ?? 50) + mod.willDrift);
+      // Enemy turns: each living foe acts on the player.
+      for (const ec of combat.livingEnemies()) {
+        const ctrl = controllerFor(ec.entity._trait);
+        ctrl({ self: ec.entity, opponent: player, selfPos: ec, oppPos: playerPos, actions: actionsAvailable(ec.entity), combat, field: prev.field || FIELD });
+        if (mod.willDrift) ec.entity.willingness = Math.min(100, (ec.entity.willingness ?? 50) + mod.willDrift);
+      }
+      log.push('The foes press in.');
 
-      // Per-round fullness drain (mirrors Combat.nextRound drainRate=0.1).
-      // Player's feedCling makes the ENEMY drain less; biome drainScale scales both.
+      // Per-round fullness drain for everyone (biome drainScale scales it).
       const drainScale = mod.drainScale ?? 1;
-      const enemyDrain = 0.1 * (1 - player.feedClingFactor) * drainScale;
-      for (const [e, rate] of [[player, 0.1 * drainScale], [enemy, enemyDrain]]) {
-        const cap = e.stomachCapacity || 0;
-        if (cap) e.fullness = Math.max(0, (e.fullness || 0) - cap * rate);
+      for (const c of combat.combatants) {
+        const rate = (c.entity === player) ? 0.1 * drainScale : 0.1 * (1 - player.feedClingFactor) * drainScale;
+        const cap = c.entity.stomachCapacity || 0;
+        if (cap) c.entity.fullness = Math.max(0, (c.entity.fullness || 0) - cap * rate);
       }
 
-      // Check player defeat
-      const playerDefeated = checkWinState(player);
-      if (playerDefeated) {
-        newLog.push('You have been overwhelmed!');
-        return { ...prev, round: prev.round + 1, status: 'lost', log: newLog.slice(-8) };
+      if (checkWinState(player)) {
+        log.push('You collapse, too stuffed to fight on!');
+        return { ...prev, round: prev.round + 1, status: 'lost', log: log.slice(-10) };
       }
 
-      return { ...prev, round: prev.round + 1, log: newLog.slice(-8) };
+      // Keep the selected target valid (jump to a living foe if the old one fell).
+      let sel = prev.selectedEnemyId;
+      if (!combat.livingEnemies().some(c => c.entity.id === sel)) sel = combat.livingEnemies()[0]?.entity.id ?? null;
+      return { ...prev, round: prev.round + 1, selectedEnemyId: sel, log: log.slice(-10) };
     });
   };
 
+  // Spell reach: ranged with a per-spell range (cells) + line of sight.
+  const spellRange = (spell) => spell.combatRange ?? ((spell.level ?? 1) <= 2 ? 2 : 4);
+
   const handleCombatCastSpell = (spell) => {
-    doCombatPlayerAction((player, enemy, mod) => {
+    runPlayerTurn(({ player, mod, selEnemy, selEnemyPos, playerPos }) => {
+      if (!selEnemy || !selEnemyPos) return { ok: false, msg: 'No target — pick a foe first.' };
+      const range = spellRange(spell);
+      if (distance(playerPos, selEnemyPos) > range || !lineOfSight(playerPos, selEnemyPos)) {
+        return { ok: false, msg: `${selEnemy.name} is out of range for ${spell.name}. Move closer or pick a nearer foe.` };
+      }
       const lvl = spell.level ?? 1;
       const cost = lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
-      if ((player.spellSlots[cost] ?? 0) <= 0) return `No L${cost} slots — ${spell.name} fizzles.`;
+      if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `No L${cost} slots — ${spell.name} fizzles.` };
       player.spellSlots[cost] -= 1;
       const pct = cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
-      fillUp(enemy, pct * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
-      return `You cast ${spell.name} on ${enemy.name}.`;
+      fillUp(selEnemy, pct * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
+      return { ok: true, msg: `You cast ${spell.name} on ${selEnemy.name}.` };
     });
   };
 
   const handleForceFeed = () => {
-    doCombatPlayerAction((player, enemy, mod) => {
-      fillUp(enemy, 0.15 * (enemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
-      return `You force-feed ${enemy.name}.`;
+    runPlayerTurn(({ player, mod, selEnemy, selEnemyPos, playerPos }) => {
+      if (!selEnemy || !selEnemyPos) return { ok: false, msg: 'No target — pick a foe first.' };
+      if (!canReach(playerPos, selEnemyPos, 1)) {
+        return { ok: false, msg: `${selEnemy.name} is too far to force-feed. Move adjacent first.` };
+      }
+      fillUp(selEnemy, 0.15 * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
+      return { ok: true, msg: `You force-feed ${selEnemy.name}.` };
+    });
+  };
+
+  const handleCombatMove = (dir) => {
+    runPlayerTurn(({ combat, playerPos }) => {
+      const before = `${playerPos.x},${playerPos.y}`;
+      moveCombatant(playerPos, dir, { maxX: FIELD.maxX, maxY: FIELD.maxY });
+      if (`${playerPos.x},${playerPos.y}` === before) return { ok: false, msg: 'You can\'t move that way — the field edge stops you.' };
+      return { ok: true, msg: `You reposition ${dir}.` };
     });
   };
 
@@ -757,15 +796,20 @@ const Game = () => {
       {combatState && (
         <CombatScreen
           player={player}
+          combat={combatState.combat}
           enemies={combatState.enemies}
+          field={combatState.field || FIELD}
+          selectedEnemyId={combatState.selectedEnemyId}
           round={combatState.round}
           status={combatState.status}
           combatLog={combatState.log}
           knownSpells={knownSpells}
           spellLibrary={spellLibrary}
-          playerStats={{ actionsLeft: actionsAvailable(player), spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
+          playerStats={{ spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
+          onSelectEnemy={handleSelectEnemy}
           onCastSpell={handleCombatCastSpell}
           onForceFeed={handleForceFeed}
+          onMove={handleCombatMove}
           onFlee={handleFlee}
           onContinue={handleCombatContinue}
         />

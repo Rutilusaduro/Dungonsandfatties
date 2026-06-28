@@ -7,7 +7,22 @@
 // Utility AI is a later upgrade; these scripts are the lazy-correct start.
 // ponytail: deterministic scripts — no RNG yet; add a seed when variety lands.
 // ═══════════════════════════════════════════════════════════════
-import { fillUp, purge, move, distance, checkWinState } from './Combat.js';
+import { fillUp, purge, move, distance, checkWinState, BANDS } from './Combat.js';
+
+const OPP_DIR = { closer: 'further', further: 'closer', up: 'down', down: 'up' };
+
+// Pick a single grid step that moves selfPos toward (or away from) oppPos,
+// stepping along the axis of greatest separation. Field-aware bounds.
+function stepRelative(selfPos, oppPos, bounds, away) {
+  if (!selfPos || !oppPos) return;
+  const dx = oppPos.x - selfPos.x, dy = oppPos.y - selfPos.y;
+  let dir;
+  if (dx !== 0 && Math.abs(dx) >= Math.abs(dy)) dir = dx > 0 ? 'further' : 'closer';
+  else if (dy !== 0) dir = dy > 0 ? 'down' : 'up';
+  else if (dx !== 0) dir = dx > 0 ? 'further' : 'closer';
+  else return; // same cell
+  move(selfPos, away ? OPP_DIR[dir] : dir, bounds);
+}
 
 // Finisher preconditions an archetype may deny. Kept in sync with the finisher
 // entries by content:lint (which derives the real set from the InteractionTable).
@@ -125,7 +140,8 @@ export function applyCondition(entity, key, meta = {}) {
 }
 
 // Bound action helpers handed to a script. Each call is one action.
-function makeApi({ self, opponent, selfPos, oppPos, actions, trait }) {
+function makeApi({ self, opponent, selfPos, oppPos, actions, trait, field }) {
+  const bounds = { maxX: field?.maxX ?? (BANDS.length - 1), maxY: field?.maxY ?? 0 };
   return {
     self, opponent, actions,
     distance: () => distance(selfPos, oppPos),
@@ -135,8 +151,9 @@ function makeApi({ self, opponent, selfPos, oppPos, actions, trait }) {
       self.willingness = Math.min(100, (self.willingness ?? 50) + (trait.gorgeWill ?? 0));
     },
     purgeSelf: () => purge(self),
-    kite: () => move(selfPos, 'further'),
-    close: () => move(selfPos, 'closer'),
+    // Move relative to the player's actual cell (2D, field-aware).
+    kite: () => stepRelative(selfPos, oppPos, bounds, true),
+    close: () => stepRelative(selfPos, oppPos, bounds, false),
   };
 }
 
