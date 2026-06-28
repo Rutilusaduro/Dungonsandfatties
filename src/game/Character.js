@@ -5,7 +5,7 @@
  */
 
 import ActiveConditions from './conditions/ActiveConditions.js';
-import { canEquip, SLOTS } from './items/Equipment.js';
+import { canEquip, SLOTS, itemByKey } from './items/Equipment.js';
 import { clampSlots } from './mechanics/Balance.js';
 import {
   applyBodyWeightChange,
@@ -194,6 +194,35 @@ class Character {
 
   getCalorieValue(options = {}) {
     return calculateLivingCalories(this, options);
+  }
+
+  // ── Save / load ──────────────────────────────────────────────
+  // Equipment instances → keys; conditions → plain dump. Everything else
+  // is plain numbers/strings/objects and survives JSON round-trip as-is.
+  serialize() {
+    const out = {};
+    for (const [k, v] of Object.entries(this)) {
+      if (k === 'equippedItems' || k === 'inventory' || k === 'conditions') continue;
+      out[k] = v;
+    }
+    out.equippedItems = Object.fromEntries(
+      Object.entries(this.equippedItems).map(([slot, it]) => [slot, it?.key ?? null]),
+    );
+    out.inventory  = this.inventory.map(it => it.key).filter(Boolean);
+    out.conditions = this.conditions.serialize();
+    return out;
+  }
+
+  static hydrate(data) {
+    const c = new Character(data.name, { race: data.race, class: data.class_ });
+    Object.assign(c, data);
+    c.equippedItems = { weapon: null, offhand: null, armor: null, accessory: null };
+    for (const [slot, key] of Object.entries(data.equippedItems || {})) {
+      if (key) c.equippedItems[slot] = itemByKey(key);
+    }
+    c.inventory   = (data.inventory || []).map(itemByKey).filter(Boolean);
+    c.conditions  = new ActiveConditions().hydrate(data.conditions || []);
+    return c;
   }
 
   // Get character description

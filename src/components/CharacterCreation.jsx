@@ -3,7 +3,7 @@ import CLASS_REGISTRY from '../game/classes/ClassRegistry.js';
 
 const classes = Object.values(CLASS_REGISTRY);
 
-const CharacterCreation = ({ onStart }) => {
+const CharacterCreation = ({ onStart, onResume }) => {
   const [playerName, setPlayerName] = useState('');
   const [selectedClass, setSelectedClass] = useState(null);
 
@@ -19,6 +19,12 @@ const CharacterCreation = ({ onStart }) => {
 
       <h1 style={s.title}>Dungeons &amp; Fatties</h1>
       <p style={s.subtitle}>A Text-Based Fattening Adventure</p>
+
+      {onResume && (
+        <button style={s.resumeBtn} className="class-card" onClick={onResume}>
+          ▸ Continue saved run
+        </button>
+      )}
 
       <div style={s.nameRow}>
         <input
@@ -212,6 +218,19 @@ const s = {
     fontSize: '0.75rem',
     color: '#888',
     lineHeight: 1.6,
+  },
+  resumeBtn: {
+    padding: '10px 24px',
+    marginBottom: '28px',
+    fontSize: '0.9rem',
+    backgroundColor: '#1d2a1d',
+    color: '#9fd99f',
+    border: '1px solid #2f4a2f',
+    borderRadius: '6px',
+    fontFamily: 'Georgia, serif',
+    fontWeight: 700,
+    cursor: 'pointer',
+    letterSpacing: '0.04em',
   },
   startBtn: {
     padding: '14px 40px',

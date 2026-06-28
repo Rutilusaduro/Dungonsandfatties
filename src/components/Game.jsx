@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TextDisplay from './TextDisplay';
 import CharacterPanel from './CharacterPanel';
 import SpellCaster from './SpellCaster';
@@ -26,6 +26,7 @@ import CombatScreen from './CombatScreen';
 import { DungeonState } from '../game/dungeon/DungeonState.js';
 import { Combat, fillUp, checkWinState, actionsAvailable } from '../game/combat/Combat.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
+import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -79,11 +80,36 @@ const Game = () => {
   const [levelUpState, setLevelUpState] = useState(null); // { level, choices }
   const [dungeon, setDungeon] = useState(null);        // DungeonState instance
   const [combatState, setCombatState] = useState(null); // { combat, enemies, round, status, log }
+  const [savedRunExists] = useState(() => hasSave());
+
+  // Autosave: persist the run whenever progress-bearing state changes.
+  // Combat isn't restored (enemies respawn on resume) so we don't save combatState itself.
+  useEffect(() => {
+    if (!gameStarted) return;
+    const player = gameState.getPlayer();
+    if (player) saveGame({ player, dungeon, knownSpells });
+  }, [gameStarted, dungeon, knownSpells, combatState, levelUpState]);
+
+  // Resume a saved run.
+  const resumeGame = () => {
+    const run = loadGame();
+    if (!run) return;
+    gameState.setPlayer(run.player);
+    setKnownSpells(run.knownSpells);
+    setDungeon(run.dungeon);
+    textEngine.clearBuffer();
+    textEngine.addText(`Welcome back, ${run.player.name}.`);
+    textEngine.addText('Your run resumes where you left it.');
+    setTextBuffer(textEngine.getBuffer());
+    setCurrentZone(world.getCurrentZone());
+    setGameStarted(true);
+  };
 
   // Initialize game
   const startGame = (playerName, classKey) => {
     const classDef = CLASS_REGISTRY[classKey];
     if (!classDef) throw new Error(`Unknown class: ${classKey}`);
+    clearSave(); // fresh run abandons any prior save
     const character = new Character(playerName, {
       race: 'Human',
       class: classKey,
@@ -458,6 +484,7 @@ const Game = () => {
         addEntry('You have conquered the dungeon. A legend is born.');
         setCombatState(null);
         setDungeon(null);
+        clearSave(); // run finished — don't resurrect it
       } else {
         if (floorComplete) addEntry(`Floor complete! Entering ${dungeon.currentFloor?.name || 'next floor'}.`);
         const nextEnemies = dungeon.spawnEnemies();
@@ -479,7 +506,7 @@ const Game = () => {
   };
 
   if (!gameStarted) {
-    return <CharacterCreation onStart={startGame} />;
+    return <CharacterCreation onStart={startGame} onResume={savedRunExists ? resumeGame : null} />;
   }
 
   const player = gameState.getPlayer();

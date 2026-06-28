@@ -135,6 +135,12 @@ export const ITEMS = {
   }),
 };
 
+// Stamp each item with its registry key so saves can store keys, not instances.
+for (const [k, item] of Object.entries(ITEMS)) item.key = k;
+
+// Look up the shared Equipment instance for a saved key (null if unknown).
+export function itemByKey(key) { return ITEMS[key] || null; }
+
 // Loot table: floor → rarity weight
 // ponytail: flat list keyed by floor; weighted random in LootTable.js
 export const FLOOR_LOOT = {

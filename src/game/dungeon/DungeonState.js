@@ -3,7 +3,7 @@
 // Mini-boss is the last encounter on floors 1-2; true boss is floor 3 last.
 
 import { FLOOR1_ENEMIES, FLOOR2_ENEMIES, FLOOR3_ENEMIES, makeEnemy } from './Enemies.js';
-import { ITEMS, FLOOR_LOOT } from '../items/Equipment.js';
+import { ITEMS, FLOOR_LOOT, itemByKey } from '../items/Equipment.js';
 
 const FLOORS = [
   {
@@ -96,5 +96,24 @@ export class DungeonState {
     const items = [...this.lootPile];
     this.lootPile = [];
     return items;
+  }
+
+  // Save/load: enemies respawn fresh on resume, so only progress + loot persist.
+  serialize() {
+    return {
+      floorIndex:     this.floorIndex,
+      encounterIndex: this.encounterIndex,
+      completed:      this.completed,
+      lootPile:       this.lootPile.map(it => it.key).filter(Boolean),
+    };
+  }
+
+  static hydrate(data = {}) {
+    const ds = new DungeonState();
+    ds.floorIndex     = data.floorIndex ?? 0;
+    ds.encounterIndex = data.encounterIndex ?? 0;
+    ds.completed      = data.completed ?? false;
+    ds.lootPile       = (data.lootPile || []).map(itemByKey).filter(Boolean);
+    return ds;
   }
 }
