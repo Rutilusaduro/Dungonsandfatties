@@ -80,7 +80,7 @@ const CombatScreen = ({
         {/* Tactical grid */}
         <div style={{ ...s.grid, gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}>
           {Array.from({ length: cols * rows }).map((_, i) => (
-            <div key={i} style={s.cell} />
+            <div key={i} style={{ ...s.cell, background: i % 2 === 0 ? '#151515' : '#1a1a1a' }} />
           ))}
           {tokens.map(c => {
             const e = c.entity;
@@ -100,7 +100,7 @@ const CombatScreen = ({
                 }}
                 title={e.name}
               >
-                {isPlayer ? '☻' : (e.name[0] || '✦')}
+                {isPlayer ? '☻' : (() => { const nearFull = (e.fullness || 0) >= (e.stomachCapacity || 1) * 0.9; return nearFull ? '💀' : (e.name[0] || '✦'); })()}
               </button>
             );
           })}
@@ -116,8 +116,8 @@ const CombatScreen = ({
         {/* Combat log */}
         {combatLog?.length > 0 && (
           <div style={s.log} aria-live="polite">
-            {combatLog.slice(-6).map((line, i) => (
-              <div key={i} style={s.logLine}>{line}</div>
+            {combatLog.slice(-6).map((line, i, arr) => (
+              <div key={i} style={{ ...s.logLine, color: i === arr.length - 1 ? '#d4c9b0' : '#9a9a9a' }}>{line}</div>
             ))}
           </div>
         )}
@@ -206,14 +206,15 @@ const css = `
 const s = {
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40, padding: '16px' },
   panel: {
-    background: '#141414', border: '1px solid #333', borderRadius: '14px', padding: '22px',
+    background: '#141414', border: '1px solid #3a2a1a', borderRadius: '14px', padding: '22px',
     width: '560px', maxWidth: '96vw', maxHeight: '92vh', overflowY: 'auto',
-    fontFamily: 'Georgia, serif', color: '#e0e0e0', boxShadow: '0 16px 56px rgba(0,0,0,0.8)',
+    fontFamily: 'Georgia, serif', color: '#e0e0e0',
+    boxShadow: '0 16px 56px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.04)',
     display: 'flex', flexDirection: 'column', gap: '14px',
   },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   round: { fontSize: '0.72rem', color: '#666', textTransform: 'uppercase', letterSpacing: '0.12em', fontVariantNumeric: 'tabular-nums' },
-  status: (st) => ({ fontSize: '0.78rem', fontWeight: 700, color: st === 'won' ? '#4fc66a' : st === 'lost' ? '#c94a4a' : '#c9a227', textTransform: 'uppercase', letterSpacing: '0.08em' }),
+  status: (st) => ({ fontSize: '0.78rem', fontWeight: 700, color: st === 'won' ? '#4fc66a' : st === 'lost' ? '#c94a4a' : '#c9a227', textTransform: 'uppercase', letterSpacing: '0.08em', textShadow: st === 'won' ? '0 0 12px rgba(79,198,106,0.5)' : st === 'lost' ? '0 0 10px rgba(201,74,74,0.4)' : 'none' }),
   roster: { display: 'flex', gap: '8px', flexWrap: 'wrap' },
   enemyCard: { flex: '1 1 150px', minWidth: '140px', textAlign: 'left', background: '#1a1212', border: '1px solid #2a2020', borderRadius: '9px', padding: '8px 10px', cursor: 'pointer', color: '#e0e0e0', fontFamily: 'Georgia, serif', display: 'flex', flexDirection: 'column', gap: '4px' },
   enemyCardSel: { borderColor: '#c9a227', background: '#241c14', boxShadow: '0 0 0 1px #c9a22744' },
@@ -244,7 +245,7 @@ const s = {
   cancel: { background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.72rem', textDecoration: 'underline', fontFamily: 'Georgia, serif' },
   spellBtn: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e1e1e', border: '1px solid #2a2a2a', borderRadius: '6px', padding: '9px 11px', cursor: 'pointer', color: '#e0e0e0', fontFamily: 'Georgia, serif', fontSize: '0.8rem' },
   spellMeta: { fontSize: '0.66rem', color: '#888', fontVariantNumeric: 'tabular-nums' },
-  continue: (st) => ({ width: '100%', padding: '13px', background: st === 'won' ? '#4a6a2a' : '#4a1a1a', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Georgia, serif', fontSize: '0.95rem', fontWeight: 700 }),
+  continue: (st) => ({ width: '100%', padding: '13px', background: st === 'won' ? 'linear-gradient(135deg, #5a7a32 0%, #3a5020 100%)' : 'linear-gradient(135deg, #5a2020 0%, #3a1010 100%)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Georgia, serif', fontSize: '0.95rem', fontWeight: 700, transition: 'transform 80ms' }),
 };
 
 export default CombatScreen;

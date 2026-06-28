@@ -59,11 +59,14 @@ const css = `
     .levelup-choice:hover {
       border-color: #c9a227;
       background: rgba(201,162,39,0.08);
+      box-shadow: 0 0 12px rgba(201,162,39,0.2);
     }
   }
+  .levelup-choice { transition: border-color 150ms, background 150ms, box-shadow 150ms; }
   .levelup-choice:active { transform: scale(0.98); }
   @media (prefers-reduced-motion: reduce) {
     .levelup-panel { animation: none; }
+    .levelup-choice { transition: none; }
   }
 `;
 
@@ -75,8 +78,8 @@ const s = {
     zIndex: 100,
   },
   panel: {
-    background: '#161616',
-    border: '1px solid #333',
+    background: 'radial-gradient(ellipse at 50% 0%, #2a2010 0%, #141414 60%)',
+    border: '1px solid #3a2f1a',
     borderRadius: '12px',
     padding: '32px 28px',
     width: '360px',
@@ -84,7 +87,7 @@ const s = {
     textAlign: 'center',
     fontFamily: 'Georgia, serif',
     color: '#e0e0e0',
-    boxShadow: '0 8px 40px rgba(0,0,0,0.7)',
+    boxShadow: '0 8px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(201,162,39,0.08)',
   },
   badge: {
     display: 'inline-block',
@@ -104,6 +107,8 @@ const s = {
     fontWeight: 700,
     margin: '0 0 8px',
     color: '#c9a227',
+    letterSpacing: '0.06em',
+    textShadow: '0 0 24px rgba(201,162,39,0.5), 0 2px 8px rgba(201,162,39,0.3)',
     textWrap: 'balance',
   },
   sub: {
