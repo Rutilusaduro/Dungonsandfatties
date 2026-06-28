@@ -8,6 +8,10 @@ import { getTextEngine } from '../src/textEngine/index.js';
 import SpellLibrary from '../src/game/magic/SpellLibrary.js';
 import { ARCHETYPES } from '../src/game/combat/EnemyController.js';
 import { WEIGHT_STAGES } from '../src/textEngine/stages.js';
+import { ITEMS, FLOOR_LOOT } from '../src/game/items/Equipment.js';
+import { FLOOR1_ENEMIES, FLOOR2_ENEMIES, FLOOR3_ENEMIES } from '../src/game/dungeon/Enemies.js';
+import CLASS_REGISTRY from '../src/game/classes/ClassRegistry.js';
+import { LEVEL_UP_SPELLS } from '../src/game/mechanics/ProgressionSystem.js';
 
 // SpellLibrary is pure JS (no React) — load it for names + target validation
 const lib = new SpellLibrary();
@@ -133,9 +137,43 @@ if (!vicSmoke || vicSmoke.split(/\s+/).length < 8) {
   errors++;
 }
 
+// ── Content refs (Step 1, scale-4x): enemies, loot, class/levelup spell pools ──
+const itemKeys = new Set(Object.keys(ITEMS));
+const spellSet = new Set(knownSpells);
+const ALL_ENEMIES = [...FLOOR1_ENEMIES, ...FLOOR2_ENEMIES, ...FLOOR3_ENEMIES];
+
+for (const e of ALL_ENEMIES) {
+  const tag = `[enemy:${e.name || '(no-name)'}]`;
+  if (!e.name) { console.error(`content:lint ERROR ${tag} missing 'name'`); errors++; }
+  if (!ARCHETYPES[e.archetype]) {
+    console.error(`content:lint ERROR ${tag} unknown archetype: '${e.archetype}'`); errors++;
+  }
+  for (const key of e.lootTable || []) {
+    if (!itemKeys.has(key)) { console.error(`content:lint ERROR ${tag} lootTable key not in ITEMS: '${key}'`); errors++; }
+  }
+}
+
+for (const [floor, keys] of Object.entries(FLOOR_LOOT)) {
+  for (const key of keys) {
+    if (!itemKeys.has(key)) { console.error(`content:lint ERROR [FLOOR_LOOT:${floor}] key not in ITEMS: '${key}'`); errors++; }
+  }
+}
+
+for (const [cls, def] of Object.entries(CLASS_REGISTRY)) {
+  for (const name of def.startingSpells || []) {
+    if (!spellSet.has(name)) { console.error(`content:lint ERROR [class:${cls}] startingSpell not in SpellLibrary: '${name}'`); errors++; }
+  }
+}
+
+for (const [cls, pool] of Object.entries(LEVEL_UP_SPELLS)) {
+  for (const name of pool) {
+    if (!spellSet.has(name)) { console.error(`content:lint ERROR [LEVEL_UP_SPELLS:${cls}] spell not in SpellLibrary: '${name}'`); errors++; }
+  }
+}
+
 if (errors > 0) {
   console.error(`\ncontent:lint: ${errors} error(s). Fix before shipping.`);
   process.exit(1);
 } else {
-  console.log(`content:lint: ${TABLE.length} entries, ${ids.size} unique IDs, ${knownSpells.length} spells — clean.`);
+  console.log(`content:lint: ${TABLE.length} combos, ${ALL_ENEMIES.length} enemies, ${itemKeys.size} items, ${knownSpells.length} spells — clean.`);
 }
