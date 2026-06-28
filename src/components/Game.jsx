@@ -173,7 +173,9 @@ const Game = () => {
       baseWeight: classDef.baseWeight,
       spellSlots: { ...classDef.spellSlots },
     });
-    setKnownSpells(new Set(classDef.startingSpells));
+    // Every class knows the basic fattening cantrips — at-will, no slot cost.
+    const CANTRIPS = ['Conjure Morsel', 'Sating Spark', 'Greasy Flick'];
+    setKnownSpells(new Set([...classDef.startingSpells, ...CANTRIPS]));
 
     // Starting gear by class offhand type
     const startingGear = {
@@ -192,7 +194,7 @@ const Game = () => {
     // Add initial message
     textEngine.addText(`Welcome, ${playerName}!`);
     textEngine.addText('You find yourself in The Bloated Boar Tavern...');
-    textEngine.addText('Barkeep Boris leans across the bar, voice hushed: "Listen close, adventurer. There\'s a dungeon beneath this very tavern — three floors of cursed kitchens, haunted feasting halls, and the Grand Gourmand himself at the bottom. Sealed himself in there centuries ago and never stopped eating. Every soul who went down came back changed, if they came back at all. Trapdoor\'s behind the staircase. Use the \'Enter Dungeon\' button when you\'re ready. Don\'t say I didn\'t warn you."')
+    textEngine.addText('Barkeep Boris leans across the bar, voice dropping low. "You\'ve got the look of someone who goes hunting for trouble. There\'s plenty of it under our feet. A stair behind the cellar door drops into the old dungeon — kitchens that still cook, halls still laid for a feast no one living was invited to. They say something waits at the bottom that never once stopped eating. Mind the cold down there. It does strange things to a person\'s appetite."')
     setTextBuffer(textEngine.getBuffer());
 
     // Set starting zone
@@ -204,21 +206,34 @@ const Game = () => {
 
   const addEntry = (text, type) => textEngine.addText(text, type ? { type } : {});
 
-  const handleCastSpell = ({ spell, target, secondaryTarget, zone, selectedOption }) => {
+  const handleCastSpell = (args) => {
+    try {
+      castSpellImpl(args);
+    } catch (err) {
+      // A single spell must never white-screen the game — log it and surface it.
+      console.error('Spell cast failed:', err);
+      addEntry(`The spell sputters and fails — something went wrong (${err.message}).`, 'error');
+      setTextBuffer(textEngine.getBuffer());
+    }
+  };
+
+  const castSpellImpl = ({ spell, target, secondaryTarget, zone, selectedOption }) => {
     if (!spell || !zone) return;
 
     const caster = gameState.getPlayer();
     if (!caster) return;
 
     const slotLevel = optionSlotCost(spell, selectedOption);
-    const available = caster.spellSlots[slotLevel] ?? 0;
-    if (available <= 0) {
-      addEntry(`— ${spell.name} —`, 'divider');
-      addEntry(`No level ${slotLevel} spell slots remaining. Long rest to restore.`, 'error');
-      setTextBuffer(textEngine.getBuffer());
-      return;
+    if (slotLevel > 0) { // cantrips (slot 0) are at-will and cost nothing
+      const available = caster.spellSlots[slotLevel] ?? 0;
+      if (available <= 0) {
+        addEntry(`— ${spell.name} —`, 'divider');
+        addEntry(`No level ${slotLevel} spell slots remaining. Long rest to restore.`, 'error');
+        setTextBuffer(textEngine.getBuffer());
+        return;
+      }
+      caster.spellSlots[slotLevel] -= 1;
     }
-    caster.spellSlots[slotLevel] -= 1;
 
     const { result } = SpellResolver.cast({ spell, caster, target, secondaryTarget, zone, selectedOption });
 
@@ -558,6 +573,17 @@ const Game = () => {
   const runPlayerTurn = (mutate) => {
     setCombatState(prev => {
       if (!prev || prev.status !== 'active') return prev;
+      try {
+        return runPlayerTurnImpl(prev, mutate);
+      } catch (err) {
+        console.error('Combat action failed:', err);
+        return { ...prev, log: [...prev.log, `That action misfired (${err.message}).`].slice(-10) };
+      }
+    });
+  };
+
+  const runPlayerTurnImpl = (prev, mutate) => {
+    {
       const player = gameState.getPlayer();
       if (!player) return prev;
       const { combat } = prev;
@@ -606,11 +632,12 @@ const Game = () => {
       let sel = prev.selectedEnemyId;
       if (!combat.livingEnemies().some(c => c.entity.id === sel)) sel = combat.livingEnemies()[0]?.entity.id ?? null;
       return { ...prev, round: prev.round + 1, selectedEnemyId: sel, log: log.slice(-10) };
-    });
+    }
   };
 
-  // Spell reach: ranged with a per-spell range (cells) + line of sight.
-  const spellRange = (spell) => spell.combatRange ?? ((spell.level ?? 1) <= 2 ? 2 : 4);
+  // Spell reach: ranged with a per-spell range (cells) + line of sight. Generous
+  // by default — a spell should reach across the field; force-feed is the melee option.
+  const spellRange = (spell) => spell.combatRange ?? ((spell.level ?? 1) <= 2 ? 4 : 6);
 
   // When a fill pushes a foe across a fullness band, narrate her swelling.
   const FATTEN_BANDS = [0.5, 0.7, 0.85, 1.0];
@@ -632,10 +659,13 @@ const Game = () => {
         return { ok: false, msg: `${selEnemy.name} is out of range for ${spell.name}. Move closer or pick a nearer foe.` };
       }
       const lvl = spell.level ?? 1;
-      const cost = lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
-      if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `No L${cost} slots — ${spell.name} fizzles.` };
-      player.spellSlots[cost] -= 1;
-      const pct = cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
+      const isCantrip = lvl <= 0;
+      const cost = isCantrip ? 0 : lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
+      if (!isCantrip) {
+        if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `No L${cost} slots — ${spell.name} fizzles.` };
+        player.spellSlots[cost] -= 1;
+      }
+      const pct = isCantrip ? 0.10 : cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
       const before = selEnemy.fullness || 0;
       fillUp(selEnemy, pct * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
       log.push(`You cast ${spell.name} on ${selEnemy.name}.`);

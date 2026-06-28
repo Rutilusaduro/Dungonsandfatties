@@ -12,7 +12,28 @@ description: >
 
 # Dungeons & Fatties — Gamedev Operating Manual
 
-**Dungeons & Fatties** (repo: `Rutilusaduro/Dungonsandfatties`, branch `claude/combat-fattening-mechanics-j4oa23`) is a React + Vite text-adventure RPG. The player picks a class, explores The Bloated Boar Tavern, then descends 3 dungeon floors — fattening enemies via spells and force-feeding until they're immobilized or succumb, collecting loot, and levelling up.
+**Dungeons & Fatties** (repo: `Rutilusaduro/Dungonsandfatties`, branch `claude/combat-fattening-mechanics-j4oa23`) is a React + Vite text-adventure RPG. The player picks a class, explores The Bloated Boar Tavern, then descends a 12-floor dungeon (room graph per floor) — fattening enemies via spells and force-feeding until they're immobilized or succumb, collecting loot, and levelling up.
+
+---
+
+## ⛔ Non-negotiable: diegetic prose only (no 4th wall)
+
+**Player-facing text NEVER references game mechanics, UI, or controls.** Write only what a character living in the world would perceive. This is a hard rule — it applies to every string the player can read: NPC dialogue, room/zone descriptions, item flavor, combat log lines, spell narration, hints, tooltips.
+
+Banned in player-facing prose:
+- UI/control references: "button", "click", "press", "menu", "tab", "panel", "select", "the X screen", key names.
+- Raw mechanic names/numbers as instruction: "spell slots", "the Engage button", "3 floors with enemies and a boss", "HP", "willingness stat", "press Examine to interact".
+- Tutorialese that addresses the player-as-user: "you should X to Y", "use the Z to…".
+
+Instead, render the *lived experience* and let mechanics stay invisible:
+- ❌ "Use the Enter Dungeon button to explore the 3-floor dungeon with a boss at the end."
+- ✅ "A stair behind the cellar door drops into the old dungeon. They say something waits at the bottom that never stopped eating."
+- ❌ "Press Examine to see what you can interact with."
+- ✅ "Something glints at the edge of your vision as you pass."
+- ❌ "This enemy has high willingness, so it will succumb faster."
+- ✅ "She's barely resisting now — leaning into every mouthful."
+
+Allowed: action verbs that happen to match a control as long as they read as in-world action ("you look around", "you reposition", "you force the next bite") — the test is whether a character in the scene would say it. When in doubt, describe the sensation, not the system. All new prose still routes through `weightgain-prose` (voice) + `fuck-slop` (de-slop) before finalizing; this rule is checked there too.
 
 ---
 

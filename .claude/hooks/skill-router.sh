@@ -19,6 +19,10 @@ Route by activity (invoke the Skill, do not merely mention it):
 - brainstorming or stress-testing an idea/plan -> grill-me
 - reviewing code, a plan, or a design -> junior-to-senior
 - game content or mechanics (enemies, spells, floors, combat, equipment, balance, classes) -> gamedev
+Hard prose rule (always): player-facing game text is DIEGETIC ONLY. Never name
+UI/controls/buttons or raw mechanics (no "press the X button", "3 floors with a
+boss", "spell slots"). Write what a character perceives; mechanics stay invisible.
+See the gamedev skill's "diegetic prose only" section.
 TXT
 )"
 

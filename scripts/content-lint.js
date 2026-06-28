@@ -88,7 +88,9 @@ for (const entry of TABLE) {
 // ponytail: warn-only during the content build; flip COVERAGE_HARD=true at P3.5 closeout.
 const COVERAGE_FLOOR = 3;
 const COVERAGE_HARD = true; // P3.5 closeout: floor is now enforced, not just warned
-const touches = Object.fromEntries(knownSpells.map(s => [s, 0]));
+// Cantrips are intentionally simple and non-interacting — exempt from combo coverage.
+const isCantrip = (name) => { const sp = lib.getSpell(name); return sp?.level === 0 || (sp?.tags || []).includes('cantrip'); };
+const touches = Object.fromEntries(knownSpells.filter(s => !isCantrip(s)).map(s => [s, 0]));
 for (const entry of TABLE) {
   if (entry.trigger in touches) touches[entry.trigger]++;
   if (entry.requires?.recentSpell in touches) touches[entry.requires.recentSpell]++;
