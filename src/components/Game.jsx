@@ -421,10 +421,12 @@ const Game = () => {
       ctrl({ self: enemy, opponent: player, selfPos, oppPos, actions, combat });
       newLog.push(`${enemy.name} retaliates.`);
 
-      // Per-round fullness drain (mirrors Combat.nextRound drainRate=0.1)
-      for (const e of [player, enemy]) {
+      // Per-round fullness drain (mirrors Combat.nextRound drainRate=0.1).
+      // Player's feedCling makes the ENEMY drain less, so feeding sticks.
+      const enemyDrain = 0.1 * (1 - player.feedClingFactor);
+      for (const [e, rate] of [[player, 0.1], [enemy, enemyDrain]]) {
         const cap = e.stomachCapacity || 0;
-        if (cap) e.fullness = Math.max(0, (e.fullness || 0) - cap * 0.1);
+        if (cap) e.fullness = Math.max(0, (e.fullness || 0) - cap * rate);
       }
 
       // Check player defeat

@@ -179,6 +179,16 @@ class Character {
     return 1 + bonus / 100;
   }
 
+  // Fraction (0..0.6) by which equipped feedCling reduces a target's per-round
+  // fullness drain — makes your feeding "stick" against purgers.
+  get feedClingFactor() {
+    let pct = 0;
+    for (const item of Object.values(this.equippedItems)) {
+      if (item) pct += (item.feedCling || 0);
+    }
+    return Math.min(0.6, pct / 100);
+  }
+
   consumeCalories(calories, source = 'Food', options = {}) {
     return recordCalorieConsumption(this, calories, source, options);
   }
