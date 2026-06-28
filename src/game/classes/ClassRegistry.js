@@ -29,6 +29,38 @@ const CLASS_REGISTRY = {
     baseWeight: 150,
     accentColor: '#8b5cf6',
   },
+
+  // ── Scale-4x: three more classes for replay variety ──
+  Cleric: {
+    name: 'Cleric',
+    offHand: 'shield',
+    description: 'Devout provider who answers hunger with holy abundance. Buffs the feast and shields the faithful while the unworthy are filled to bursting.',
+    passive: 'Blessed Bounty: Ambrosial Aura lingers an extra round; Goodberry never runs dry.',
+    startingSpells: ['Goodberry', 'Command', 'Ambrosial Aura', 'Create Food and Water', "Feeder's Devotion"],
+    spellSlots: { 1: 4, 2: 2, 3: 1 },
+    baseWeight: 170,
+    accentColor: '#e0c060',
+  },
+  Druid: {
+    name: 'Druid',
+    offHand: 'focus',
+    description: 'Keeper of the wild harvest who grows food from bare earth and swells flesh like fruit on the vine. Patient, overwhelming, inevitable.',
+    passive: 'Wild Harvest: Plant Growth also conjures food; growth spells cost no extra slot in natural zones.',
+    startingSpells: ['Goodberry', 'Shape Wood', 'Enlarge Person', 'Conjure Food', 'Plant Growth', 'Sylvan Bounty'],
+    spellSlots: { 1: 3, 2: 3, 3: 1 },
+    baseWeight: 155,
+    accentColor: '#5fa45f',
+  },
+  Bard: {
+    name: 'Bard',
+    offHand: 'tome',
+    description: 'Silver-tongued tempter who talks foes into one more bite, and another. Weakest raw power, strongest at bending willingness.',
+    passive: 'Honeyed Words: Suggestion and Command raise target willingness twice as fast.',
+    startingSpells: ['Suggestion', 'Command', 'Sleep', 'Detect Cravings', 'Sympathetic Bond'],
+    spellSlots: { 1: 3, 2: 2, 3: 2 },
+    baseWeight: 145,
+    accentColor: '#c264a0',
+  },
 };
 
 export default CLASS_REGISTRY;

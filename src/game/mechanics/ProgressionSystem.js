@@ -29,6 +29,21 @@ export const LEVEL_UP_SPELLS = {
     'Rooting Glut', 'Feeder\'s Devotion', 'Swelling Tide',
     'Imbue Life', 'Sphere of Influence', 'Malleable Flesh',
   ],
+  Cleric: [
+    'Hold Person', 'Suggestion', 'Slow',
+    'Rapid Digestion', 'Morph Mass', 'Swelling Tide',
+    'Imbue Life', 'Sphere of Influence', 'Feast Exile',
+  ],
+  Druid: [
+    'Erupting Earth', 'Shape Earth', 'Polymorph',
+    'Ravenous Expansion', 'Malleable Flesh', 'Summon Cattle',
+    'Telekinesis', 'Float', 'Gust of Wind',
+  ],
+  Bard: [
+    'Hold Person', 'Slow', 'Haste',
+    'Duplication', 'Polymorph', 'Sphere of Influence',
+    'Covetous Siphon', 'Wall of Force', 'Telekinesis',
+  ],
 };
 
 // Slot bonuses granted each level: { 1: +N, 2: +N, 3: +N }.
@@ -48,6 +63,9 @@ const SLOT_BONUS_BY_CLASS = {
   Paladin: Object.assign([null, null, { 1: 1 }, { 1: 1, 2: 1 }, { 2: 1 }, { 2: 1, 3: 1 }], slotTail(6, 20)),
   Mage:    Object.assign([null, null, { 2: 1 }, { 2: 1 }, { 2: 1, 3: 1 }, { 3: 1 }], slotTail(6, 20)),
   Warlock: Object.assign([null, null, { 2: 1 }, { 3: 1 }, { 2: 1, 3: 1 }, { 3: 2 }], slotTail(6, 20)),
+  Cleric:  Object.assign([null, null, { 1: 1 }, { 1: 1, 2: 1 }, { 2: 1 }, { 2: 1, 3: 1 }], slotTail(6, 20)),
+  Druid:   Object.assign([null, null, { 2: 1 }, { 2: 1 }, { 2: 1, 3: 1 }, { 3: 1 }], slotTail(6, 20)),
+  Bard:    Object.assign([null, null, { 1: 1 }, { 2: 1 }, { 2: 1, 3: 1 }, { 3: 1 }], slotTail(6, 20)),
 };
 
 /**
