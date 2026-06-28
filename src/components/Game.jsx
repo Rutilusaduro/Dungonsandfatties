@@ -96,6 +96,18 @@ const Game = () => {
     const caster = gameState.getPlayer();
     if (!caster) return;
 
+    // Determine slot cost: option.slotLevel if explicit, else derive from spell level
+    const slotLevel = selectedOption?.slotLevel
+      ?? (spell.level <= 1 ? 1 : spell.level <= 3 ? 2 : 3);
+    const available = caster.spellSlots[slotLevel] ?? 0;
+    if (available <= 0) {
+      addEntry(`— ${spell.name} —`, 'divider');
+      addEntry(`No level ${slotLevel} spell slots remaining. Long rest to restore.`, 'error');
+      setTextBuffer(textEngine.getBuffer());
+      return;
+    }
+    caster.spellSlots[slotLevel] -= 1;
+
     const { result } = SpellResolver.cast({ spell, caster, target, secondaryTarget, zone, selectedOption });
 
     // Append to history (no clearBuffer) — add a divider to separate actions.
@@ -205,6 +217,9 @@ const Game = () => {
     addEntry('— Long Rest —', 'divider');
     addEntry('The day\'s meals and magic settle into lasting changes.');
 
+    // Restore spell slots
+    if (player) player.spellSlots = { ...player.maxSpellSlots };
+
     const sharingNotes = applyPreRestSharing(restTargets, currentZone);
     sharingNotes.forEach(note => addEntry(note, 'info'));
 
@@ -313,6 +328,8 @@ const Game = () => {
                 gravity: player.gravity,
                 caloriesEatenToday: player.caloriesEatenToday,
                 conditions: player.conditions?.keys?.() || [],
+                spellSlots: { ...player.spellSlots },
+                maxSpellSlots: { ...player.maxSpellSlots },
               } : null}
             />
           </div>

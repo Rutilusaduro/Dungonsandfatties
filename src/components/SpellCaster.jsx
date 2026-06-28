@@ -1,5 +1,10 @@
 import { useState } from 'react';
 
+// Slot cost for an option given its spell — mirrors Game.jsx logic
+function optionSlotLevel(spell, option) {
+  return option?.slotLevel ?? (spell.level <= 1 ? 1 : spell.level <= 3 ? 2 : 3);
+}
+
 const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) => {
   const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'you'
   const [selectedSpell, setSelectedSpell] = useState(null);
@@ -166,6 +171,24 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
           You
         </button>
       </div>
+
+      {/* Spell Slot Bar */}
+      {playerStats?.spellSlots && (
+        <div style={styles.slotBar}>
+          {[1, 2, 3].map(lvl => {
+            const cur = playerStats.spellSlots[lvl] ?? 0;
+            const max = playerStats.maxSpellSlots?.[lvl] ?? cur;
+            return (
+              <div key={lvl} style={styles.slotGroup}>
+                <span style={styles.slotLabel}>L{lvl}</span>
+                <span style={{ ...styles.slotCount, color: cur === 0 ? '#666' : '#ffd700' }}>
+                  {cur}/{max}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Cast Tab */}
       {activeTab === 'cast' && (
@@ -341,20 +364,29 @@ const SpellCaster = ({ spellLibrary, onCastSpell, currentZone, playerStats }) =>
                 <div style={styles.optionSection}>
                   <p style={styles.label}>How to Cast:</p>
                   <div style={styles.optionList}>
-                    {availableOptions.map((option, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedOption(option)}
-                        style={{
-                          ...styles.optionButton,
-                          backgroundColor:
-                            selectedOption === option ? '#5a8a3a' : '#3a5a2a',
-                        }}
-                      >
-                        <div style={styles.optionName}>{option.name}</div>
-                        <div style={styles.optionDesc}>{option.description}</div>
-                      </button>
-                    ))}
+                    {availableOptions.map((option, idx) => {
+                      const cost = optionSlotLevel(selectedSpell, option);
+                      const hasSlot = (playerStats?.spellSlots?.[cost] ?? 1) > 0;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => hasSlot && setSelectedOption(option)}
+                          style={{
+                            ...styles.optionButton,
+                            backgroundColor: !hasSlot ? '#2a2a2a'
+                              : selectedOption === option ? '#5a8a3a' : '#3a5a2a',
+                            opacity: hasSlot ? 1 : 0.45,
+                            cursor: hasSlot ? 'pointer' : 'not-allowed',
+                          }}
+                        >
+                          <div style={styles.optionHeader}>
+                            <div style={styles.optionName}>{option.name}</div>
+                            <div style={styles.slotBadge}>L{cost}</div>
+                          </div>
+                          <div style={styles.optionDesc}>{option.description}</div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -613,6 +645,27 @@ const styles = {
     flexDirection: 'column',
     gap: '6px',
   },
+  slotBar: {
+    display: 'flex',
+    gap: '12px',
+    padding: '6px 10px',
+    backgroundColor: '#111',
+    borderBottom: '1px solid #333',
+    marginBottom: '8px',
+  },
+  slotGroup: {
+    display: 'flex',
+    gap: '4px',
+    alignItems: 'center',
+    fontSize: '11px',
+  },
+  slotLabel: {
+    color: '#777',
+  },
+  slotCount: {
+    fontWeight: 'bold',
+    fontVariantNumeric: 'tabular-nums',
+  },
   optionButton: {
     padding: '8px 10px',
     color: '#fff',
@@ -623,10 +676,23 @@ const styles = {
     transition: 'all 0.2s',
     fontSize: '11px',
   },
+  optionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '2px',
+  },
   optionName: {
     fontWeight: 'bold',
-    marginBottom: '2px',
     fontSize: '12px',
+  },
+  slotBadge: {
+    fontSize: '10px',
+    color: '#aaa',
+    backgroundColor: '#1a1a1a',
+    padding: '1px 5px',
+    borderRadius: '3px',
+    border: '1px solid #444',
   },
   optionDesc: {
     fontSize: '10px',

@@ -22,7 +22,10 @@ class SpellOption {
     this.name = name;
     this.description = description;
     this.implementation = implementation;
+    this.slotLevel = null; // null = derive from spell.level at cast time
   }
+
+  atSlot(level) { this.slotLevel = level; return this; }
 
   apply(caster, target, context) {
     return this.implementation(caster, target, context);

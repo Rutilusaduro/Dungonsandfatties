@@ -54,6 +54,11 @@ class Character {
     // Equipment and inventory refs
     this.equippedItems = [];
 
+    // DnD-style spell slots { 1: N, 2: N, 3: N }
+    const defaultSlots = options.spellSlots || { 1: 3, 2: 2, 3: 1 };
+    this.spellSlots = { ...defaultSlots };
+    this.maxSpellSlots = { ...defaultSlots };
+
     // Spell status + conditions (so the player can also be a narration subject)
     this.restrainedBy = null;
     this.suspensionState = null;
@@ -172,6 +177,8 @@ Weight: ${this.currentWeight} lbs (${weightStatus})
         retentionMultiplier: this.calorieRetentionMultiplier,
         edibleCalories: this.getCalorieValue(),
       },
+      spellSlots: { ...this.spellSlots },
+      maxSpellSlots: { ...this.maxSpellSlots },
     };
   }
 }
