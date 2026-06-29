@@ -122,11 +122,11 @@ const CombatScreen = ({
           <div style={{ flex: 1 }}><FullnessBar entity={player} /></div>
         </div>
 
-        {/* Combat log */}
+        {/* Combat log — prominent, shows last 10 lines */}
         {combatLog?.length > 0 && (
           <div style={s.log} aria-live="polite">
-            {combatLog.slice(-6).map((line, i, arr) => (
-              <div key={i} style={{ ...s.logLine, color: i === arr.length - 1 ? '#d4c9b0' : '#9a9a9a' }}>{line}</div>
+            {combatLog.slice(-10).map((line, i, arr) => (
+              <div key={i} style={{ ...s.logLine, color: i === arr.length - 1 ? '#e8d4a0' : i === arr.length - 2 ? '#d0b894' : '#8a8a8a', fontSize: i === arr.length - 1 ? '0.82rem' : '0.75rem' }}>{line}</div>
             ))}
           </div>
         )}
@@ -245,7 +245,7 @@ const s = {
   playerRow: { display: 'flex', alignItems: 'center', gap: '10px' },
   playerName: { fontWeight: 700, fontSize: '0.86rem' },
   playerSub: { fontSize: '0.7rem', color: '#888', textTransform: 'capitalize', whiteSpace: 'nowrap' },
-  log: { background: '#0d0d0d', borderRadius: '8px', padding: '10px 12px', maxHeight: '110px', overflowY: 'auto' },
+  log: { background: '#1a1410', border: '1px solid #3a2a1a', borderRadius: '8px', padding: '12px 14px', maxHeight: '180px', overflowY: 'auto', lineHeight: '1.5' },
   logLine: { fontSize: '0.74rem', color: '#9a9a9a', lineHeight: 1.6 },
   actions: { display: 'flex', gap: '12px', alignItems: 'stretch' },
   movePad: { display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' },
