@@ -77,8 +77,10 @@ export function buildReturnDef(def, stage) {
     stomachCapacity: Math.round((def.stomachCapacity ?? def.baseWeight * 0.8) * mult),
     xpValue:         Math.round((def.xpValue ?? 100) * (1 + stage * 0.5)),
     description:     ret.description || `${def.name}, back again — ${RETURN_FLAVOR[stage] || RETURN_FLAVOR[1]}.`,
-    dialogue:        ret.dialogue || def.dialogue,
-    defeatText:      ret.defeatText || def.defeatText,
+    // Merge so authored rung text overrides precombat / the three defeat lines
+    // while the source's postcombat-talk + any other keys survive.
+    dialogue:        ret.dialogue ? { ...def.dialogue, ...ret.dialogue } : def.dialogue,
+    defeatText:      ret.defeatText ? { ...def.defeatText, ...ret.defeatText } : def.defeatText,
     canReturn:       true,
     _returnStage:    stage,
   };
@@ -91,6 +93,60 @@ export const FLOOR1_ENEMIES = [
     name: 'Kitchen Imp',
     archetype: 'flyer',
     canReturn: true,
+    returns: {
+      1: {
+        description: "The red-skinned pantry sprite returns with a new, undeniable softness rounding out her once-hollow frame. A warm, plush belly now pooches forward beneath her ragged top, jiggling softly every time her insect wings beat. Her hips have widened into gentle curves that sway when she tries to dart, and her thighs brush together with a new, warm friction. The wings still buzz, but she sinks a little lower with each flap, red skin stretched smooth and shiny over the fresh layers of give that make her look deliciously substantial.",
+        dialogue: { precombat: [
+          "You again?! I swore I’d lost you in that last mess!",
+          "These wings are still fast — you’ll see!",
+          "Lucky last time. I’m ready for you now.",
+        ] },
+        defeatText: {
+          immobilized: "Her wings give one last frantic buzz before she drops heavily onto the stone, belly and thighs spreading in a soft, quivering heap that pins her in place.",
+          succumbed: "A surprised little moan slips out as her hands sink into the warm, yielding plush of her own middle, the fight melting out of her limbs.",
+          fattened: "She drags herself away heavier than she arrived, belly rounding lower, hips widening with fresh, wobbling give that makes her wings work even harder.",
+        },
+      },
+      2: {
+        description: "The sprite is markedly thicker, her midsection dominated by a heavy, hanging belly that sways pendulously with every labored flap of her wings. Her hips have broadened into wide, soft shelves that jiggle and rub together as she fights to stay airborne, while her breasts and thickened thighs add obvious weight to every movement. Red skin gleams tight and warm over the new plushness; the insect wings beat harder and faster, yet she still sinks steadily, the once-agile flier now clearly bottom-heavy and struggling.",
+        dialogue: { precombat: [
+          "You… you keep finding me. How?!",
+          "I’m still the fastest thing down here — just watch!",
+          "Last time was a fluke. My wings’ll carry me right past you!",
+        ] },
+        defeatText: {
+          immobilized: "The extra weight drags her down mid-dodge; she crashes in a heavy, jiggling sprawl, belly spreading wide across the floor and trapping her own wings beneath soft red curves.",
+          succumbed: "She lets out a shaky, breathy sound as her fingers press deep into the warm overflow of her belly, body settling heavily into itself.",
+          fattened: "She retreats slower than before, visibly plumper with every step — belly drooping lower, thighs rubbing thicker, the red plush claiming more of her silhouette.",
+        },
+      },
+      3: {
+        description: "The kitchen imp has become a heavy, grounded creature of soft red flesh. Her massive belly hangs in a thick, wobbling apron that brushes the floor whenever she tries to rise, while her enormous hips and ass spread wide behind her, forcing her wings to work desperately just to keep her upper body aloft. The insect wings are almost decorative now, their strained buzz doing little against the sheer plush weight of her thighs, breasts, and gut that jiggle and sway with every panting breath, red skin stretched drum-tight and gleaming.",
+        dialogue: { precombat: [
+          "It’s… getting so hard to stay up…",
+          "My wings used to take me anywhere. Now everything’s so heavy…",
+          "You did this… and it feels… strange…",
+        ] },
+        defeatText: {
+          immobilized: "She can no longer pretend to fly; her body drops like a warm, heavy sack of plush, belly and breasts spreading outward in a soft tide that completely grounds her.",
+          succumbed: "Her eyes half-lid as she sinks deeper into her own giving softness, a low, warm sound rising from her plush chest.",
+          fattened: "She pulls away even slower, curves heavier and lower, the red skin now stretched over an unmistakably massive, wobbling frame that promises she’ll return even bigger.",
+        },
+      },
+      4: {
+        description: "The sprite is no longer a flier at all. She is a massive, beached mound of warm red softness, her enormous belly and breasts spreading heavily across the pantry floor in thick, jiggling waves. Her hips and thighs have become vast, heavy pillows that pin her completely in place, while her once-busy insect wings lie limp and forgotten against the overflowing plushness of her back and sides. Only her round, impish face remains visible, serene amid the sea of her own body.",
+        dialogue: { precombat: [
+          "I can’t… fly anymore. Everything’s just so soft and heavy.",
+          "You win. I don’t even want to run this time…",
+          "It feels good, actually. Being this full… this warm…",
+        ] },
+        defeatText: {
+          immobilized: "She doesn’t even try to rise. Her colossal body has claimed every inch of space, belly and breasts spreading in heavy, quivering waves that make movement impossible.",
+          succumbed: "A deep, blissful sigh escapes her as she fully relaxes into the warm, enveloping softness of her maximum size, hands lazily stroking the vast expanse of her belly.",
+          fattened: "This is her end. The kitchen imp has reached her absolute heaviest form — a permanent, room-filling monument of soft red flesh and contented immobility. She will not return.",
+        },
+      },
+    },
     baseWeight: 80,
     stomachCapacity: 90,
     willingness: 45,
@@ -122,6 +178,60 @@ export const FLOOR1_ENEMIES = [
     name: 'Pantry Goblin',
     archetype: 'brute',
     canReturn: true,
+    returns: {
+      1: {
+        description: "The broad green cook returns thicker and heavier, her once-commanding frame now dominated by a prominent, rounded belly that strains the front of her apron. The lard-soaked cap still sits on her head, but her hips have widened enough to make her waddle slightly as she plants her feet, green skin warm and shiny where it stretches over new plushness. She grips her spoon like a weapon, but the weight already makes her movements slower and more deliberate than before.",
+        dialogue: { precombat: [
+          "You again? This is MY pantry — get out!",
+          "I run this place. You don’t get to waltz back in!",
+          "Last time was a mistake. I won’t go easy on you again!",
+        ] },
+        defeatText: {
+          immobilized: "Her belly catches on the edge of a shelf as she tries to swing; she stumbles forward, the heavy apron and soft gut pinning her awkwardly against her own workstation.",
+          succumbed: "She grunts and then exhales hard, one hand pressing into the warm, soft swell of her belly as the fight drains out of her broad frame.",
+          fattened: "She lumbers away still barking orders over her shoulder, but her apron rides higher and her belly hangs heavier with every step.",
+        },
+      },
+      2: {
+        description: "The pantry goblin is noticeably broader and lower-slung, her massive belly now hanging in a heavy, apron-straining curve that sways and bounces when she moves. Her thick thighs rub together with every step, forcing a slower, wider stance, while her arms have softened enough that the spoon looks smaller in her grip. Green skin stretches tight and warm over the new layers of plush; the lard-soaked cap is still perched, but tilted from the way her fuller cheeks and neck press upward.",
+        dialogue: { precombat: [
+          "You keep coming back to mess up my kitchen!",
+          "I’m still in charge here — don’t you forget it!",
+          "My body might be slowing down, but my spoon isn’t!",
+        ] },
+        defeatText: {
+          immobilized: "She tries to lunge and her own belly throws her off balance; she ends up half-sprawled across a prep table, soft green curves spreading and pinning her in place.",
+          succumbed: "A frustrated growl turns into a heavy, reluctant sigh as she sinks against the table, hands sinking into the warm overflow of her own gut.",
+          fattened: "She retreats even slower, belly swinging lower and heavier, the apron now hopelessly rucked up over the new plushness she’s carrying away.",
+        },
+      },
+      3: {
+        description: "The cook has become massively broad and slow, her enormous belly hanging in a thick, wobbling apron that nearly brushes the floor and forces her to brace herself against counters just to stay upright. Her hips and ass spread wide and heavy behind her, making every step a deliberate, jiggling effort, while her softened arms make the spoon look almost toy-like. Green skin gleams with a warm sheen; the lard-soaked cap still sits, but her rounder face and heavier jowls make her look both more imposing and more inescapably soft.",
+        dialogue: { precombat: [
+          "You… you’re making this harder than it needs to be…",
+          "I still give the orders around here… even if I can’t chase you anymore.",
+          "My body’s getting away from me… but I’m not done yet.",
+        ] },
+        defeatText: {
+          immobilized: "She plants her feet to swing and her own colossal belly stops her cold; she ends up leaning heavily on the counter, soft green flesh spreading and overflowing around her like warm dough.",
+          succumbed: "She lets out a long, low groan that turns almost relieved as she sags fully into her own heavy softness, spoon clattering to the floor.",
+          fattened: "She leaves even slower than she arrived, belly swinging in heavy, pendulous arcs, the pantry suddenly feeling smaller with the space she now occupies.",
+        },
+      },
+      4: {
+        description: "The pantry goblin has become an enormous, beached monument of soft green flesh. Her colossal belly spreads in thick, heavy waves across the floor and against the counters, pinning her completely in place. Her hips and ass have become vast, warm shelves that fill the pantry doorway, while her softened arms rest atop the great dome of her gut. The lard-soaked cap still sits atop her round, serene face; she no longer even tries to stand fully upright.",
+        dialogue: { precombat: [
+          "I… I can’t even get around my own pantry anymore.",
+          "You win. I can’t enforce anything from here…",
+          "It’s… actually kind of peaceful when you stop fighting it.",
+        ] },
+        defeatText: {
+          immobilized: "She doesn’t move. Her body has become its own anchor — belly and hips spread so wide and heavy that the pantry itself seems built around her now.",
+          succumbed: "A deep, rumbling sigh of acceptance rolls through her as she melts fully into the warm, enveloping plush of her maximum size, eyes half-closed in strange contentment.",
+          fattened: "This is her end. The pantry goblin has reached her absolute heaviest form — a permanent, room-dominating fixture of soft green flesh and surrendered authority. She will not return.",
+        },
+      },
+    },
     baseWeight: 140,
     stomachCapacity: 200,
     willingness: 55,
@@ -199,6 +309,60 @@ export const FLOOR2_ENEMIES = [
     name: 'Banquet Specter',
     archetype: 'glutton',
     canReturn: true,
+    returns: {
+      1: {
+        description: "The translucent specter returns with a new, visible weight to her form. Her once-ethereal curves now show clear, soft roundness — a gently distended belly that sways beneath the phantom silk of her gown, hips and breasts fuller and more substantial. She still floats, but lower than before, and the air around her feels heavier, warmer, scented with phantom spices and warm bread. She lifts a ghostly fork to her lips even as she regards you, never truly stopping her endless meal.",
+        dialogue: { precombat: [
+          "Ah… the one who interrupted my feast before.",
+          "The courses never truly end. Even now they call to me.",
+          "You may have won last time… but the table is always set.",
+        ] },
+        defeatText: {
+          immobilized: "She tries to drift away and her newly weighted form sinks lower, the phantom gown clinging to soft, heavy curves that make graceful movement impossible.",
+          succumbed: "She sighs with something like pleasure, one translucent hand resting on the warm swell of her belly as she continues to “eat,” eyes soft and distant.",
+          fattened: "She fades, but leaves the air thicker and warmer behind her — her form already promising to return even more substantial.",
+        },
+      },
+      2: {
+        description: "The specter is noticeably more solid, her translucence giving way to soft, pearlescent opacity across her heavier curves. Her belly has grown into a proper, rounded dome that sways and settles with every slow float, while her hips and thighs have thickened into substantial, room-filling softness. Phantom food stains seem to linger on her gown; she never stops lifting fork to mouth, each bite making her form just a little more present, a little heavier in the air.",
+        dialogue: { precombat: [
+          "Every return makes the feast… richer.",
+          "I can feel myself growing more real with every course.",
+          "You keep interrupting… yet I only grow more content.",
+        ] },
+        defeatText: {
+          immobilized: "She drifts too low and her heavy, softening form settles onto the floor with a soft, weighty sound, belly spreading in a warm, visible swell that pins her in place.",
+          succumbed: "A serene, almost grateful smile touches her lips as she sinks deeper into her own growing substance, still “chewing” slowly.",
+          fattened: "She dissipates more slowly than before, leaving behind a heavier, warmer imprint on the room — already thicker for the next return.",
+        },
+      },
+      3: {
+        description: "The specter has become heavily substantial, her form more opaque and physically present with every passing moment. Her enormous belly hangs in a thick, wobbling curve that sways and brushes the floor when she moves, while her hips and breasts have grown into lush, room-dominating softness. She still eats phantom courses with serene focus, but now her body takes up noticeable space; the air grows warmer and thicker around her, scented with endless feast.",
+        dialogue: { precombat: [
+          "It’s becoming… difficult to stay light.",
+          "The more I eat, the more of me stays.",
+          "You may defeat this form… but the feast continues.",
+        ] },
+        defeatText: {
+          immobilized: "She lowers herself willingly, her massive, soft form spreading across the floor in heavy, visible waves that make rising again impossible.",
+          succumbed: "She closes her eyes in quiet ecstasy as her body settles deeper into its own plush weight, still lifting the phantom fork to her lips.",
+          fattened: "She fades even more reluctantly, leaving the banquet hall feeling smaller and warmer, her next form already promising to be truly substantial.",
+        },
+      },
+      4: {
+        description: "The specter has become almost fully solid — a massive, room-filling presence of soft, pearlescent flesh and heavy, swaying curves. Her colossal belly spreads in thick, warm waves across the floor and against the walls, while her hips and breasts dominate the space around her. She still serenely lifts phantom food to her mouth, but her body now has undeniable physical weight and presence; she barely floats at all.",
+        dialogue: { precombat: [
+          "I… no longer wish to drift away.",
+          "Every bite makes me more… here.",
+          "This is where I belong now. Heavy. Full. Content.",
+        ] },
+        defeatText: {
+          immobilized: "She settles completely, her enormous, soft form spreading and claiming the entire end of the hall, belly and hips forming warm, immovable barriers.",
+          succumbed: "A long, peaceful sigh leaves her as she fully accepts the weight of her maximum form, still eating slowly, eyes half-lidded in bliss.",
+          fattened: "This is her end. The banquet specter has reached her absolute heaviest, most solid form — a permanent, serene, room-filling presence of endless feasting and surrendered grace. She will not return.",
+        },
+      },
+    },
     baseWeight: 160,
     stomachCapacity: 350,
     willingness: 80,
@@ -230,6 +394,60 @@ export const FLOOR2_ENEMIES = [
     name: 'Oven Imp',
     archetype: 'flyer',
     canReturn: true,
+    returns: {
+      1: {
+        description: "The copper-skinned imp returns from the rafters with new, noticeable softness rounding her manic frame. Her belly has filled out into a warm, jiggling pooch that presses more firmly against the hot metal when she clings there, while her hips and thighs have thickened enough to make her usual frantic movements just a little slower and heavier. Copper skin gleams with sweat and heat-flush, stretched smooth over the fresh plush that makes her press deeper into the warmth with every shift.",
+        dialogue: { precombat: [
+          "Heehee! You again! The heat feels even better now!",
+          "I’m still fast up here — try and catch me!",
+          "Last time you made me all soft… I kinda liked it!",
+        ] },
+        defeatText: {
+          immobilized: "She tries to scramble higher and her new softness pins her belly and thighs against the warm metal, leaving her stuck and wiggling helplessly.",
+          succumbed: "She lets out a high, giggly moan that turns breathy as she sinks deeper into the heat and her own plush curves.",
+          fattened: "She retreats higher into the rafters, but already her body looks heavier and softer against the metal, promising she’ll return even more pinned.",
+        },
+      },
+      2: {
+        description: "The oven imp is markedly thicker, her soft copper belly now hanging in a warm, heavy curve that sags and presses more deeply into the hot rafters whenever she moves. Her hips and ass have widened into plush, jiggling handfuls that make her usual manic speed impossible; she clings tighter to the warm metal, copper skin shiny with sweat, the new softness making her sink and spread against the heat with obvious, delighted friction.",
+        dialogue: { precombat: [
+          "You keep making me softer… and the ovens love it!",
+          "I’m still up here! Just… a little stuck now!",
+          "Heehee… feel how warm and heavy I’m getting?",
+        ] },
+        defeatText: {
+          immobilized: "She tries to dart along the rafter and her own heavy, soft belly and thighs pin her firmly against the hot metal, leaving her squirming and breathless.",
+          succumbed: "A manic little laugh melts into a low, pleased moan as she presses herself harder into the warmth and her own yielding curves.",
+          fattened: "She pulls herself higher with visible effort, body already visibly plumper and more spread against the metal than before.",
+        },
+      },
+      3: {
+        description: "The copper imp has grown heavily soft and heat-drunk, her enormous belly and breasts now overflowing and pinning her more completely against the warm metal of the rafters. Her hips and thighs have become vast, plush pillows that spread and jiggle with every tiny movement, copper skin stretched tight and gleaming, constantly pressing into the heat that makes her new softness even more yielding and sensitive. She still giggles, but the sound is slower, breathier, more lost in sensation.",
+        dialogue: { precombat: [
+          "It’s… pinning me so nicely against the warm metal…",
+          "I don’t even want to move fast anymore…",
+          "You did this… and it feels so good…",
+        ] },
+        defeatText: {
+          immobilized: "She can barely shift at all; her massive, soft body has wedged her firmly between rafter and hot metal, belly and breasts spreading in heavy, quivering waves.",
+          succumbed: "She lets out a long, trembling sigh of pure delight as she melts deeper into the heat and her own enveloping plushness.",
+          fattened: "She stays wedged longer than before, body visibly swelling and settling even more firmly into the warm metal before she finally drags herself away.",
+        },
+      },
+      4: {
+        description: "The oven imp is no longer mobile. She is a massive, heat-drunk mound of soft copper flesh completely wedged and overflowing in the warmest part of the rafters. Her colossal belly and breasts spread heavily across the metal and hang in thick, jiggling waves, while her hips and thighs have become vast, warm pillows that pin her utterly in place. Copper skin gleams with constant sweat and heat-flush; she presses into the warmth with open, blissful surrender, face round and serene amid the sea of her own softness.",
+        dialogue: { precombat: [
+          "I can’t move… and I don’t want to.",
+          "The heat and the softness… it’s perfect now.",
+          "You win. I’m staying right here… forever.",
+        ] },
+        defeatText: {
+          immobilized: "She doesn’t even try to leave. Her body has become part of the rafters — belly, breasts, and hips spread so wide and heavy that she is completely, permanently wedged in the warmest spot.",
+          succumbed: "A deep, blissful moan rolls through her as she fully relaxes into the heat and the maximum softness of her own body, eyes half-lidded in utter contentment.",
+          fattened: "This is her end. The oven imp has reached her absolute heaviest form — a permanent, heat-drunk fixture of soft copper flesh melted blissfully against the warm metal. She will not return.",
+        },
+      },
+    },
     baseWeight: 90,
     stomachCapacity: 100,
     willingness: 40,
