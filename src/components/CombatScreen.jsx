@@ -195,6 +195,13 @@ const CombatScreen = ({
           </div>
         )}
 
+        {status === 'won' && enemies.some(e => e._dead && e.defeatText?.[e._defeatCondition]) && (
+          <div style={s.victoryCard}>
+            {enemies.filter(e => e._dead && e.defeatText?.[e._defeatCondition]).map(e => (
+              <div key={e.id} style={s.victoryText}>{e.defeatText[e._defeatCondition]}</div>
+            ))}
+          </div>
+        )}
         {(status === 'won' || status === 'lost') && (
           <button style={s.continue(status)} onClick={onContinue}>
             {status === 'won' ? 'Continue' : 'Retreat'}
@@ -260,6 +267,8 @@ const s = {
   spellBtn: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e1e1e', border: '1px solid #2a2a2a', borderRadius: '6px', padding: '9px 11px', cursor: 'pointer', color: '#e0e0e0', fontFamily: 'Georgia, serif', fontSize: '0.8rem' },
   spellMeta: { fontSize: '0.66rem', color: '#888', fontVariantNumeric: 'tabular-nums' },
   continue: (st) => ({ width: '100%', padding: '13px', background: st === 'won' ? 'linear-gradient(135deg, #5a7a32 0%, #3a5020 100%)' : 'linear-gradient(135deg, #5a2020 0%, #3a1010 100%)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Georgia, serif', fontSize: '0.95rem', fontWeight: 700, transition: 'transform 80ms' }),
+  victoryCard: { background: '#0d0a06', border: '1px solid #4a3020', borderRadius: '8px', padding: '14px 16px' },
+  victoryText: { fontSize: '0.88rem', lineHeight: 1.75, color: '#c4b490', fontStyle: 'italic' },
 };
 
 export default CombatScreen;

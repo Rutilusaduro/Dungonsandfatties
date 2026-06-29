@@ -245,7 +245,7 @@ const Game = () => {
       const available = caster.spellSlots[slotLevel] ?? 0;
       if (available <= 0) {
         addEntry(`— ${spell.name} —`, 'divider');
-        addEntry(`No level ${slotLevel} spell slots remaining. Long rest to restore.`, 'error');
+        addEntry(`The incantation dies half-formed — too much spent and the well runs dry.`, 'error');
         setTextBuffer(textEngine.getBuffer());
         return;
       }
@@ -328,7 +328,7 @@ const Game = () => {
         // Show pending rest gain only if the spell fed the target (not for restraints etc.)
         if (totalCaloriesLogged > 0 && totalImmediateWeightGain === 0) {
           const pendingGain = target.pendingWeightGain || 0;
-          if (pendingGain > 0) addEntry(`${target.name} will gain an estimated +${pendingGain} lbs after rest.`, 'info');
+          if (pendingGain > 0) addEntry(`${target.name} looks heavier already — it will settle by morning.`, 'info');
         }
 
         applySpellConditions(spell, target, selectedOption);
@@ -453,7 +453,6 @@ const Game = () => {
     const player = gameState.getPlayer();
     if (!player) return;
     const { leveledUp, newLevel } = awardXP(player, amount);
-    addEntry(`+${amount} XP`, 'info');
     if (leveledUp) {
       const choices = levelUpChoices(player, knownSpells);
       setLevelUpState({ level: newLevel, choices });
@@ -713,10 +712,10 @@ const Game = () => {
     for (const e of prev.enemies) {
       if (!e._dead && !living.includes(e)) {
         e._dead = true;
-        e._defeatCondition = checkWinState(e)?.state ?? 'immobilized';
+        e._defeatCondition = e.conditions?.has('buried') ? 'buried'
+          : e.conditions?.has('satiated') ? 'asleep'
+          : checkWinState(e)?.state ?? 'immobilized';
         log.push(`${e.name} is defeated!`);
-        const dt = e.defeatText?.[e._defeatCondition];
-        if (dt) log.push(dt);
       }
     }
 
@@ -774,7 +773,19 @@ const Game = () => {
       const selfFull = self.fullness || 0;
       if (selfFull < selfBefore) log.push(`${self.name} sheds the filling — the weight slides off her.`);
       else if (selfFull > selfBefore) log.push(`${self.name} gorges hungrily.`);
-      if (playerFed > 0) log.push(`${self.name} forces a mouthful on you.`);
+      if (playerFed > 0) {
+        log.push(`${self.name} forces a mouthful on you.`);
+        const playerCap = player.stomachCapacity || 0;
+        if (playerCap) {
+          const pBefore = playerBefore / playerCap, pAfter = (player.fullness || 0) / playerCap;
+          if (FATTEN_BANDS.some(bnd => pBefore < bnd && pAfter >= bnd)) {
+            log.push(pAfter >= 1.0 ? 'You strain at the seams, gorged past reason.'
+              : pAfter >= 0.85 ? 'Your belly presses tight — breathing comes harder.'
+              : pAfter >= 0.70 ? 'A heaviness settles through your middle.'
+              : 'Your stomach starts to push back.');
+          }
+        }
+      }
       else if (selfFull === selfBefore && playerFed === 0) log.push(`${self.name} repositions.`);
     }
 
@@ -826,7 +837,7 @@ const Game = () => {
       const isCantrip = lvl <= 0;
       const cost = isCantrip ? 0 : lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
       if (!isCantrip && !debugInfiniteSlots) {
-        if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `No L${cost} slots — ${spell.name} fizzles.` };
+        if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `${spell.name} falls apart — you've spent the well dry.` };
         player.spellSlots[cost] -= 1;
       }
       const l3Pct = player.level >= 19 ? EPIC_FILL.tier2 : player.level >= 16 ? EPIC_FILL.tier1 : EPIC_FILL.base;
@@ -847,8 +858,8 @@ const Game = () => {
         const isCritSpell = Math.random() * 100 < (player.critFeedChance || 0);
         fillUp(selEnemy, isCritSpell ? fillAmt * 2 : fillAmt);
         log.push(narrative);
-        if (isCritSpell) log.push(`Critical spellcast — ${spell.name} doubles!`);
-        if (cost === 3 && player.level >= 16) log.push(`Epic spellcraft — ${spell.name} surges.`);
+        if (isCritSpell) log.push(`The spell catches beyond your intent — it surges.`);
+        if (cost === 3 && player.level >= 16) log.push(`Something vast answers the casting.`);
         narrateFatten(selEnemy, before, log);
       }
       // Feeding wears down resistance — willingness rises a little no matter which path.
@@ -869,7 +880,7 @@ const Game = () => {
       const isCrit = critRoll < (player.critFeedChance || 0);
       fillUp(selEnemy, isCrit ? fillAmt * 2 : fillAmt);
       log.push(`You force-feed ${selEnemy.name}.`);
-      if (isCrit) log.push(`Critical feed on ${selEnemy.name}!`);
+      if (isCrit) log.push(`${selEnemy.name} reels — you pushed that past her limit.`);
       narrateFatten(selEnemy, before, log);
       // Sustained force-feeding wears down resistance faster than spells.
       selEnemy.willingness = Math.min(100, (selEnemy.willingness ?? 50) + 4);
@@ -901,10 +912,6 @@ const Game = () => {
     if (status === 'won') {
       const enemy = enemies[0];
       if (enemy.bossEvent) addEntry(enemy.bossEvent);
-      for (const e of enemies) {
-        const dt = e.defeatText?.[e._defeatCondition];
-        if (dt) addEntry(dt, 'italic');
-      }
 
       // Persist per-floor weight gains for enemies that weren't fattened to death.
       setFloorWeights(prev => {
@@ -1005,7 +1012,7 @@ const Game = () => {
           player={player}
           knownSpells={knownSpells}
           spellLibrary={spellLibrary}
-          onCastSpell={!dungeon ? handleCastSpell : handleCastSpell}
+          onCastSpell={handleCastSpell}
           currentZone={currentZone}
           playerStats={{ spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
           discovery={discovery}
@@ -1026,6 +1033,7 @@ const Game = () => {
         <EnemyDialoguePanel
           enemyName={selectedEnemy.name}
           lines={selectedEnemy.lines}
+          mode={selectedEnemy.isPostCombat ? 'narration' : 'speech'}
           onClose={handleEnemyDialogueClose}
         />
       )}

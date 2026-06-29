@@ -1,6 +1,6 @@
 // Minimal gothic dialogue panel for enemy pre/post combat lines.
 // Does NOT use NPCInteraction — enemies aren't full NPC objects.
-const EnemyDialoguePanel = ({ enemyName, lines, onClose }) => {
+const EnemyDialoguePanel = ({ enemyName, lines, mode = 'speech', onClose }) => {
   const [idx, setIdx] = useState(0);
 
   const advance = () => {
@@ -11,11 +11,11 @@ const EnemyDialoguePanel = ({ enemyName, lines, onClose }) => {
   return (
     <div style={s.overlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={s.panel}>
-        <div style={s.nameBar}>{enemyName}</div>
-        <div style={s.body}>{lines[idx]}</div>
+        {mode === 'speech' && <div style={s.nameBar}>{enemyName}</div>}
+        <div style={{ ...s.body, ...(mode === 'narration' ? s.bodyNarration : {}) }}>{lines[idx]}</div>
         <div style={s.footer}>
           <button style={s.btn} onClick={advance}>
-            {idx < lines.length - 1 ? '...' : 'Leave'}
+            {idx < lines.length - 1 ? '...' : mode === 'narration' ? 'Dismiss' : 'Leave'}
           </button>
         </div>
       </div>
@@ -56,6 +56,11 @@ const s = {
     lineHeight: 1.65,
     color: '#d8cbb8',
     minHeight: '80px',
+  },
+  bodyNarration: {
+    paddingTop: '24px',
+    fontStyle: 'italic',
+    color: '#bba88a',
   },
   footer: {
     padding: '8px 16px 12px',
