@@ -269,6 +269,11 @@ export const FLOOR10_ENEMIES = [
     xpValue: 560, lootTable: ['honey_lance', 'grimoire_of_swelling'],
   },
   {
+    name: 'Void Colossus', archetype: 'colossus', baseWeight: 540, stomachCapacity: 1200, willingness: 55,
+    description: 'Huge and slow, it purges the dark every time you think you\'ve landed the spell.',
+    xpValue: 620, lootTable: ['hauberk_of_hunger', 'grimoire_of_swelling'],
+  },
+  {
     name: 'Maw Crawler', archetype: 'flyer', baseWeight: 200, stomachCapacity: 280, willingness: 44,
     description: 'All teeth and appetite, it scuttles along the ceiling spitting gobbets of rendered shadow-fat.',
     xpValue: 580, lootTable: ['hauberk_of_hunger', 'signet_of_satiation'],
@@ -288,6 +293,11 @@ export const FLOOR11_ENEMIES = [
     xpValue: 680, lootTable: ['the_endless_fork', 'carapace_of_the_colossus'],
   },
   {
+    name: 'Abyssal Leech', archetype: 'leech', baseWeight: 420, stomachCapacity: 800, willingness: 90,
+    description: 'Gorges with terrifying speed, splitting its appetite between itself and you.',
+    xpValue: 720, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'],
+  },
+  {
     name: 'Surfeit Phantom', archetype: 'trickster', baseWeight: 340, stomachCapacity: 460, willingness: 50,
     description: 'A guest who never stops arriving, flickering down the endless table just out of reach.',
     xpValue: 700, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'],
@@ -295,7 +305,7 @@ export const FLOOR11_ENEMIES = [
   {
     name: 'The Eternal Guest', archetype: 'glutton', baseWeight: 680, stomachCapacity: 1200, willingness: 86,
     description: 'Seated at the head for a thousand years, still eating, still growing, welcoming you to join the feast forever.',
-    xpValue: 1400, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'], isMiniBoss: true,
+    xpValue: 1400, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'], isMiniBoss: true, legendaryResists: 1,
   },
 ];
 
@@ -307,6 +317,11 @@ export const FLOOR12_ENEMIES = [
     xpValue: 760, lootTable: ['bulwark_of_the_feast', 'carapace_of_the_colossus'],
   },
   {
+    name: 'Titan Warden', archetype: 'warden', baseWeight: 700, stomachCapacity: 980, willingness: 58,
+    description: 'Guards the final approach to the throne, purging any magic that would slow its patrol.',
+    xpValue: 880, lootTable: ['bulwark_of_the_feast', 'carapace_of_the_colossus'],
+  },
+  {
     name: 'Herald of the Glut', archetype: 'leech', baseWeight: 580, stomachCapacity: 980, willingness: 74,
     description: 'It announces the coming feast by force-feeding all who approach, gorging on the leavings.',
     xpValue: 800, lootTable: ['crown_of_the_grand_gourmand', 'the_endless_fork'],
@@ -314,7 +329,7 @@ export const FLOOR12_ENEMIES = [
   {
     name: 'The Insatiable One', archetype: 'brute', baseWeight: 900, stomachCapacity: 1600, willingness: 64,
     description: 'The true heart of the Undergorge — a god of appetite grown so vast the dungeon was built around it. It has been waiting, and it is still hungry.',
-    xpValue: 2500, lootTable: ['crown_of_the_grand_gourmand'], isBoss: true,
+    xpValue: 2500, lootTable: ['crown_of_the_grand_gourmand'], isBoss: true, legendaryResists: 1,
     bossEvent: 'The Insatiable One shudders as the last spell takes hold. For the first time in an age, it is full. The Undergorge groans, the throne splits, and a crown of impossible weight tumbles down to you — the only thing it ever truly owned.',
   },
 ];
