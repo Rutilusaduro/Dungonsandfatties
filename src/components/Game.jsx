@@ -23,10 +23,10 @@ import EquipmentPanel from './EquipmentPanel';
 import LevelUpPanel from './LevelUpPanel';
 import { ITEMS } from '../game/items/Equipment.js';
 import { awardXP, applyLevelBonus, levelUpChoices, xpToNextLevel } from '../game/mechanics/ProgressionSystem.js';
+import { EPIC_FILL, FAT_THRESHOLD, FATTEN_PCT } from '../game/mechanics/Balance.js';
 import CombatScreen from './CombatScreen';
 import { DungeonState } from '../game/dungeon/DungeonState.js';
 import { Combat, fillUp, fattenUp, checkFatPhase, isFatDefeated, checkWinState, actionsAvailable, canReach, lineOfSight, move as moveCombatant, distance } from '../game/combat/Combat.js';
-import { FAT_THRESHOLD, FATTEN_PCT } from '../game/mechanics/Balance.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 import { Discovery, idOf } from '../game/discovery/Discovery.js';
@@ -71,6 +71,13 @@ function applySpellConditions(spell, target, selectedOption) {
 
 // Combat field dimensions (cells are 0-indexed). 5 wide x 3 tall.
 const FIELD = { maxX: 4, maxY: 2 };
+
+function applyCapstone(player) {
+  // Grant mechanical bonus: +1 L3 slot above cap, +15% feedBonus
+  player.maxSpellSlots[3] = (player.maxSpellSlots[3] || 0) + 1;
+  player.spellSlots[3]    = (player.spellSlots[3]    || 0) + 1;
+  player.feedBonusMultiplier = (player.feedBonusMultiplier || 1) + 0.15;
+}
 
 const Game = () => {
   const [gameState] = useState(() => new GameState());
@@ -450,6 +457,14 @@ const Game = () => {
   const handleLevelUpChoice = (spellName) => {
     const player = gameState.getPlayer();
     applyLevelBonus(player);
+    if (spellName?.startsWith('[CAPSTONE]')) {
+      applyCapstone(player);
+      addEntry('— Level 20 Capstone —', 'divider');
+      addEntry(spellName.replace('[CAPSTONE] ', ''));
+      setLevelUpState(null);
+      setTextBuffer(textEngine.getBuffer());
+      return;
+    }
     if (spellName) {
       setKnownSpells(prev => new Set([...(prev || []), spellName]));
       addEntry(`— Level ${player.level} —`, 'divider');
@@ -609,6 +624,21 @@ const Game = () => {
         return { ...prev, log: log.slice(-10) }; // aborted — no turn spent
       }
 
+      // Legendary resistance: boss shakes off near-defeat once.
+      if (selEnemyC && (selEnemyC.entity.legendaryResists ?? 0) > 0) {
+        const ws = checkWinState(selEnemyC.entity);
+        if (ws) {
+          selEnemyC.entity.legendaryResists -= 1;
+          // Partial purge: shakes off to 40% full
+          selEnemyC.entity.fullness = (selEnemyC.entity.stomachCapacity || 0) * 0.40;
+          log.push(`${selEnemyC.entity.name} resists — legendary endurance flares. Not yet.`);
+          // Don't proceed to win check this round
+          let sel = prev.selectedEnemyId;
+          if (!combat.livingEnemies().some(c => c.entity.id === sel)) sel = combat.livingEnemies()[0]?.entity.id ?? null;
+          return { ...prev, round: prev.round + 1, selectedEnemyId: sel, log: log.slice(-10) };
+        }
+      }
+
       // Mark any enemies defeated by the player's action.
       const living = combat.livingEnemies().map(c => c.entity);
       for (const e of prev.enemies) {
@@ -664,7 +694,10 @@ const Game = () => {
       // Per-round fullness drain for everyone (biome drainScale scales it).
       const drainScale = mod.drainScale ?? 1;
       for (const c of combat.combatants) {
-        const rate = (c.entity === player) ? 0.1 * drainScale : 0.1 * (1 - player.feedClingFactor) * drainScale;
+        const resist = (c.entity === player) ? (1 - (player.drainResistFactor || 0) / 100) : 1;
+        const rate = (c.entity === player)
+          ? 0.1 * drainScale * resist
+          : 0.1 * (1 - player.feedClingFactor) * drainScale;
         const cap = c.entity.stomachCapacity || 0;
         if (cap) c.entity.fullness = Math.max(0, (c.entity.fullness || 0) - cap * rate);
       }
@@ -711,10 +744,10 @@ const Game = () => {
         if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `No L${cost} slots — ${spell.name} fizzles.` };
         player.spellSlots[cost] -= 1;
       }
-      const pct = isCantrip ? 0.10 : cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
+      const l3Pct = player.level >= 19 ? EPIC_FILL.tier2 : player.level >= 16 ? EPIC_FILL.tier1 : EPIC_FILL.base;
+      const pct = isCantrip ? 0.10 : cost === 1 ? 0.20 : cost === 2 ? 0.35 : l3Pct;
       const before = selEnemy.fullness || 0;
       if (spell.isFatten || spell.options?.[0]?.isFatten) {
-        // Fatten path: add permanent weight instead of (or in addition to) fullness.
         const lbs = Math.round((FATTEN_PCT[cost] ?? FATTEN_PCT[1]) * (selEnemy.baseWeight ?? 100));
         fattenUp(selEnemy, lbs);
         log.push(`You cast ${spell.name} on ${selEnemy.name}. She puts on ${lbs} lbs.`);
@@ -724,8 +757,12 @@ const Game = () => {
           log.push(`${selEnemy.name} has grown too heavy to continue — she's defeated!`);
         }
       } else {
-        fillUp(selEnemy, pct * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
+        const fillAmt = pct * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1);
+        const isCritSpell = Math.random() * 100 < (player.critFeedChance || 0);
+        fillUp(selEnemy, isCritSpell ? fillAmt * 2 : fillAmt);
         log.push(`You cast ${spell.name} on ${selEnemy.name}.`);
+        if (isCritSpell) log.push(`Critical spellcast — ${spell.name} doubles!`);
+        if (cost === 3 && player.level >= 16) log.push(`Epic spellcraft — ${spell.name} surges.`);
         narrateFatten(selEnemy, before, log);
       }
       return { ok: true };
@@ -739,8 +776,12 @@ const Game = () => {
         return { ok: false, msg: `${selEnemy.name} is too far to force-feed. Move adjacent first.` };
       }
       const before = selEnemy.fullness || 0;
-      fillUp(selEnemy, 0.15 * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
+      const critRoll = Math.random() * 100;
+      const fillAmt = 0.15 * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1);
+      const isCrit = critRoll < (player.critFeedChance || 0);
+      fillUp(selEnemy, isCrit ? fillAmt * 2 : fillAmt);
       log.push(`You force-feed ${selEnemy.name}.`);
+      if (isCrit) log.push(`Critical feed on ${selEnemy.name}!`);
       narrateFatten(selEnemy, before, log);
       return { ok: true };
     });

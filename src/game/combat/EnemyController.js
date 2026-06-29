@@ -111,6 +111,22 @@ export const ARCHETYPES = {
     },
   },
 
+  // Colossus — shakes off fullness at 50%; player must sustain conditions + pressure.
+  // Denies burial (too massive to ground). Requires combo, not spam.
+  colossus: {
+    id: 'colossus',
+    denies: ['buried'],
+    feedRate: 0.28,
+    script: (api) => {
+      let b = api.actions;
+      const full = api.self.fullness || 0;
+      const cap = api.self.stomachCapacity || 1;
+      if (b > 0 && full >= cap * 0.5) { api.purgeSelf(); b--; }
+      if (b > 0) { api.close(); b--; }
+      while (b-- > 0) api.forceFeed();
+    },
+  },
+
   // Trickster — pure evasion. Kites out of reach and purges to stall the
   // throttle, feeding little. Raw fattening crawls; it's built to be finished
   // with a combo, not a gauge race. Denies bury (never grounded).

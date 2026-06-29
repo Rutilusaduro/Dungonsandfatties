@@ -34,6 +34,7 @@ export function makeEnemy(def) {
     requiresFatPhase: def.requiresFatPhase ?? 0,
     isBoss:          def.isBoss ?? false,
     isMiniBoss:      def.isMiniBoss ?? def.isMiniBosse ?? false,
+    legendaryResists: def.legendaryResists ?? 0,
     // Stub _createContext so SpellNarrator doesn't crash on enemies
     _createContext(extra = {}) { return { subject: this, ...extra }; },
     processLongRestNutrition() { return null; },
@@ -534,6 +535,17 @@ export const FLOOR10_ENEMIES = [
     },
   },
   {
+    name: 'Void Colossus', archetype: 'colossus', baseWeight: 540, stomachCapacity: 1200, willingness: 55,
+    description: 'She is massive the way architecture is massive — built to occupy space rather than to move through it — wide and shadow-pale, patches of her skin absorbing light rather than reflecting it. She purges the dark the instant she feels it filling her: methodical, unhurried, a woman who has done this many times before.',
+    xpValue: 620, lootTable: ['hauberk_of_hunger', 'grimoire_of_swelling'],
+    fatThreshold: 0.50,
+    defeatText: {
+      immobilized: 'The purges come slower, then stop. The Colossus settles into the Undergorge stone like a foundation — too much weight, too much void compressed into too small a space, the dark no longer moving around her but pressing to her, taking her shape. She breathes, vastly, and does not move.',
+      succumbed: 'The purge reflex inverts. She draws the void in and holds it — holds more, reaches for more — the ancient expulsion become something else entirely. She has been emptying herself for so long that fullness feels like discovery.',
+      fattened: 'The Undergorge walls flex outward as she grows, stone resettling with a groan that travels up through the floor. The void filling the corridor thickens around her outline and stays thick — darkness taking the permanent shape of what she has become, the dungeon rewriting its geometry around her.',
+    },
+  },
+  {
     name: 'Maw Crawler', archetype: 'flyer', baseWeight: 200, stomachCapacity: 280, willingness: 44,
     description: 'She clings upside-down on the ceiling in a posture a human body should not achieve, but she is technically still a human body — pale where she isn\'t shadow, wide-mouthed and wide-hipped, the only thing bigger than her smile being the appetite behind it.',
     xpValue: 580, lootTable: ['hauberk_of_hunger', 'signet_of_satiation'],
@@ -581,6 +593,17 @@ export const FLOOR11_ENEMIES = [
     },
   },
   {
+    name: 'Abyssal Leech', archetype: 'leech', baseWeight: 420, stomachCapacity: 800, willingness: 90,
+    description: 'She arrives at the feast already eating — not from her plate but from yours, and from the courses being carried past, her mouth always slightly moving, hands always slightly occupied, a woman for whom consumption is continuous and entirely unselfconscious.',
+    xpValue: 720, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'],
+    fatThreshold: 0.50,
+    defeatText: {
+      immobilized: 'Even at this pace there is a ceiling. She finds it and keeps going past it, the leeching turning back on itself, the speed of her appetite the thing that finally pins her to her chair. She sits, vast and stilled, the Endless Table extending twenty places on either side to accommodate what she has become.',
+      succumbed: 'She stops thinking about you the moment her own hunger takes over completely. It gorges now — continuous, the leeching redirected inward — and the look on her face is the look of someone who has found a purpose equal to the appetite.',
+      fattened: 'Her chair cracks first, then the table beneath it bows. The Endless Table rushes to compensate — new settings appearing in a wave outward from where she sits, the feast restructuring itself around its newest and largest guest. She does not look up from her plate.',
+    },
+  },
+  {
     name: 'Surfeit Phantom', archetype: 'trickster', baseWeight: 340, stomachCapacity: 460, willingness: 50,
     description: 'Every time you look directly at her she\'s somewhere else — silk dress, full figure, glass raised — always mid-arrival, never quite landed, the kind of party guest who has been just walking in for so long that walking in has become her permanent condition.',
     xpValue: 700, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'],
@@ -594,7 +617,7 @@ export const FLOOR11_ENEMIES = [
   {
     name: 'The Eternal Guest', archetype: 'glutton', baseWeight: 680, stomachCapacity: 1200, willingness: 86,
     description: 'She has not stood in so long that standing seems like something she invented and then abandoned, seated immense at the head of the table in a gown that the table itself seems to have grown around, still eating, welcoming you in the particular way that means she intends to make you stay.',
-    xpValue: 1400, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'], isMiniBoss: true,
+    xpValue: 1400, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'], isMiniBoss: true, legendaryResists: 1,
     phases: [
       {
         threshold: 0.5,
@@ -628,6 +651,17 @@ export const FLOOR12_ENEMIES = [
     },
   },
   {
+    name: 'Titan Warden', archetype: 'warden', baseWeight: 700, stomachCapacity: 980, willingness: 58,
+    description: 'She patrols the throne approach in heavy plate that has been let out and re-fitted so many times the leather patches read like a record of her history — she sheds your spells off her back-plate with the flat efficiency of someone who has seen everything you\'re trying at least twice before.',
+    xpValue: 880, lootTable: ['bulwark_of_the_feast', 'carapace_of_the_colossus'],
+    fatThreshold: 0.50,
+    defeatText: {
+      immobilized: 'The patrol stops mid-step. She stands in the approach corridor like something load-bearing — planted, enormous, the route she has walked a thousand times now impassable. She does not fall. She simply ends, standing.',
+      succumbed: 'Years of the same corridor, the same turns. Somewhere in the accumulated weight of the patrol, the hunger she has been ignoring gets a word in. She lets go of the post and follows the smell from the throne room — not running, just walking toward something that has been waiting.',
+      fattened: 'She hits the throne-room wall and the floor cracks from heel to stone in a straight line. The heralds carved into the approach stonework seem to bow toward her. The crown above the throne-room door shivers. The corridor is narrower now, permanently, and she is what narrowed it.',
+    },
+  },
+  {
     name: 'Herald of the Glut', archetype: 'leech', baseWeight: 580, stomachCapacity: 980, willingness: 74,
     description: 'Tall in her ceremonial coat and gloves, she reads the proclamation of the feast from a scroll she never lets you see, and while you\'re distracted by the words she\'s already feeding you the first course, taking the surplus for herself with practiced ease.',
     xpValue: 800, lootTable: ['crown_of_the_grand_gourmand', 'the_endless_fork'],
@@ -641,7 +675,7 @@ export const FLOOR12_ENEMIES = [
   {
     name: 'The Insatiable One', archetype: 'brute', baseWeight: 900, stomachCapacity: 1600, willingness: 64,
     description: 'She is what a woman looks like when appetite has had enough time and no one has ever said no — ancient beyond reckoning, filling the throne room the way water fills a vessel, her face still recognizably a face, still recognizably a woman\'s, patient and enormous and hungry in a way that predates the word.',
-    xpValue: 2500, lootTable: ['crown_of_the_grand_gourmand'], isBoss: true,
+    xpValue: 2500, lootTable: ['crown_of_the_grand_gourmand'], isBoss: true, legendaryResists: 1,
     requiresFatPhase: 2,
     bossEvent: 'The Insatiable One shudders as the last spell takes hold. For the first time in an age, it is full. The Undergorge groans, the throne splits, and a crown of impossible weight tumbles down to you — the only thing it ever truly owned.',
     phases: [

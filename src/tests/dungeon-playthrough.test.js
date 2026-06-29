@@ -89,7 +89,7 @@ describe('full dungeon playthrough is winnable for every class', () => {
       while (!dungeon.completed && guard++ < 20) clearFloor();
 
       expect(dungeon.completed, `${classKey} run completed`).toBe(true);
-      expect(combats).toBe(36); // 12 floors x 3 combat rooms (2 regular + gate)
+      expect(combats).toBe(39); // floors 1-9: 3 combat rooms each; floors 10-12: 4 combat rooms each
       expect(lastWinRound, 'final boss is not a round-1 auto-win').toBeGreaterThan(1);
 
       // Slot caps held across the whole level run.

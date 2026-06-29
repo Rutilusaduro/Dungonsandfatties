@@ -189,6 +189,24 @@ class Character {
     return Math.min(0.6, pct / 100);
   }
 
+  // % reduction to the player's own per-round fullness drain (capped at 80%).
+  get drainResistFactor() {
+    let total = 0;
+    for (const item of Object.values(this.equippedItems)) {
+      if (item) total += (item.drainResist || 0);
+    }
+    return Math.min(80, total);
+  }
+
+  // % chance per forceFeed/spell to deal double fill (uncapped sum, handled at call site).
+  get critFeedChance() {
+    let total = 0;
+    for (const item of Object.values(this.equippedItems)) {
+      if (item) total += (item.critFeed || 0);
+    }
+    return total;
+  }
+
   consumeCalories(calories, source = 'Food', options = {}) {
     return recordCalorieConsumption(this, calories, source, options);
   }
