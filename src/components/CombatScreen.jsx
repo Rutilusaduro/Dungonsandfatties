@@ -47,7 +47,7 @@ const CombatScreen = ({
   const tokens = combat.combatants.filter(c => c.entity === player || !c.entity._dead);
 
   const spells = spellLibrary
-    ? spellLibrary.getAllSpells().filter(s => !knownSpells || knownSpells.size === 0 || knownSpells.has(s.name))
+    ? spellLibrary.getAllSpells().filter(s => debugMode || !knownSpells || knownSpells.size === 0 || knownSpells.has(s.name))
     : [];
   const spellCost = (sp) => { const l = sp.level ?? 1; return l <= 0 ? 0 : l <= 1 ? 1 : l <= 3 ? 2 : 3; };
   const spellReach = (sp) => sp.combatRange ?? ((sp.level ?? 1) <= 2 ? 4 : 6);
