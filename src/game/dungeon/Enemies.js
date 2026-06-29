@@ -35,6 +35,9 @@ export function makeEnemy(def) {
     isBoss:          def.isBoss ?? false,
     isMiniBoss:      def.isMiniBoss ?? def.isMiniBosse ?? false,
     legendaryResists: def.legendaryResists ?? 0,
+    dialogue:         def.dialogue ?? null,
+    _dialogueIndex:   0,
+    _postcombatTalked: false,
     // Stub _createContext so SpellNarrator doesn't crash on enemies
     _createContext(extra = {}) { return { subject: this, ...extra }; },
     processLongRestNutrition() { return null; },
@@ -58,6 +61,20 @@ export const FLOOR1_ENEMIES = [
       immobilized: 'The imp drops mid-dart, crashing into a shelf of preserves. Jars rattle and one tips, sloshing brine across its swollen ankles. It lies wedged between two shelves, wings pinned flat under rolls of accumulated fat, chittering indignantly at the ceiling.',
       succumbed: 'The imp stops flinging morsels and starts eating them. Then the ones it was saving. Then a string of dried mushrooms off the wall. It sinks to the pantry floor with a contented wheeze, too full to care that you\'re standing right there.',
       fattened: 'The imp\'s weight tips a shelf. Jars slide and shatter, spilling pickled onions and preserved plums in a spreading slick. The pantry reorganises itself around the new obstacle, shelves groaning sideways, tins stacking themselves into a wall around the bloated little creature.',
+    },
+    dialogue: {
+      precombat: [
+        "You want to talk? To me? I'm busy.",
+        "If you're not food and you're not leaving, you're in the way.",
+        "Fine. Stand there. I'll get to you after the top shelf.",
+      ],
+      postcombat: {
+        fattened:    "Don't. Don't look at me like that. I am still — I am still very fast. I just need. A moment.",
+        immobilized: "The wings still work. They work. I just don't — there isn't — there's nowhere to go that isn't me.",
+        succumbed:   "The dried mushrooms were right there. I was going to throw them. I was. They're gone now.",
+        asleep:      "Wh — where did the — the pastry. I had a pastry. Someone — you — did you eat my pastry.",
+        buried:      "This shelf has never done anything for me. I have been in this pantry for sixty years and this shelf has never once — get it off me. You get it off me right now.",
+      },
     },
   },
   {
@@ -101,6 +118,20 @@ export const FLOOR1_ENEMIES = [
       immobilized: 'The Warden sinks slowly against the pantry wall, keys dragging a long scrape across the stone as she goes down. She fills the aisle like a cork fills a bottle. Her hand still reaches for the purging gesture but there is nothing left to purge — every inch of her is simply, undeniably, permanently more.',
       succumbed: 'The Warden stops purging and starts eating. She reaches behind her — without looking, with a terrible muscle memory — and opens a jar of preserved cherries. Then another. Her keys lie forgotten on the floor. She eats the way someone does who has been holding back for years and has finally run out of reasons.',
       fattened: 'The Warden sags against the nearest shelf and the whole rack shifts under her. Jars clatter together, two topple, one rolls into the dark and pops its seal with a wet crack. The pantry feels like it contracted around her, shelves leaning in, the ceiling pressing lower, everything accommodating itself to the fact of her.',
+    },
+    dialogue: {
+      precombat: [
+        "This pantry is inventoried. Everything in it has a place. You don't.",
+        "I've dealt with intruders before. They don't stay long once they understand what I maintain here.",
+        "You're welcome to make this difficult. Most do. They find it isn't worth the trouble.",
+      ],
+      postcombat: {
+        fattened:    "I know every jar on these shelves. I know their weight, their contents, their exact position. I can't reach any of them anymore. That is — that is genuinely new information about myself.",
+        immobilized: "The gesture still works. I could purge this if I could reach the gesture. The gesture is — I can't reach the gesture. I need you to understand that this is a logistics problem, not a defeat.",
+        succumbed:   "The cherries are preserved in their own syrup. I put them up in late summer. They've been here eight months. They are better than I remembered.",
+        asleep:      "I was — the purge was — something interrupted the purge. The inventory is — I'll need to take count. Something has changed. Several things have changed.",
+        buried:      "I am between the shelves. I am aware of where I am. I am also aware that this is not a position I designed the shelving to accommodate. I will need the morning to determine next steps.",
+      },
     },
   },
 ];

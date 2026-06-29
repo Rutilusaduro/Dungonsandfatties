@@ -32,6 +32,7 @@ import { narrativeFor } from '../game/combat/SpellNarrative.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 import { Discovery, idOf } from '../game/discovery/Discovery.js';
 import RightPanel from './RightPanel.jsx';
+import EnemyDialoguePanel from './EnemyDialoguePanel.jsx';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -103,6 +104,8 @@ const Game = () => {
   const [debugUnlockAllSpells, setDebugUnlockAllSpells] = useState(false);
   const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
   const [discoveryTick, setDiscoveryTick] = useState(0); // bump to force re-render after reveal
+  const [postCombatEnemy, setPostCombatEnemy] = useState(null); // defeated enemy stashed for post-combat talk
+  const [selectedEnemy, setSelectedEnemy] = useState(null);     // { name, lines, isPostCombat }
 
   // All discoverable things present in a zone, with their entity refs.
   const zonePresent = (zone) => [
@@ -536,6 +539,7 @@ const Game = () => {
     if (!dungeon) return;
     const room = dungeon.move(dir);
     if (!room) return;
+    setPostCombatEnemy(null);
     setDungeonTick(t => t + 1);
     addEntry(`— You go ${dir} —`, 'divider');
     addEntry(dungeon.currentFloor?.name + '. The passage opens into another room.');
@@ -556,6 +560,60 @@ const Game = () => {
     setTextBuffer(textEngine.getBuffer());
   };
 
+  // Build the dungeon location descriptor, enabling talk for enemies that have dialogue.
+  const buildDungeonLocation = (ds) => {
+    const loc = roomToLocation(ds);
+    if (!loc) return null;
+    const prompts = [...loc.prompts, { id: 'leave', label: 'Retreat to the surface', tone: 'neutral' }];
+    let discovered = [...loc.discovered];
+
+    // Pre-combat: mark foe as talkable if it has precombat dialogue.
+    const room = ds.currentRoom;
+    if (room?.contents?.kind === 'combat' && !room.cleared) {
+      const foe = room.contents.enemyDefs?.[0];
+      if (foe?.dialogue?.precombat) {
+        discovered = discovered.map(r => r.id.endsWith('_foe') ? { ...r, canTalk: true } : r);
+      }
+    }
+
+    // Post-combat: inject a row for the defeated enemy if she has something to say.
+    if (postCombatEnemy && !postCombatEnemy._postcombatTalked) {
+      const line = postCombatEnemy.dialogue?.postcombat?.[postCombatEnemy._defeatCondition];
+      if (line) {
+        discovered = [...discovered, {
+          id: 'postcombat_enemy',
+          kind: 'creature',
+          name: postCombatEnemy.name,
+          canExamine: false,
+          canTalk: true,
+        }];
+      }
+    }
+
+    return { ...loc, prompts, discovered };
+  };
+
+  const handleDungeonTalkRow = (row) => {
+    if (!dungeon) return;
+    if (row.id === 'postcombat_enemy' && postCombatEnemy) {
+      const line = postCombatEnemy.dialogue?.postcombat?.[postCombatEnemy._defeatCondition];
+      if (line) setSelectedEnemy({ name: postCombatEnemy.name, lines: [line], isPostCombat: true });
+    } else if (row.id.endsWith('_foe')) {
+      const foe = dungeon.currentRoom?.contents?.enemyDefs?.[0];
+      if (foe?.dialogue?.precombat) {
+        setSelectedEnemy({ name: foe.name, lines: foe.dialogue.precombat, isPostCombat: false });
+      }
+    }
+  };
+
+  const handleEnemyDialogueClose = () => {
+    if (selectedEnemy?.isPostCombat && postCombatEnemy) {
+      postCombatEnemy._postcombatTalked = true;
+      setPostCombatEnemy(null);
+    }
+    setSelectedEnemy(null);
+  };
+
   const handleRoomPrompt = (id) => {
     if (!dungeon) return;
     if (id === 'engage') {
@@ -569,6 +627,7 @@ const Game = () => {
       setDungeonTick(t => t + 1);
       setTextBuffer(textEngine.getBuffer());
     } else if (id === 'descend') {
+      setPostCombatEnemy(null);
       const { dungeonComplete } = dungeon.descend();
       if (dungeonComplete) {
         addEntry('— Dungeon Cleared! —', 'divider');
@@ -858,6 +917,10 @@ const Game = () => {
         return next;
       });
 
+      // Stash a defeated enemy with post-combat dialogue before clearing combat.
+      const talkable = enemies.find(e => e.dialogue?.postcombat?.[e._defeatCondition]);
+      if (talkable) setPostCombatEnemy(talkable);
+
       // Clear the room (banks loot), drop combat → back to traversal. Award XP last
       // so a level-up modal doesn't race the room transition.
       const items = dungeon.clearRoom();
@@ -909,12 +972,10 @@ const Game = () => {
           {dungeon && !combatState ? (
             <div style={styles.zoneSection}>
               <LocationView
-                location={(() => {
-                  const loc = roomToLocation(dungeon);
-                  return loc ? { ...loc, prompts: [...loc.prompts, { id: 'leave', label: 'Retreat to the surface', tone: 'neutral' }] } : loc;
-                })()}
+                location={buildDungeonLocation(dungeon)}
                 onLookAround={handleDungeonLook}
                 onExamine={handleDungeonExamine}
+                onTalk={handleDungeonTalkRow}
                 onMove={handleDungeonMove}
                 onPrompt={handleRoomPrompt}
               />
@@ -958,6 +1019,14 @@ const Game = () => {
           npc={selectedNPC}
           onClose={handleCloseNPC}
           onAction={handleNPCAction}
+        />
+      )}
+
+      {selectedEnemy && (
+        <EnemyDialoguePanel
+          enemyName={selectedEnemy.name}
+          lines={selectedEnemy.lines}
+          onClose={handleEnemyDialogueClose}
         />
       )}
 
