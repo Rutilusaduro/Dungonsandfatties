@@ -23,6 +23,8 @@ export class Equipment {
     this.bonusWeight = opts.bonusWeight || 0;   // +lbs to baseWeight (makes you harder to fatten)
     this.feedBonus   = opts.feedBonus   || 0;   // % bonus calories on cast
     this.feedCling   = opts.feedCling   || 0;   // % reduction of target's per-round fullness drain
+    this.drainResist = opts.drainResist || 0;   // % reduction to player's own per-round fullness drain
+    this.critFeed    = opts.critFeed    || 0;   // % chance each forceFeed/spell deals double fill
     this.passiveText = opts.passiveText || '';
   }
 }
@@ -325,6 +327,37 @@ export const ITEMS = {
     passiveText: '+40% caloric yield; targets purge 30% less; +1 slot at every level.',
   }),
 
+  // ── EPIC / ARTIFACT TIER (floors 10-12, D&D levels 13-20) ──────
+  wellspring_orb: new Equipment('Wellspring Orb', {
+    slot: 'offhand', offhandType: 'focus', rarity: 'legendary',
+    description: 'A sphere of compressed hunger, cold to the touch, warm to the soul. It pulses when you have unspent magic.',
+    passiveText: '+1 L3 slot; fullness drains 20% slower each round.',
+    bonusSlots: { 3: 1 },
+    drainResist: 20,
+  }),
+  vorpal_feeding_fork: new Equipment('Vorpal Feeding Fork', {
+    slot: 'weapon', rarity: 'legendary',
+    description: 'Tines that phase through resistance. Once in a while, everything goes in at once.',
+    passiveText: '+30% caloric yield; 20% chance each attack deals double fill.',
+    feedBonus: 30,
+    critFeed: 20,
+  }),
+  mantle_of_the_abyss: new Equipment('Mantle of the Abyss', {
+    slot: 'armor', rarity: 'legendary',
+    description: 'Woven from condensed hunger given form. It slows the passage of everything — especially calories out.',
+    passiveText: '+100 effective base weight; fullness drains 25% slower each round.',
+    bonusWeight: 100,
+    drainResist: 25,
+  }),
+  heart_of_gluttony: new Equipment('Heart of Gluttony', {
+    slot: 'accessory', rarity: 'legendary',
+    description: 'A still-beating heart carved from pure caloric obsession. It remembers every feast you\'ve ever attended.',
+    passiveText: '+50% caloric yield; targets purge 35% less; 15% chance each attack deals double fill.',
+    feedBonus: 50,
+    feedCling: 35,
+    critFeed: 15,
+  }),
+
   // ── extra mid-tier fillers for floor variety ───────────────
   skewer_of_searing: new Equipment('Skewer of Searing', {
     slot: 'weapon', rarity: 'common',
@@ -371,7 +404,7 @@ export const FLOOR_LOOT = {
   7: ['glazing_glaive', 'plate_of_the_provider', 'aegis_of_plenty', 'grimoire_of_swelling', 'torc_of_the_titan_table'],
   8: ['honey_lance', 'hauberk_of_hunger', 'signet_of_satiation', 'famine_sigil'],
   9: ['cauldron_breaker', 'plate_of_the_provider', 'torc_of_the_titan_table', 'aegis_of_plenty'],
-  10: ['honey_lance', 'hauberk_of_hunger', 'signet_of_satiation', 'grimoire_of_swelling'],
-  11: ['the_endless_fork', 'carapace_of_the_colossus', 'codex_of_the_glut', 'heart_of_the_maw'],
-  12: ['bulwark_of_the_feast', 'crown_of_the_grand_gourmand', 'the_endless_fork', 'carapace_of_the_colossus'],
+  10: ['honey_lance', 'hauberk_of_hunger', 'signet_of_satiation', 'grimoire_of_swelling', 'wellspring_orb'],
+  11: ['the_endless_fork', 'carapace_of_the_colossus', 'codex_of_the_glut', 'heart_of_the_maw', 'vorpal_feeding_fork'],
+  12: ['bulwark_of_the_feast', 'crown_of_the_grand_gourmand', 'the_endless_fork', 'mantle_of_the_abyss', 'heart_of_gluttony'],
 };
