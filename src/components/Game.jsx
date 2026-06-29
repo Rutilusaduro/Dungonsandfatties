@@ -612,7 +612,13 @@ const Game = () => {
       // Mark any enemies defeated by the player's action.
       const living = combat.livingEnemies().map(c => c.entity);
       for (const e of prev.enemies) {
-        if (!e._dead && !living.includes(e)) { e._dead = true; log.push(`${e.name} is defeated!`); }
+        if (!e._dead && !living.includes(e)) {
+          e._dead = true;
+          e._defeatCondition = checkWinState(e)?.state ?? 'immobilized';
+          log.push(`${e.name} is defeated!`);
+          const dt = e.defeatText?.[e._defeatCondition];
+          if (dt) log.push(dt);
+        }
       }
 
       // Boss phase check — fire phase transitions for living enemies that crossed a fat threshold.

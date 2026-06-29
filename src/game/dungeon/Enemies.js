@@ -49,7 +49,7 @@ export const FLOOR1_ENEMIES = [
     baseWeight: 80,
     stomachCapacity: 90,
     willingness: 45,
-    description: 'A wiry imp that darts between shelves, pelting you with enchanted morsels.',
+    description: 'She\'s barely waist-height, red-skinned and hollow-cheeked, with crumpled insect wings that carry her faster than anything that small should move — snatching morsels off shelves as she passes and flinging them at you without bothering to slow down.',
     xpValue: 80,
     lootTable: ['feeding_fork', 'ring_of_appetite'],
     fatThreshold: 0.50,
@@ -65,7 +65,7 @@ export const FLOOR1_ENEMIES = [
     baseWeight: 140,
     stomachCapacity: 200,
     willingness: 55,
-    description: 'A stocky goblin that lumbers forward, spooning enormous mouthfuls of lard at you.',
+    description: 'Wide green hips, forearms thick as rolling pins, hair hacked short under a lard-soaked cap — she carries herself with the blunt authority of someone who owns this pantry and intends to prove it, spoon raised and dripping.',
     xpValue: 120,
     lootTable: ['padded_robe', 'ring_of_appetite'],
     fatThreshold: 0.50,
@@ -81,7 +81,7 @@ export const FLOOR1_ENEMIES = [
     baseWeight: 200,
     stomachCapacity: 280,
     willingness: 60,
-    description: 'A rotund custodian who periodically purges the enchantment weighing her down, making her maddeningly hard to fatten.',
+    description: 'Broad-shouldered and tight-lipped, she moves through the pantry with the satisfaction of a woman who has always known exactly where everything belongs — including the fat she\'s already carrying, which she keeps shedding with a precise gesture like brushing crumbs from a counter.',
     xpValue: 250,
     lootTable: ['gorging_ladle', 'enchanted_doublet', 'amulet_of_excess'],
     isMiniBosse: true,
@@ -113,7 +113,7 @@ export const FLOOR2_ENEMIES = [
     baseWeight: 160,
     stomachCapacity: 350,
     willingness: 80,
-    description: 'A ghost that died mid-feast. It gorges on ethereal food, swelling visibly. Succumb finisher opens fastest here.',
+    description: 'Translucent from collarbone to hem, her curves catch kitchen light like smoke through glass — she died mid-feast and she\'s been finishing the meal ever since, spooning phantom courses into her mouth with the absolute focus of a woman who has nowhere else to be.',
     xpValue: 180,
     lootTable: ['gorging_ladle', 'sanctified_buckler', 'hunger_focus'],
     fatThreshold: 0.50,
@@ -129,7 +129,7 @@ export const FLOOR2_ENEMIES = [
     baseWeight: 90,
     stomachCapacity: 100,
     willingness: 40,
-    description: 'Fast and slippery, this imp hurls baked goods from above with unnerving accuracy.',
+    description: 'Copper-skinned from living above the ovens, body gone soft and quick in equal measure, she uses the rafters as a runway — the heat has made her fearless and slightly unhinged, and every pasty she flings travels faster than it has any right to.',
     xpValue: 160,
     lootTable: ['amulet_of_excess', 'feeding_fork'],
     fatThreshold: 0.50,
@@ -145,7 +145,7 @@ export const FLOOR2_ENEMIES = [
     baseWeight: 320,
     stomachCapacity: 500,
     willingness: 65,
-    description: 'A massive construct of animated cookware and half-cooked meats. Heavy and relentless. Finishers open once fattened.',
+    description: 'The silhouette is unmistakably a woman\'s — wide at the hip, rounded at the shoulder — but built from cauldrons and copper pans, half-cured hams threaded through the framework like muscle, the whole construction groaning with size and insisting on itself.',
     xpValue: 400,
     lootTable: ['fattening_staff', 'feast_plate', 'arcane_cookbook'],
     isMiniBosse: true,
@@ -177,7 +177,7 @@ export const FLOOR3_ENEMIES = [
     baseWeight: 280,
     stomachCapacity: 450,
     willingness: 70,
-    description: 'A former champion who traded martial prowess for an unstoppable appetite.',
+    description: 'The armour still fits — barely, and she knows it — the gorget pinching where her jaw has softened, the pauldrons riding up over shoulders that have grown past them; she carries her weight like a weapon and charges like someone who has replaced the reason she used to fight with a better one.',
     xpValue: 280,
     lootTable: ['feast_plate', 'dread_orb'],
     fatThreshold: 0.50,
@@ -193,7 +193,7 @@ export const FLOOR3_ENEMIES = [
     baseWeight: 200,
     stomachCapacity: 300,
     willingness: 55,
-    description: 'Incorporeal unless feasting. It purges itself constantly, resisting your fattening spells — until you break its rhythm.',
+    description: 'She flickers like a candle in a draft — almost solid, almost a woman, dress and full figure rendered in grey light that keeps almost settling — and every time she slips your spells she dissolves a little of what you managed to give her, methodical as washing dishes.',
     xpValue: 320,
     lootTable: ['arcane_cookbook', 'dread_orb'],
     fatThreshold: 0.50,
@@ -209,7 +209,7 @@ export const FLOOR3_ENEMIES = [
     baseWeight: 500,
     stomachCapacity: 900,
     willingness: 60,
-    description: 'The ancient lord of this dungeon. Immense, slow, and fiercely resistant to every finisher path — except the one you\'ve prepared for.',
+    description: 'She filled this hall long before the banquet tables were laid — vast and pale-gowned, her hair braided and pinned as if for a formal occasion that has been running for centuries, moving through the torchlight with the patience of a woman who understands that appetite always outlasts resistance.',
     xpValue: 1000,
     lootTable: ['legendary_band'],
     isBoss: true,
@@ -242,7 +242,7 @@ export const FLOOR3_ENEMIES = [
 export const FLOOR4_ENEMIES = [
   {
     name: 'Cellar Slime', archetype: 'leech', baseWeight: 180, stomachCapacity: 260, willingness: 50,
-    description: 'A translucent ooze that drinks rendered fat from the cold-store and feeds the surplus straight back at you.',
+    description: 'Hold your light up and you\'ll see her inside the ooze — a woman\'s outline, hair floating, hips wide, lips slightly parted — the shape dissolving at the edges into a translucent slick that smells of cold fat and old brine.',
     xpValue: 200, lootTable: ['basting_brush', 'bib_of_the_bottomless'],
     fatThreshold: 0.50,
     defeatText: {
@@ -253,7 +253,7 @@ export const FLOOR4_ENEMIES = [
   },
   {
     name: 'Pickle Wraith', archetype: 'trickster', baseWeight: 150, stomachCapacity: 220, willingness: 45,
-    description: 'A briny spectre that slips between barrels, sloshing and dodging, never where your spell lands.',
+    description: 'Wet hair plastered across a sharp grin, vinegar-sharp smell, body gleaming like something just fished out of a crock — she slides between the barrels with the ease of someone who has been doing it for decades, daring you to catch her.',
     xpValue: 220, lootTable: ['charm_of_craving', 'skewer_of_searing'],
     fatThreshold: 0.50,
     defeatText: {
@@ -264,7 +264,7 @@ export const FLOOR4_ENEMIES = [
   },
   {
     name: 'The Brinemother', archetype: 'warden', baseWeight: 300, stomachCapacity: 420, willingness: 58,
-    description: 'A vast salted matron who pickles away every ounce you force on her, resisting satiation to the last.',
+    description: 'She\'s enormous in the way of something preserved perfectly — skin salt-white and faintly shining, grey hair coiled in a bun that never comes undone, every inch of her packed and sealed against the world\'s intrusions, regarding you with the cool patience of a woman who has never once been rushed.',
     xpValue: 460, lootTable: ['quilted_gambeson', 'trencher_shield'], isMiniBoss: true,
     phases: [
       {
@@ -289,7 +289,7 @@ export const FLOOR4_ENEMIES = [
 export const FLOOR5_ENEMIES = [
   {
     name: 'Lard Golem', archetype: 'brute', baseWeight: 340, stomachCapacity: 480, willingness: 60,
-    description: 'A lumbering figure packed from rendered tallow. Slow, soft, and easy to pile higher.',
+    description: 'Pale as candle wax and shaped like a woman remembered in generous terms — broad hips, heavy arms, a face serene and approximate — she exhales cold fog when she breathes and sheds tallow with every slow step, the larder floor shining wherever she\'s been.',
     xpValue: 260, lootTable: ['cramming_spoon', 'larders_apron'],
     fatThreshold: 0.50,
     defeatText: {
@@ -300,7 +300,7 @@ export const FLOOR5_ENEMIES = [
   },
   {
     name: 'Frost Imp', archetype: 'flyer', baseWeight: 110, stomachCapacity: 140, willingness: 42,
-    description: 'It darts through the chill flinging frozen cream-puffs that burst on impact.',
+    description: 'Ice-blue skin, breath coming out in short white puffs, cheeks and belly rounded from a diet of her own ammunition — she darts through the cold larder on wings caked with frost and has the smug accuracy of someone who has never once missed.',
     xpValue: 240, lootTable: ['whisk_of_the_whirlwind', 'girdle_of_gula'],
     fatThreshold: 0.50,
     defeatText: {
@@ -311,7 +311,7 @@ export const FLOOR5_ENEMIES = [
   },
   {
     name: 'The Glacier Glutton', archetype: 'glutton', baseWeight: 280, stomachCapacity: 560, willingness: 78,
-    description: 'A half-frozen feaster that thaws only to gorge, swelling visibly with every mouthful it steals.',
+    description: 'From the waist down she\'s still ice — blue-white crust, crackling as she shifts weight — but her upper body has been thawing for some time, pink-cheeked and heavy, hair loose and damp against her neck as she tears at whatever she can reach with the urgency of someone who knows the cold will take her back.',
     xpValue: 520, lootTable: ['ledger_of_gluttony', 'pact_morsel'], isMiniBoss: true,
     phases: [
       {
@@ -336,7 +336,7 @@ export const FLOOR5_ENEMIES = [
 export const FLOOR6_ENEMIES = [
   {
     name: 'Smoke Revenant', archetype: 'dispeller', baseWeight: 240, stomachCapacity: 340, willingness: 55,
-    description: 'A haze of cured-meat smoke that disperses your feeding magic as fast as you cast it.',
+    description: 'She\'s more suggestion than woman — a column of cured-smoke in a woman\'s shape, dark hair bleeding at the edges into the haze, breasts and hips visible for a moment before the smokehouse air reclaims them — and whatever you feed her, she breathes out in a long slow exhale.',
     xpValue: 300, lootTable: ['tenderizing_maul', 'band_of_second_helpings'],
     fatThreshold: 0.50,
     defeatText: {
@@ -347,7 +347,7 @@ export const FLOOR6_ENEMIES = [
   },
   {
     name: 'Hung Hog', archetype: 'brute', baseWeight: 400, stomachCapacity: 560, willingness: 64,
-    description: 'An enormous smoked hog, somehow still hungry, swinging from a hook and charging when it drops.',
+    description: 'Cured dark and strung from the rafters by the heel like everything else in here, she revolves slowly on the hook — unmistakably a woman\'s form, mahogany-smoked, enormous, every curve lacquered with rendered fat — and the hunger in her eyes says the hook is more inconvenience than constraint.',
     xpValue: 320, lootTable: ['brigandine_of_surfeit', 'mantle_of_the_well_fed'],
     fatThreshold: 0.50,
     defeatText: {
@@ -358,7 +358,7 @@ export const FLOOR6_ENEMIES = [
   },
   {
     name: 'The Pitmaster', archetype: 'warden', baseWeight: 420, stomachCapacity: 600, willingness: 66,
-    description: 'Tender of the eternal fire. He bastes away your every effort and refuses to be sated.',
+    description: 'Thick-armed and oak-dark from decades at the coals, she moves around the fire pit with the unhurried confidence of a woman who tends something eternal — basting brush dripping, apron smoke-black, weighing more than anyone who moves this efficiently has any business weighing.',
     xpValue: 620, lootTable: ['pendant_of_plenty', 'tenderizing_maul'], isMiniBoss: true,
     phases: [
       {
@@ -383,7 +383,7 @@ export const FLOOR6_ENEMIES = [
 export const FLOOR7_ENEMIES = [
   {
     name: 'Dough Horror', archetype: 'glutton', baseWeight: 320, stomachCapacity: 680, willingness: 80,
-    description: 'A risen mass of living dough that proofs larger by the second, doubling and doubling.',
+    description: 'She has the rough shape of a woman left too long in a warm room — soft, pale, expanding at the seams, hair lost somewhere inside the rising mass — and she opens her mouth not to speak but to receive, each yeasty breath pulling more flour from the air and adding it to herself.',
     xpValue: 360, lootTable: ['glazing_glaive', 'grimoire_of_swelling'],
     fatThreshold: 0.50,
     defeatText: {
@@ -394,7 +394,7 @@ export const FLOOR7_ENEMIES = [
   },
   {
     name: 'Sugar Sprite', archetype: 'trickster', baseWeight: 160, stomachCapacity: 240, willingness: 48,
-    description: 'A glittering blur that crystallises out of reach and dissolves your spells in spun sugar.',
+    description: 'Light goes through her the way it goes through a boiled sweet — she\'s iridescent, crystalline at the fingertips and edges, a woman rendered in spun sugar with too-bright eyes and a smile that dissolves whatever it touches.',
     xpValue: 380, lootTable: ['torc_of_the_titan_table', 'aegis_of_plenty'],
     fatThreshold: 0.50,
     defeatText: {
@@ -405,7 +405,7 @@ export const FLOOR7_ENEMIES = [
   },
   {
     name: 'The Head Baker', archetype: 'brute', baseWeight: 480, stomachCapacity: 700, willingness: 68,
-    description: 'Flour-dusted and immense, she kneads the very air, pressing weight onto everything in the room.',
+    description: 'White from hairnet to clogs, immense through the shoulders and through every other dimension, she fills the main aisle the way bread fills a tin — completely, with nowhere left over — and her hands keep moving even when she\'s watching you, the kneading so habitual it has become breathing.',
     xpValue: 760, lootTable: ['plate_of_the_provider', 'aegis_of_plenty'], isMiniBoss: true,
     phases: [
       {
@@ -430,7 +430,7 @@ export const FLOOR7_ENEMIES = [
 export const FLOOR8_ENEMIES = [
   {
     name: 'Caramel Colossus', archetype: 'brute', baseWeight: 520, stomachCapacity: 760, willingness: 66,
-    description: 'A slow titan of hardening caramel; every spell you land sets into another golden layer.',
+    description: 'She came in as a woman and has been acquiring caramel ever since — golden layers setting hard over soft curves, each one locked tighter than the last, her face still visible through the amber casing with an expression of deep, amber-warm satisfaction.',
     xpValue: 420, lootTable: ['honey_lance', 'hauberk_of_hunger'],
     fatThreshold: 0.50,
     defeatText: {
@@ -441,7 +441,7 @@ export const FLOOR8_ENEMIES = [
   },
   {
     name: 'Bonbon Swarmling', archetype: 'leech', baseWeight: 220, stomachCapacity: 340, willingness: 56,
-    description: 'A rolling clutch of animate chocolates that gorge each other and spit the overflow at you.',
+    description: 'A dozen small dark figures, each one a handspan tall and shaped like a miniature woman in dusted chocolate, moving as a single liquid mass — they feed each other in tight loops, face to face, and what overflows gets flung at the nearest available target.',
     xpValue: 440, lootTable: ['signet_of_satiation', 'famine_sigil'],
     fatThreshold: 0.50,
     defeatText: {
@@ -452,7 +452,7 @@ export const FLOOR8_ENEMIES = [
   },
   {
     name: 'The Confectioner', archetype: 'dispeller', baseWeight: 460, stomachCapacity: 640, willingness: 70,
-    description: 'A precise, terrible artisan who dissolves your enchantments like sugar in hot water.',
+    description: 'Immaculate in her white work coat despite a day\'s worth of caramel and sugar on every surface around her, she carries herself with the economy of someone who has spent years doing difficult things cleanly — small hands, sharp eyes, the quiet authority of a woman who does not tolerate imprecision.',
     xpValue: 880, lootTable: ['signet_of_satiation', 'famine_sigil'], isMiniBoss: true,
     phases: [
       {
@@ -477,7 +477,7 @@ export const FLOOR8_ENEMIES = [
 export const FLOOR9_ENEMIES = [
   {
     name: 'Mead Wyrm', archetype: 'glutton', baseWeight: 380, stomachCapacity: 820, willingness: 82,
-    description: 'A drunken serpent swollen on spilled mead, gulping anything sweet within reach — itself included.',
+    description: 'Her lower half is serpent — vast golden coils thick as barrels, honey-damp scales — and above the waist she\'s a woman heavy with mead and satisfaction, dark hair loose, cheeks flushed, drinking from whatever she can close her hands around while her tail sweeps everything else toward her mouth.',
     xpValue: 480, lootTable: ['cauldron_breaker', 'torc_of_the_titan_table'],
     fatThreshold: 0.50,
     defeatText: {
@@ -488,7 +488,7 @@ export const FLOOR9_ENEMIES = [
   },
   {
     name: 'Comb Guardian', archetype: 'warden', baseWeight: 500, stomachCapacity: 700, willingness: 64,
-    description: 'A waxen sentinel that seals itself against satiation behind walls of dripping honeycomb.',
+    description: 'She\'s been here so long the wax has grown into her — sealed at the joints, built up across her shoulders and thighs in amber layers, a woman slowly becoming architecture, still and sentinel-eyed, smelling of old honey and warm wax.',
     xpValue: 500, lootTable: ['plate_of_the_provider', 'aegis_of_plenty'],
     fatThreshold: 0.50,
     defeatText: {
@@ -499,7 +499,7 @@ export const FLOOR9_ENEMIES = [
   },
   {
     name: 'The Honey Queen', archetype: 'leech', baseWeight: 560, stomachCapacity: 900, willingness: 72,
-    description: 'Vast and golden, she drinks tribute from her swarm and pours the excess down your throat.',
+    description: 'The throne of honeycomb was built for her and has been growing to keep up with her ever since — she is golden, enormous, every surface of her lacquered in honey that her swarm never lets dry, her expression the absolute calm of a woman who has not needed to move in a very long time.',
     xpValue: 1000, lootTable: ['plate_of_the_provider', 'aegis_of_plenty'], isMiniBoss: true,
     phases: [
       {
@@ -524,7 +524,7 @@ export const FLOOR9_ENEMIES = [
 export const FLOOR10_ENEMIES = [
   {
     name: 'Gloom Glutton', archetype: 'glutton', baseWeight: 460, stomachCapacity: 980, willingness: 84,
-    description: 'A shadow that learned to eat. It devours the dark itself and bloats on an endless hunger.',
+    description: 'She is the dark given appetite and a woman\'s shape — void-black skin that swallows torchlight, curves that expand as you watch, eyes like two points where the darkness goes deepest — and she opens her mouth and the shadows nearest her lean in.',
     xpValue: 560, lootTable: ['honey_lance', 'grimoire_of_swelling'],
     fatThreshold: 0.50,
     defeatText: {
@@ -535,7 +535,7 @@ export const FLOOR10_ENEMIES = [
   },
   {
     name: 'Maw Crawler', archetype: 'flyer', baseWeight: 200, stomachCapacity: 280, willingness: 44,
-    description: 'All teeth and appetite, it scuttles along the ceiling spitting gobbets of rendered shadow-fat.',
+    description: 'She clings upside-down on the ceiling in a posture a human body should not achieve, but she is technically still a human body — pale where she isn\'t shadow, wide-mouthed and wide-hipped, the only thing bigger than her smile being the appetite behind it.',
     xpValue: 580, lootTable: ['hauberk_of_hunger', 'signet_of_satiation'],
     fatThreshold: 0.50,
     defeatText: {
@@ -546,7 +546,7 @@ export const FLOOR10_ENEMIES = [
   },
   {
     name: 'The Famine Lord', archetype: 'warden', baseWeight: 620, stomachCapacity: 860, willingness: 62,
-    description: 'A gaunt aristocrat of hunger who purges himself raw, refusing every satisfaction you offer.',
+    description: 'She is gaunt the way a disciplinarian is gaunt — by studied refusal, not misfortune — sharp-boned in a black velvet coat that hangs exactly right, maintaining the posture of a woman who considers abundance a moral failure and intends to keep doing so.',
     xpValue: 1120, lootTable: ['signet_of_satiation', 'hauberk_of_hunger'], isMiniBoss: true,
     phases: [
       {
@@ -571,7 +571,7 @@ export const FLOOR10_ENEMIES = [
 export const FLOOR11_ENEMIES = [
   {
     name: 'Gorge Behemoth', archetype: 'brute', baseWeight: 720, stomachCapacity: 1040, willingness: 66,
-    description: 'A mountain that walks to dinner. Each footfall shakes loose another course from the rafters.',
+    description: 'Ancient and vast and moving with the gravity of a landslide that has decided on a direction — she has been walking toward this table for centuries, her footfalls arriving in the bones of the floor before she does, her appetite the only thing in the hall older than the hall.',
     xpValue: 680, lootTable: ['the_endless_fork', 'carapace_of_the_colossus'],
     fatThreshold: 0.50,
     defeatText: {
@@ -582,7 +582,7 @@ export const FLOOR11_ENEMIES = [
   },
   {
     name: 'Surfeit Phantom', archetype: 'trickster', baseWeight: 340, stomachCapacity: 460, willingness: 50,
-    description: 'A guest who never stops arriving, flickering down the endless table just out of reach.',
+    description: 'Every time you look directly at her she\'s somewhere else — silk dress, full figure, glass raised — always mid-arrival, never quite landed, the kind of party guest who has been just walking in for so long that walking in has become her permanent condition.',
     xpValue: 700, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'],
     fatThreshold: 0.50,
     defeatText: {
@@ -593,7 +593,7 @@ export const FLOOR11_ENEMIES = [
   },
   {
     name: 'The Eternal Guest', archetype: 'glutton', baseWeight: 680, stomachCapacity: 1200, willingness: 86,
-    description: 'Seated at the head for a thousand years, still eating, still growing, welcoming you to join the feast forever.',
+    description: 'She has not stood in so long that standing seems like something she invented and then abandoned, seated immense at the head of the table in a gown that the table itself seems to have grown around, still eating, welcoming you in the particular way that means she intends to make you stay.',
     xpValue: 1400, lootTable: ['codex_of_the_glut', 'heart_of_the_maw'], isMiniBoss: true,
     phases: [
       {
@@ -618,7 +618,7 @@ export const FLOOR11_ENEMIES = [
 export const FLOOR12_ENEMIES = [
   {
     name: 'Throne Sentinel', archetype: 'warden', baseWeight: 640, stomachCapacity: 900, willingness: 60,
-    description: 'The last guardian before the throne, sworn to purge any magic that would unseat its master.',
+    description: 'Full plate over a body that has been growing into it for years, the armour\'s joins packed with shaped leather to let it keep fitting — she stands before the throne door like she was built there, and she sheds your spells off her shoulders the way rain comes off stone.',
     xpValue: 760, lootTable: ['bulwark_of_the_feast', 'carapace_of_the_colossus'],
     fatThreshold: 0.50,
     defeatText: {
@@ -629,7 +629,7 @@ export const FLOOR12_ENEMIES = [
   },
   {
     name: 'Herald of the Glut', archetype: 'leech', baseWeight: 580, stomachCapacity: 980, willingness: 74,
-    description: 'It announces the coming feast by force-feeding all who approach, gorging on the leavings.',
+    description: 'Tall in her ceremonial coat and gloves, she reads the proclamation of the feast from a scroll she never lets you see, and while you\'re distracted by the words she\'s already feeding you the first course, taking the surplus for herself with practiced ease.',
     xpValue: 800, lootTable: ['crown_of_the_grand_gourmand', 'the_endless_fork'],
     fatThreshold: 0.50,
     defeatText: {
@@ -640,7 +640,7 @@ export const FLOOR12_ENEMIES = [
   },
   {
     name: 'The Insatiable One', archetype: 'brute', baseWeight: 900, stomachCapacity: 1600, willingness: 64,
-    description: 'The true heart of the Undergorge — a god of appetite grown so vast the dungeon was built around it. It has been waiting, and it is still hungry.',
+    description: 'She is what a woman looks like when appetite has had enough time and no one has ever said no — ancient beyond reckoning, filling the throne room the way water fills a vessel, her face still recognizably a face, still recognizably a woman\'s, patient and enormous and hungry in a way that predates the word.',
     xpValue: 2500, lootTable: ['crown_of_the_grand_gourmand'], isBoss: true,
     requiresFatPhase: 2,
     bossEvent: 'The Insatiable One shudders as the last spell takes hold. For the first time in an age, it is full. The Undergorge groans, the throne splits, and a crown of impossible weight tumbles down to you — the only thing it ever truly owned.',
