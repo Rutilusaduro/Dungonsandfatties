@@ -14,7 +14,7 @@ const CLASS_REGISTRY = {
     offHand: 'tome',
     description: 'Arcane scholar who conjures endless feasts and transmutes flesh. Master of area saturation.',
     passive: 'Arcane Appetite: Conjured food has +25% caloric density.',
-    startingSpells: ['Prestidigitation', 'Mage Hand', 'Detect Cravings', 'Grease', 'Conjure Food', 'Oozing Abundance'],
+    startingSpells: ['Prestidigitation', 'Mage Hand', 'Detect Cravings', 'Grease', 'Conjure Food', 'Oozing Abundance', 'Adipose Touch'],
     spellSlots: { 1: 3, 2: 3, 3: 1 },
     baseWeight: 140,
     accentColor: '#4a7fc1',

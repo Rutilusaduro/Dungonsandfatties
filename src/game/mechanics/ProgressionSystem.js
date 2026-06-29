@@ -18,16 +18,19 @@ export const LEVEL_UP_SPELLS = {
     'Hold Person', 'Ambrosial Aura', 'Create Food and Water',
     'Suggestion', 'Slow', 'Confection Snare',
     'Morph Mass', 'Rapid Digestion', 'Swelling Tide',
+    'Adipose Touch',
   ],
   Mage: [
     'Erupting Earth', 'Fireball', 'Polymorph',
     'Slow', 'Haste', 'Duplication',
     'Flesh to Food', 'Ravenous Expansion', 'Culinary Transmutation',
+    'Adipose Touch', 'Metabolic Hex', 'Corpulence Surge',
   ],
   Warlock: [
     'Sympathetic Bond', 'Draconic Hunger', 'Ambrosial Aura',
     'Rooting Glut', 'Feeder\'s Devotion', 'Swelling Tide',
     'Imbue Life', 'Sphere of Influence', 'Malleable Flesh',
+    'Metabolic Hex', 'Corpulence Surge',
   ],
   Cleric: [
     'Hold Person', 'Suggestion', 'Slow',
