@@ -937,19 +937,18 @@ const Game = () => {
           )}
         </div>
 
-        <RightPanel dungeon={dungeon} player={player} knownSpells={knownSpells} />
-        {!dungeon && !combatState && (
-          <SpellCaster
-            spellLibrary={spellLibrary}
-            knownSpells={knownSpells}
-            onCastSpell={handleCastSpell}
-            currentZone={currentZone}
-            playerStats={{ spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
-            discovery={discovery}
-            debugUnlockAll={debugUnlockAllSpells}
-            onToggleDebugSpells={() => setDebugUnlockAllSpells(v => !v)}
-          />
-        )}
+        <RightPanel
+          dungeon={dungeon}
+          player={player}
+          knownSpells={knownSpells}
+          spellLibrary={spellLibrary}
+          onCastSpell={!dungeon ? handleCastSpell : handleCastSpell}
+          currentZone={currentZone}
+          playerStats={{ spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
+          discovery={discovery}
+          debugUnlockAll={debugUnlockAllSpells}
+          onToggleDebugSpells={() => setDebugUnlockAllSpells(v => !v)}
+        />
       </div>
 
       {selectedNPC && (

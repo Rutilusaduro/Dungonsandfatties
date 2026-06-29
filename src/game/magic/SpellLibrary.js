@@ -139,7 +139,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: 'Concentration, up to 1 minute',
-        description: 'One creature doubles in size',
+        description: 'The target swells outward, their frame expanding until they loom twice as large, heavier, more imposing with every passing breath.',
         weightGainTheme:
           'Target grows larger - the spell adds weight, muscle, and presence. They feel heavier, stronger, more imposing.',
         tags: ['transformation', 'size', 'weight-gain'],
@@ -172,7 +172,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: 'Concentration, up to 1 minute',
-        description: 'One creature halves in size',
+        description: 'The target shrinks away, their mass drawing inward until they stand small and diminished — a cruel reversal of growth.',
         weightGainTheme:
           'Target shrinks to half size - they lose weight and feel lighter. A cruel reversal of growth magic.',
         tags: ['transformation', 'size'],
@@ -374,7 +374,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: 'Instantaneous',
-        description: 'Create up to 10 gallons of water',
+        description: 'Fresh water materializes from empty air, pooling and pouring as if a hidden spring has opened in the space before you.',
         weightGainTheme: 'Conjure water, milk, honey, or other liquids for sustenance and pleasure',
         tags: ['conjuration', 'creation', 'sustenance'],
       })
@@ -488,7 +488,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: '1 minute',
-        description: 'Create a slippery, greasy substance',
+        description: 'Thick, golden slime pools across the ground and clings to everything it touches — slippery, warm, and everywhere.',
         weightGainTheme:
           'Conjure sticky, slippery grease to coat surfaces or create a basin. The grease is thick and calorie-rich, perfect for coating food or creating a feeding area.',
         tags: ['conjuration', 'environmental', 'feeding'],
@@ -518,7 +518,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: 'Permanent',
-        description: 'Transform water into magical ice cream',
+        description: 'Water shimmers and hardens into magical ice cream that never melts — cold, sweet, and impossibly rich.',
         weightGainTheme:
           'Transmute plain water into delicious, high-calorie ice cream. The spell can modify the flavor, and the ice cream gains magical properties - it never melts and can provide unlimited sustenance.',
         tags: ['transmutation', 'food', 'magical', 'feeding'],
@@ -556,7 +556,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: 'Instantaneous',
-        description: 'Gently persuade a creature to eat food',
+        description: 'A whisper of compulsion settles into the target\'s mind — they suddenly feel the urge to eat, rationalization catching up to desire.',
         weightGainTheme:
           'Magically encourage an NPC to consume food. The more willing they are naturally, the easier the spell. They gain weight from eating and appreciate your generosity.',
         tags: ['enchantment', 'feeding', 'social'],
@@ -605,7 +605,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: 'Instantaneous',
-        description: 'Sense what foods an NPC craves',
+        description: 'Knowledge blooms in your mind — you sense their deepest food-hungers as clearly as if they\'d spoken them aloud.',
         weightGainTheme:
           'Magically perceive what foods an NPC loves, likes, and dislikes. Use this knowledge to encourage feeding.',
         tags: ['divination', 'knowledge', 'feeding'],
@@ -808,7 +808,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Concentration, up to 1 minute',
-        description: 'A humanoid is paralyzed by magical command',
+        description: 'The target freezes in place, their body locked by invisible chains of force, unable to resist whatever comes next.',
         weightGainTheme:
           'The spell paralyzes movement but allows feeding. Held targets cannot resist consumption.',
         tags: ['enchantment', 'restraint', 'forced-feeding'],
@@ -1040,7 +1040,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Instantaneous (fullness persists)',
-        description: 'Accelerate target\'s digestive system',
+        description: 'Magical haste floods the target\'s belly — what they ate churns violently, processing faster than their body can resist.',
         weightGainTheme:
           'Magical haste floods the GI tract. Food already eaten converts more efficiently during the next long rest. Creates satiation state.',
         tags: ['transmutation', 'digestion', 'weight-gain'],
@@ -1101,7 +1101,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Instantaneous (permanent)',
-        description: 'Transform living flesh into edible food',
+        description: 'The target\'s form ripples and restructures into sustenance — a grim alchemy that leaves behind only abundance.',
         weightGainTheme:
           'Creatures transmute into pure culinary abundance. Living beings become sustenance ready for consumption.',
         tags: ['transmutation', 'conversion', 'food'],
@@ -1159,7 +1159,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: 'Concentration, up to 1 minute',
-        description: 'Target moves and acts with supernatural speed',
+        description: 'The target blurs, moving with impossible speed — and their jaw works twice as fast, food vanishing as quickly as it enters their mouth.',
         weightGainTheme:
           'Eating and food consumption accelerates. Magical metabolism burns fewer calories, improving long-rest conversion.',
         tags: ['transmutation', 'speed', 'weight-gain'],
@@ -1268,7 +1268,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Concentration, 1 hour',
-        description: 'Target\'s stomach swells with magical capacity and hunger',
+        description: 'The target\'s belly swells obscenely, distending outward — capacity blooming, and with it comes a ravenous, desperate hunger that won\'t be denied.',
         weightGainTheme:
           'Target becomes ravenous yet capable. Stomach capacity doubles, desperate hunger sets in. No satiation mechanics.',
         tags: ['transmutation', 'hunger', 'capacity'],
@@ -1549,7 +1549,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Concentration, up to 1 hour (or until broken)',
-        description: 'Conjure animated vines made of candy/licorice for restraint and feeding',
+        description: 'Candy vines animate and coil outward, their sweet smell flooding the air as they wrap tight — impossible to break, easy to consume from.',
         weightGainTheme:
           'Sugary bonds wrap around targets. Both restraint and temptation. Integrates with gravity system for suspension mechanics.',
         tags: ['transmutation', 'restraint', 'feeding', 'gravity-dependent'],
@@ -1633,7 +1633,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Concentration, up to 10 minutes',
-        description: 'Multiply the force of gravity on one target. The effect stacks.',
+        description: 'The target suddenly weighs far more, pinned downward by an invisible force — they struggle to move, crushed by magnified gravity.',
         weightGainTheme:
           'The target becomes effectively heavier without changing mass. Suspensions, furniture, and burial effects all become more dangerous.',
         tags: ['transmutation', 'gravity', 'weight-force', 'stacking'],
@@ -1750,7 +1750,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Concentration, up to 10 minutes',
-        description: 'Reduce the target\'s gravity, potentially making them float.',
+        description: 'The target becomes light, drifting upward as though the world\'s weight has released them — they hover at your mercy.',
         weightGainTheme:
           'The target becomes light enough for suspension, floor tethering, and gravity reversal tricks.',
         tags: ['transmutation', 'gravity', 'floating', 'mobility'],
@@ -1847,7 +1847,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Until dispelled',
-        description: 'Form a mystical bond between two creatures, causing them to share a portion of their calorie intake at rest.',
+        description: 'A silver thread of magic winds between the two — their appetites entangle, their hungers synchronized, one body feeding the other\'s settling mass.',
         weightGainTheme: 'Two hearts beat as one, and their appetites entangle.',
         validTargets: ['npc', 'creature'],
         requiresSecondaryTarget: true,
@@ -1900,7 +1900,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Instantaneous',
-        description: 'Drain weight from one creature and transfer it to another. The weight is drawn from current body weight.',
+        description: 'Envious desire manifests in stolen flesh — weight tears free from one body and settles into another, leaving the source diminished and the destination swollen.',
         weightGainTheme: 'Envious desire manifests as flesh migrating between bodies.',
         validTargets: ['npc', 'creature'],
         requiresSecondaryTarget: false,
@@ -1956,7 +1956,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Instantaneous',
-        description: "A target creature manifests a dragon's gullet and can devour another creature whole, gaining its living-calorie value.",
+        description: "The target's jaw distends impossibly wide, their throat expanding into a dragon's terrible gullet — they can swallow creatures whole, gaining their terrible hunger.",
         weightGainTheme: 'The ancient hunger of dragons awakens in mortal flesh.',
         validTargets: ['npc', 'creature'],
         requiresSecondaryTarget: true,
@@ -1997,7 +1997,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Until long rest',
-        description: 'An aura of magical nourishment fills the zone. Every occupant gains additional calories at the next long rest.',
+        description: 'The air itself becomes thick with golden haze — every breath tastes of honey and cream, and the sense of plenty settles deep into bones and belly.',
         weightGainTheme: 'The air itself becomes rich with the essence of feast and plenty.',
         validTargets: [],
         requiresSecondaryTarget: false,
@@ -2048,7 +2048,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: 'Concentration, up to 1 minute',
-        description: 'Bind a target to the ground beneath its own gathering weight.',
+        description: 'The target sinks slowly downward, their feet binding to earth as their own mass pins them in place — they cannot rise.',
         weightGainTheme:
           'The target settles where it stands, anchored and softening, too heavy and too rooted to rise.',
         validTargets: ['creature', 'npc'],
@@ -2088,7 +2088,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: 'Touch',
         duration: '10 minutes',
-        description: 'Expand how much a target can take in before it feels full.',
+        description: 'The target\'s stomach opens like an abyss — fullness retreats impossibly far, each bite disappearing into depths that seem to have no bottom.',
         weightGainTheme:
           'Fullness retreats. A feast that should have ended becomes a marathon, every limit pushed further back.',
         validTargets: ['creature', 'npc'],
@@ -2310,7 +2310,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: 'Self (30-foot radius)',
         duration: 'Concentration, up to 10 minutes',
-        description: 'Fill the area with obsessive hunger; every creature, monster, and critter present eats continuously.',
+        description: 'An invisible hunger grips the entire room — friend and foe alike are seized by a single-minded need to eat, unable to stop, unable to think of anything else.',
         weightGainTheme:
           'A sphere of compulsive appetite settles over the whole room. Friend, beast, and bystander alike are seized by a gnawing, single-minded hunger and will not stop eating while it holds.',
         validTargets: [], // area spell — targets the zone, not one entity
@@ -2347,7 +2347,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: 'Self (60-foot line)',
         duration: 'Concentration, up to 1 minute',
-        description: 'A blast of wind that scatters loose matter and shoves the unrooted — though the heavy stand firm.',
+        description: 'A howling gale tears through the space — food and coatings scatter wildly, light targets stagger backward, but the heavy simply plant themselves and endure.',
         weightGainTheme:
           'The gale flings food, grease, and ooze across the room and pushes light targets back; anyone heavy enough simply plants themselves and lets it break around them.',
         validTargets: ['creature', 'npc', 'object'],
@@ -2384,7 +2384,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '120 feet',
         duration: 'Concentration, up to 10 minutes',
-        description: 'Shape an invisible, impassable wall — a pen a target cannot leave, no matter how it tries.',
+        description: 'An invisible wall of pure force snaps into being — seamless, immovable, inescapable. The target is penned with no way out.',
         weightGainTheme:
           'A seamless barrier of force boxes the target in. There is no squeezing out, no pushing through; she can only sit in the pen and accept whatever is brought to her.',
         validTargets: ['creature', 'npc', 'area'],
@@ -2421,7 +2421,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Concentration, up to 1 hour',
-        description: 'Fill an area with thick, clinging webbing that ensnares whatever it touches.',
+        description: 'Thick, sticky strands fill the air and cling fast — anything they touch is caught, wrapped, held immobile by the entangling mass.',
         weightGainTheme:
           'Sticky strands wrap a target fast, holding her in place for whatever feeding comes next — and the more of her there is, the more thoroughly the webbing has to hold.',
         validTargets: ['creature', 'npc', 'area'],
@@ -2458,7 +2458,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: '1 minute',
-        description: 'A spectral hand that fetches, carries, and — pointedly — brings food to a waiting mouth.',
+        description: 'A ghostly hand materializes, translucent and obedient, ready to ferry food from plate to mouth without the target lifting a finger.',
         weightGainTheme:
           'The conjured hand makes feeding effortless: it ferries morsel after morsel to a target\'s lips so she never has to lift a finger, only open and swallow.',
         validTargets: ['creature', 'npc', 'object'],
@@ -2488,7 +2488,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: '1 round',
-        description: 'A single word of power the target must obey — most usefully, "Eat."',
+        description: 'One word spoken with authority cracks across the target\'s will — they must obey, their body moving before their mind can resist.',
         weightGainTheme:
           'One commanding word overrides hesitation entirely. "Eat," you say, and the target must — reaching for the nearest food and obeying whether she meant to or not.',
         validTargets: ['creature', 'npc'],
@@ -2562,7 +2562,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: 'Touch',
         duration: 'Until next long rest',
-        description: 'Transmute a target\'s body soft and yielding, so it banks far more weight from whatever it eats.',
+        description: 'The target\'s flesh softens and becomes deeply receptive — every calorie clings, settles, and stays, weight taking permanent shape.',
         weightGainTheme:
           'The flesh turns pliant and receptive, every curve a little softer and quicker to take on weight. Whatever she eats before her next rest settles deeper and stays.',
         validTargets: ['creature', 'npc'],
@@ -2614,7 +2614,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: 'Touch',
         duration: 'Instantaneous',
-        description: 'You reach out and transmute what little fullness remains into solid, permanent mass.',
+        description: 'Your touch rewrites flesh itself — what was temporary softness crystallizes into permanent, solid mass that will never leave.',
         weightGainTheme:
           'A laying-on of hands that rewrites flesh rather than filling a stomach — what was temporary becomes permanent in an instant of contact.',
         validTargets: ['creature', 'npc'],
@@ -2648,7 +2648,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '30 feet',
         duration: 'Instantaneous',
-        description: "A curse that rewrites the body's math — everything consumed becomes permanent.",
+        description: "A hex settles over the target like a second skin — their metabolism rewrites itself, and now everything they eat becomes permanent flesh.",
         weightGainTheme:
           'The hex does not fill — it converts. Adipose cells bloom; hunger math rewrites itself. What she ate yesterday already weighs more.',
         validTargets: ['creature', 'npc'],
@@ -2684,7 +2684,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: 'Instantaneous',
-        description: 'Pure transmutation energy crashes into the target, reshaping mass at a fundamental level.',
+        description: 'Transmutation energy slams into the target and fills them — mass blooms from within, reshaping their body at every cellular level, leaving them dramatically heavier.',
         weightGainTheme:
           'Not a feast, not a fullness — a rewriting. The surge reaches into flesh and adds, and what it adds does not leave.',
         validTargets: ['creature', 'npc'],
@@ -2718,7 +2718,7 @@ class SpellLibrary {
         castingTime: '1 action',
         range: '60 feet',
         duration: '1 hour',
-        description: 'Call forth a living thicket heavy with fruit that keeps producing more as it is picked.',
+        description: 'A thicket of vines and branches erupts from the ground, sagging with ripe, heavy fruit that renews itself with every bite — an endless, living feast.',
         weightGainTheme:
           'Vines and boughs erupt from the ground, sagging with ripe, sweet, calorie-dense fruit — and the more is eaten, the more swells back to replace it.',
         validTargets: [], // druidic area spell — fills the zone
