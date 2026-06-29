@@ -2600,6 +2600,116 @@ class SpellLibrary {
         )
     );
 
+    // ═══════════════════════════════════════════════════════════════
+    // FATTEN SPELLS — direct permanent weight via transmutation
+    // option.isFatten: true signals the combat loop to call fattenUp
+    // instead of fillUp. Percentages come from FATTEN_PCT in Balance.js.
+    // ═══════════════════════════════════════════════════════════════
+
+    // Adipose Touch (Level 1) — close-range permanent fattening
+    this.registerSpell(
+      new Spell('Adipose Touch', {
+        level: 1,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: 'Touch',
+        duration: 'Instantaneous',
+        description: 'You reach out and transmute what little fullness remains into solid, permanent mass.',
+        weightGainTheme:
+          'A laying-on of hands that rewrites flesh rather than filling a stomach — what was temporary becomes permanent in an instant of contact.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'fatten', 'touch', 'combat'],
+      })
+        .addValidTarget('creature')
+        .addValidTarget('npc')
+        .addOption(
+          new SpellOption('Transmute', 'Convert flesh — add ~15% baseWeight in permanent fat.', (caster, target) => ({
+            type: 'fatten',
+            isFatten: true,
+            slotLevel: 1,
+            description: `Your touch rewrites ${target?.name || 'the target'}'s flesh — mass settles in and stays.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Transmutation', 'Permanent weight settles into flesh', (caster, target) => ({
+            type: 'fatten',
+            isFatten: true,
+            slotLevel: 1,
+            description: `${target?.name || 'The target'}'s form solidifies under the transmutation.`,
+          }))
+        )
+    );
+
+    // Metabolic Hex (Level 2) — medium range, fattening + bonus fullness
+    this.registerSpell(
+      new Spell('Metabolic Hex', {
+        level: 2,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '30 feet',
+        duration: 'Instantaneous',
+        description: "A curse that rewrites the body's math — everything consumed becomes permanent.",
+        weightGainTheme:
+          'The hex does not fill — it converts. Adipose cells bloom; hunger math rewrites itself. What she ate yesterday already weighs more.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'fatten', 'hex', 'combat'],
+      })
+        .addValidTarget('creature')
+        .addValidTarget('npc')
+        .addOption(
+          new SpellOption('Hex', 'Rewrite her metabolism — add ~25% baseWeight in permanent fat.', (caster, target) => ({
+            type: 'fatten',
+            isFatten: true,
+            slotLevel: 2,
+            bonusFillPct: 0.10,
+            description: `The hex settles over ${target?.name || 'the target'} and her metabolism rewrites itself.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Metabolic Rewrite', 'Permanent fat and bonus fullness', (caster, target) => ({
+            type: 'fatten',
+            isFatten: true,
+            slotLevel: 2,
+            bonusFillPct: 0.10,
+            description: `${target?.name || 'The target'}'s metabolism falters; mass settles in permanently.`,
+          }))
+        )
+    );
+
+    // Corpulence Surge (Level 3) — long range, massive permanent fattening
+    this.registerSpell(
+      new Spell('Corpulence Surge', {
+        level: 3,
+        school: 'Transmutation',
+        castingTime: '1 action',
+        range: '60 feet',
+        duration: 'Instantaneous',
+        description: 'Pure transmutation energy crashes into the target, reshaping mass at a fundamental level.',
+        weightGainTheme:
+          'Not a feast, not a fullness — a rewriting. The surge reaches into flesh and adds, and what it adds does not leave.',
+        validTargets: ['creature', 'npc'],
+        tags: ['transmutation', 'fatten', 'surge', 'combat'],
+      })
+        .addValidTarget('creature')
+        .addValidTarget('npc')
+        .addOption(
+          new SpellOption('Surge', 'Massive transmutation — add ~35% baseWeight in permanent fat. May trigger phase.', (caster, target) => ({
+            type: 'fatten',
+            isFatten: true,
+            slotLevel: 3,
+            description: `Transmutation crashes into ${target?.name || 'the target'} and reshapes her at a fundamental level.`,
+          }))
+        )
+        .addEffect(
+          new SpellEffect('Corpulence Surge', 'Massive permanent mass added', (caster, target) => ({
+            type: 'fatten',
+            isFatten: true,
+            slotLevel: 3,
+            description: `${target?.name || 'The target'} swells under the surge, mass rewriting itself from within.`,
+          }))
+        )
+    );
+
     // Sylvan Bounty - druidic; grow a living, self-replenishing food source in the zone
     this.registerSpell(
       new Spell('Sylvan Bounty', {

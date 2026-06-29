@@ -68,6 +68,9 @@ const SPELL_KEY_TO_NAME = {
   sleep: 'Sleep',
   malleable_flesh: 'Malleable Flesh',
   sylvan_bounty: 'Sylvan Bounty',
+  adipose_touch: 'Adipose Touch',
+  metabolic_hex: 'Metabolic Hex',
+  corpulence_surge: 'Corpulence Surge',
 };
 
 const gravity = new GravityCalculator();

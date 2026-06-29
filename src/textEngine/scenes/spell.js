@@ -1829,6 +1829,64 @@ export function registerSpellModules(engine) {
     { when: {}, text: 'A renewing thicket of fruit, and a roomful of occupants seized by obsessive hunger. They fall on the bounty together — and the bounty simply keeps growing back, feeding the frenzy as long as it lasts.' },
   ]);
 
+  // ─────────────────────────────────────────────
+  // ADIPOSE TOUCH (Level 1, Transmutation — fatten)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.adipose_touch', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'Your palm finds {subject.name} and the transmutation moves through skin, then flesh, then the deep structure beneath. There is no resistance — only a quiet, final settling. What was loose becomes solid. What was soft becomes permanent. You step back and the difference is already visible.',
+    },
+    {
+      when: { stage: { min: 3, max: 5 } },
+      text: 'You lay a hand on {subject.name} and the magic follows. A brief warmth spreads from your palm outward, and then the flesh under your fingers changes — not softer, not fuller, but *denser*. Heavier in a way that has nothing to do with a meal. The weight settles into her and stays.',
+    },
+    {
+      when: {},
+      text: 'Your fingers make contact and the transmutation runs. {subject.name} feels it land — a pulse of warmth moving through muscle and fat alike, reshaping what it finds. Not adding to her stomach. Adding to her. When the spell releases, the new mass is already part of her, as if it always was.',
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // METABOLIC HEX (Level 2, Transmutation — fatten)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.metabolic_hex', [
+    {
+      when: { stage: { min: 6 } },
+      text: 'The hex lands on {subject.name} and her body rewrites its own rules. The considerable mass she already carries surges heavier still — the spell finds the fat already there and multiplies it, pressing new pounds into old curves until she lists noticeably under the change. Her expression flickers between confusion and something she does not want to name.',
+    },
+    {
+      when: { stage: { min: 3, max: 5 } },
+      text: 'The curse settles over {subject.name} like a second skin. For one suspended moment nothing happens — and then her body simply decides that everything it has ever consumed should weigh more. The mass comes from nowhere visible, nowhere explainable, and it lands all at once, soft and permanent and absolutely real.',
+    },
+    {
+      when: {},
+      text: 'You direct the hex and it finds {subject.name} without difficulty. Her metabolism stutters — the spell rewrites the equation mid-calculation — and pounds materialize in her flesh from no food she ate today. The math has changed. Her body is already adding it up.',
+    },
+  ]);
+
+  // ─────────────────────────────────────────────
+  // CORPULENCE SURGE (Level 3, Transmutation — fatten)
+  // ─────────────────────────────────────────────
+  engine.registerModule('spell.scene.corpulence_surge', [
+    {
+      when: { stage: { min: 8 } },
+      text: 'The surge crashes into {subject.name} and the room *feels* it. Her already-enormous frame absorbs the transmutation and *grows*, flesh swelling outward in a wave that has no interest in asking permission. The floor registers the new weight before she does. She sways. The change is not subtle. It is not temporary. It is simply, undeniably, more of her than there was a moment ago.',
+    },
+    {
+      when: { stage: { min: 5, max: 7 } },
+      text: 'Pure transmutation crashes into {subject.name} and reshapes her from the inside out. Fat deposits swell and multiply; curves press harder against fabric; her silhouette visibly expands in the space of two breaths. She staggers under the sudden addition of mass. She does not shed it. It is hers now, permanent and present, and it is not finished settling.',
+    },
+    {
+      when: { stage: { min: 3, max: 4 } },
+      text: 'The surge reaches {subject.name} and does what surges do — it overwhelms. Her body takes on pounds that have no origin story, no meal they came from, no slow accumulation to explain them. They are simply there, fundamental as bone, and they change the shape of her in ways she will feel for the rest of the fight.',
+    },
+    {
+      when: {},
+      text: 'The transmutation surge strikes true. {subject.name} absorbs it the way stone absorbs a blow — there is a moment of stillness, then the change propagates outward. Mass adds itself to her frame with the calm certainty of a law of physics being revised. Whatever she weighed before, she weighs more now. The difference is immediate and permanent.',
+    },
+  ]);
+
   // ─── C2 FINISHERS — the moment a combatant is sealed/consumed ───
   engine.registerPool('spell.finisher.bury', [
     { when: {}, text: 'You fold the earth up and over her. Bound where she sits and far too vast to dig free, {subject.name} vanishes into shaped stone — sealed, settled, finished.' },

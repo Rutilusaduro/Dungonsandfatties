@@ -60,6 +60,32 @@ export function fillUp(entity, amount) {
   entity.fullness = Math.min(cap, (entity.fullness || 0) + amount);
 }
 
+// ── Fat path ──────────────────────────────────────────────────
+
+// Add permanent weight lbs to entity (fat path).
+export function fattenUp(entity, lbs) {
+  entity.currentWeight = (entity.currentWeight ?? entity.baseWeight) + lbs;
+}
+
+// Returns 0 (no phase), 1 (phase 1 hit ≥50%), or 2 (phase 2 hit ≥100%).
+export function checkFatPhase(entity) {
+  const base = entity.baseWeight ?? 0;
+  if (!base) return 0;
+  const gain = ((entity.currentWeight ?? base) - base) / base;
+  if (gain >= 1.0) return 2;
+  if (gain >= 0.5) return 1;
+  return 0;
+}
+
+// True if fat alone defeats this entity (dungeon enemy, non-boss, ≥50% gain).
+export function isFatDefeated(entity) {
+  if (!entity.isEnemy) return false;
+  if (entity.isBoss || entity.isMiniBoss) return false;
+  const base = entity.baseWeight ?? 0;
+  if (!base) return false;
+  return ((entity.currentWeight ?? base) - base) / base >= 0.50;
+}
+
 // Drain fullness (purge action or per-round decay).
 // amount defaults to full clear (purge action); pass a fraction for decay.
 export function purge(entity, amount) {
@@ -87,6 +113,9 @@ export function checkWinState(entity, opts = {}) {
   const succumbAt = opts.succumbAt ?? WILLINGNESS_SUCCUMB;
 
   if (entity._defeatState) return entity._defeatState; // finisher override (C2)
+
+  if (isFatDefeated(entity))
+    return { state: 'fattened', via: 'fat' };
 
   if (combatMobilityFor(entity) === 'immobile')
     return { state: 'immobilized', via: 'throttle' };
