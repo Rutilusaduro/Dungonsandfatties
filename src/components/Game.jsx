@@ -606,7 +606,11 @@ const Game = () => {
       // Mark any enemies defeated by the player's action.
       const living = combat.livingEnemies().map(c => c.entity);
       for (const e of prev.enemies) {
-        if (!e._dead && !living.includes(e)) { e._dead = true; log.push(`${e.name} is defeated!`); }
+        if (!e._dead && !living.includes(e)) {
+          e._dead = true;
+          e._defeatCondition = checkWinState(e)?.state ?? 'immobilized';
+          log.push(`${e.name} is defeated!`);
+        }
       }
       if (combat.encounterWon()) {
         return { ...prev, round: prev.round + 1, status: 'won', log: log.slice(-10) };
@@ -725,6 +729,10 @@ const Game = () => {
     if (status === 'won') {
       const enemy = enemies[0];
       if (enemy.bossEvent) addEntry(enemy.bossEvent);
+      for (const e of enemies) {
+        const dt = e.defeatText?.[e._defeatCondition];
+        if (dt) addEntry(dt, 'italic');
+      }
 
       // Clear the room (banks loot), drop combat → back to traversal. Award XP last
       // so a level-up modal doesn't race the room transition.
