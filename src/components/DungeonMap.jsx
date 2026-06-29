@@ -123,6 +123,8 @@ function generateRoomLayout(rooms) {
   let yPos = 0;
   let xOffset = 0;
 
+  let minX = 0, maxX = 0, minY = 0, maxY = 0;
+
   while (queue.length > 0) {
     const roomId = queue.shift();
     const room = rooms[roomId];
@@ -140,9 +142,19 @@ function generateRoomLayout(rooms) {
         else if (dir === 'down') childPos = { x: pos.x, y: pos.y + 1 };
         else childPos = { x: pos.x + 1, y: pos.y };
         layout[childId] = childPos;
+        minX = Math.min(minX, childPos.x);
+        maxX = Math.max(maxX, childPos.x);
+        minY = Math.min(minY, childPos.y);
+        maxY = Math.max(maxY, childPos.y);
         queue.push(childId);
       }
     }
+  }
+
+  // Offset to start at (0,0) and fit in view
+  for (const pos of Object.values(layout)) {
+    pos.x -= minX;
+    pos.y -= minY;
   }
 
   return layout;

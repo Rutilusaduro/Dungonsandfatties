@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import DungeonMap from './DungeonMap';
+import SpellCaster from './SpellCaster';
 
-const RightPanel = ({ dungeon, player, knownSpells }) => {
+const RightPanel = ({ dungeon, player, knownSpells, spellLibrary, onCastSpell, currentZone, playerStats, discovery, debugUnlockAll, onToggleDebugSpells }) => {
   const [tab, setTab] = useState('stats'); // stats, weight, spells, equipment
 
   return (
@@ -36,7 +37,20 @@ const RightPanel = ({ dungeon, player, knownSpells }) => {
           <WeightPanel player={player} />
         )}
         {tab === 'spells' && (
-          <SpellsPanel knownSpells={knownSpells} />
+          onCastSpell ? (
+            <SpellCaster
+              spellLibrary={spellLibrary}
+              knownSpells={knownSpells}
+              onCastSpell={onCastSpell}
+              currentZone={currentZone}
+              playerStats={playerStats}
+              discovery={discovery}
+              debugUnlockAll={debugUnlockAll}
+              onToggleDebugSpells={onToggleDebugSpells}
+            />
+          ) : (
+            <SpellsPanel knownSpells={knownSpells} />
+          )
         )}
         {tab === 'equipment' && player && (
           <EquipmentPanel player={player} />
