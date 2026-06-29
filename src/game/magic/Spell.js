@@ -39,7 +39,7 @@ class SpellOption {
 class Spell {
   constructor(name, options = {}) {
     this.name = name;
-    this.level = options.level || 1;
+    this.level = options.level ?? 1;
     this.school = options.school || 'Evocation';
     this.castingTime = options.castingTime || '1 action';
     this.range = options.range || '60 feet';

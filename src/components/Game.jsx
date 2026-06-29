@@ -692,7 +692,7 @@ const Game = () => {
   };
 
   const handleCombatCastSpell = (spell) => {
-    runPlayerTurn(({ player, mod, selEnemy, selEnemyPos, playerPos }) => {
+    runPlayerTurn(({ player, mod, log, selEnemy, selEnemyPos, playerPos }) => {
       if (!selEnemy || !selEnemyPos) return { ok: false, msg: 'No target — pick a foe first.' };
       const range = spellRange(spell);
       if (distance(playerPos, selEnemyPos) > range || !lineOfSight(playerPos, selEnemyPos)) {
@@ -707,7 +707,7 @@ const Game = () => {
       }
       const pct = isCantrip ? 0.10 : cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
       const before = selEnemy.fullness || 0;
-      if (spell.isFatten) {
+      if (spell.isFatten || spell.options?.[0]?.isFatten) {
         // Fatten path: add permanent weight instead of (or in addition to) fullness.
         const lbs = Math.round((FATTEN_PCT[cost] ?? FATTEN_PCT[1]) * (selEnemy.baseWeight ?? 100));
         fattenUp(selEnemy, lbs);
@@ -727,7 +727,7 @@ const Game = () => {
   };
 
   const handleForceFeed = () => {
-    runPlayerTurn(({ player, mod, selEnemy, selEnemyPos, playerPos }) => {
+    runPlayerTurn(({ player, mod, log, selEnemy, selEnemyPos, playerPos }) => {
       if (!selEnemy || !selEnemyPos) return { ok: false, msg: 'No target — pick a foe first.' };
       if (!canReach(playerPos, selEnemyPos, 1)) {
         return { ok: false, msg: `${selEnemy.name} is too far to force-feed. Move adjacent first.` };
@@ -764,6 +764,10 @@ const Game = () => {
     if (status === 'won') {
       const enemy = enemies[0];
       if (enemy.bossEvent) addEntry(enemy.bossEvent);
+      for (const e of enemies) {
+        const dt = e.defeatText?.[e._defeatCondition];
+        if (dt) addEntry(dt, 'italic');
+      }
 
       // Persist per-floor weight gains for enemies that weren't fattened to death.
       setFloorWeights(prev => {
