@@ -103,11 +103,24 @@ export function applyLevelBonus(character) {
   }
 }
 
+const CAPSTONE_LABEL = {
+  Paladin:  'Radiant Providence — slots replenish 1 L3 per rest bonus; +20% feed yield.',
+  Mage:     'Arcane Ascendancy — L3 spells fill 80% stomach; +1 L2 and +1 L3 slot.',
+  Warlock:  "Pact Apotheosis — Willingness drain is permanent; targets can't purge after 3 casts.",
+  Cleric:   'Divine Bounty — Long rest restores 2 extra L2 slots; +25% caloric retention.',
+  Druid:    'Wild Satiation — Force-feed lands as L1 spell equivalent (+20% base).',
+  Bard:     'Song of the Feast — Every spell triggers a 5% bonus gorge on all living enemies.',
+};
+
 /**
  * Pick 3 random spell options for the level-up choice.
  * Excludes spells the character already knows.
  */
 export function levelUpChoices(character, knownSpells) {
+  // Level 20: capstone — present 1 sentinel option, no spell pool
+  if (character.level === 20) {
+    return [`[CAPSTONE] ${CAPSTONE_LABEL[character.class_] || 'Epic mastery ascends.'}`];
+  }
   const pool = (LEVEL_UP_SPELLS[character.class_] || [])
     .filter(name => !knownSpells?.has(name));
   // Fisher-Yates shuffle, take 3

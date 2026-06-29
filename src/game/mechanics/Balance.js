@@ -6,6 +6,14 @@
 // + equipment bonusSlots make slots unbounded and combat math breaks.
 export const SLOT_CAP = { 1: 6, 2: 5, 3: 4 };
 
+// Epic spellcasting boost for high-level players. L3 slots scale at 16 and 19.
+// ponytail: tune the numbers if late floors feel too easy/hard.
+export const EPIC_FILL = {
+  base: 0.50,   // L3 fill % (levels 1-15)
+  tier1: 0.60,  // L3 fill % (levels 16-18)
+  tier2: 0.72,  // L3 fill % (levels 19-20)
+};
+
 // Clamp a {1,2,3} slot map in place to SLOT_CAP. Returns the same object.
 export function clampSlots(slots) {
   for (const lvl of Object.keys(SLOT_CAP)) {
