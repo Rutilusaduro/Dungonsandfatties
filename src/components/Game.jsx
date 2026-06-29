@@ -30,6 +30,7 @@ import { Combat, fillUp, fattenUp, checkFatPhase, isFatDefeated, checkWinState, 
 import { controllerFor } from '../game/combat/EnemyController.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 import { Discovery, idOf } from '../game/discovery/Discovery.js';
+import RightPanel from './RightPanel.jsx';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -935,39 +936,43 @@ const Game = () => {
           )}
         </div>
 
-        <aside style={styles.sidebar}>
-          <div style={styles.panelSection}>
-            {player && <CharacterPanel character={player} />}
-          </div>
+        {dungeon ? (
+          <RightPanel dungeon={dungeon} player={player} knownSpells={knownSpells} />
+        ) : (
+          <aside style={styles.sidebar}>
+            <div style={styles.panelSection}>
+              {player && <CharacterPanel character={player} />}
+            </div>
 
-          <div style={styles.panelSection}>
-            <EquipmentPanel
-              character={player}
-              onEquip={handleEquip}
-              onUnequip={handleUnequip}
-            />
-          </div>
+            <div style={styles.panelSection}>
+              <EquipmentPanel
+                character={player}
+                onEquip={handleEquip}
+                onUnequip={handleUnequip}
+              />
+            </div>
 
-          <div style={styles.panelSection}>
-            <SpellCaster
-              spellLibrary={spellLibrary}
-              knownSpells={knownSpells}
-              availableTargets={availableTargets}
-              onCastSpell={handleCastSpell}
-              currentZone={currentZone}
-              discovery={discovery}
-              playerStats={player ? {
-                currentWeight: player.currentWeight,
-                baseWeight: player.baseWeight,
-                gravity: player.gravity,
-                caloriesEatenToday: player.caloriesEatenToday,
-                conditions: player.conditions?.keys?.() || [],
-                spellSlots: { ...player.spellSlots },
-                maxSpellSlots: { ...player.maxSpellSlots },
-              } : null}
-            />
-          </div>
-        </aside>
+            <div style={styles.panelSection}>
+              <SpellCaster
+                spellLibrary={spellLibrary}
+                knownSpells={knownSpells}
+                availableTargets={availableTargets}
+                onCastSpell={handleCastSpell}
+                currentZone={currentZone}
+                discovery={discovery}
+                playerStats={player ? {
+                  currentWeight: player.currentWeight,
+                  baseWeight: player.baseWeight,
+                  gravity: player.gravity,
+                  caloriesEatenToday: player.caloriesEatenToday,
+                  conditions: player.conditions?.keys?.() || [],
+                  spellSlots: { ...player.spellSlots },
+                  maxSpellSlots: { ...player.maxSpellSlots },
+                } : null}
+              />
+            </div>
+          </aside>
+        )}
       </div>
 
       {selectedNPC && (
