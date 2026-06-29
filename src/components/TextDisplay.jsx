@@ -21,33 +21,30 @@ const TextDisplay = ({ textBuffer }) => {
     }
 
     const getStyle = () => {
-      const baseStyle = { margin: '8px 0', lineHeight: '1.8', color: '#e2ddd6' };
+      const baseStyle = { margin: '14px 0', lineHeight: '1.85', color: '#e2ddd6' };
+      const accent = { paddingLeft: '12px', paddingTop: '5px', paddingBottom: '5px', marginLeft: '4px' };
       switch (type) {
         case 'synergy': return {
-          ...baseStyle,
-          color: '#c8b8e8',
-          fontStyle: 'italic',
-          borderLeft: '2px solid #9a6abf',
-          backgroundColor: '#1e1630',
-          paddingLeft: '10px',
-          paddingTop: '4px',
-          paddingBottom: '4px',
-          marginLeft: '4px',
+          ...baseStyle, ...accent,
+          color: '#c8b8e8', fontStyle: 'italic',
+          borderLeft: '2px solid #9a6abf', backgroundColor: '#1e1630',
         };
-        case 'info':    return { ...baseStyle, fontSize: '14px', color: '#9a9a9a' };
+        case 'italic': return {
+          ...baseStyle,
+          color: '#c8a46a', fontStyle: 'italic',
+        };
+        case 'loot': return {
+          ...baseStyle, ...accent,
+          color: '#c9a227', fontSize: '14px',
+          borderLeft: '2px solid #c9a22766', backgroundColor: '#141008',
+        };
+        case 'info':    return { ...baseStyle, fontSize: '14px', color: '#8a8a8a' };
         case 'bold':    return { ...baseStyle, fontWeight: 'bold' };
-        case 'italic':  return { ...baseStyle, fontStyle: 'italic' };
         case 'color':   return { ...baseStyle, color };
         case 'success': return { ...baseStyle, color: '#4CAF50' };
         case 'error':   return {
-          ...baseStyle,
-          color: '#f44336',
-          borderLeft: '2px solid #c94a4a',
-          backgroundColor: '#1e1010',
-          paddingLeft: '10px',
-          paddingTop: '4px',
-          paddingBottom: '4px',
-          marginLeft: '4px',
+          ...baseStyle, ...accent,
+          color: '#f44336', borderLeft: '2px solid #c94a4a', backgroundColor: '#1e1010',
         };
         case 'warning': return { ...baseStyle, color: '#ff9800' };
         default:        return baseStyle;
@@ -79,8 +76,9 @@ const styles = {
     padding: '0 20px 20px',
   },
   content: {
-    fontSize: '15px',
-    lineHeight: '1.8',
+    fontSize: '16px',
+    lineHeight: '1.85',
+    paddingTop: '16px',
   },
   divider: {
     margin: '18px 0 10px',

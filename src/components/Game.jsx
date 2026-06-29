@@ -511,10 +511,14 @@ const Game = () => {
       ...enemies.map((e, i) => ({ entity: e, initiative: 5, x: FIELD.maxX, y: Math.min(i, FIELD.maxY) })),
     ]);
     const floor = ds.currentFloor;
+    const openingLine = enemies.length === 1 ? enemies[0]?.dialogue?.precombat?.[0] : null;
     setCombatState({
       combat, enemies, round: 1, status: 'active', modifier: floor?.modifier || null,
       selectedEnemyId: enemies[0].id, field: FIELD,
-      log: [enemies.length > 1 ? `${enemies.length} foes block your way!` : `${enemies[0]?.name} blocks your way!`],
+      log: [
+        enemies.length > 1 ? `${enemies.length} foes block your way!` : `${enemies[0]?.name} blocks your way!`,
+        ...(openingLine ? [`"${openingLine}"`] : []),
+      ],
     });
   };
 
@@ -589,7 +593,9 @@ const Game = () => {
       }
     }
 
-    return { ...loc, prompts, discovered };
+    const totalRooms = Object.keys(ds.rooms).length;
+    const clearedRooms = Object.values(ds.rooms).filter(r => r.cleared).length;
+    return { ...loc, prompts, discovered, floorProgress: { cleared: clearedRooms, total: totalRooms } };
   };
 
   const handleDungeonTalkRow = (row) => {
@@ -934,7 +940,7 @@ const Game = () => {
       const player = gameState.getPlayer();
       items.forEach(item => player.inventory.push(item));
       addEntry(`— ${enemy.name} defeated —`, 'divider');
-      if (items.length) addEntry(`Loot: ${items.map(i => i.name).join(', ')}.`, 'info');
+      if (items.length) addEntry(`Loot: ${items.map(i => i.name).join(', ')}.`, 'loot');
       addEntry(dungeon.canDescend || dungeon.currentRoom?.contents?.isGate
         ? 'The way deeper is clear.'
         : 'The room falls quiet. You may move on.');
