@@ -936,43 +936,7 @@ const Game = () => {
           )}
         </div>
 
-        {dungeon ? (
-          <RightPanel dungeon={dungeon} player={player} knownSpells={knownSpells} />
-        ) : (
-          <aside style={styles.sidebar}>
-            <div style={styles.panelSection}>
-              {player && <CharacterPanel character={player} />}
-            </div>
-
-            <div style={styles.panelSection}>
-              <EquipmentPanel
-                character={player}
-                onEquip={handleEquip}
-                onUnequip={handleUnequip}
-              />
-            </div>
-
-            <div style={styles.panelSection}>
-              <SpellCaster
-                spellLibrary={spellLibrary}
-                knownSpells={knownSpells}
-                availableTargets={availableTargets}
-                onCastSpell={handleCastSpell}
-                currentZone={currentZone}
-                discovery={discovery}
-                playerStats={player ? {
-                  currentWeight: player.currentWeight,
-                  baseWeight: player.baseWeight,
-                  gravity: player.gravity,
-                  caloriesEatenToday: player.caloriesEatenToday,
-                  conditions: player.conditions?.keys?.() || [],
-                  spellSlots: { ...player.spellSlots },
-                  maxSpellSlots: { ...player.maxSpellSlots },
-                } : null}
-              />
-            </div>
-          </aside>
-        )}
+        <RightPanel dungeon={dungeon} player={player} knownSpells={knownSpells} />
       </div>
 
       {selectedNPC && (

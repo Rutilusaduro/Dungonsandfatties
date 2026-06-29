@@ -6,9 +6,12 @@ const RightPanel = ({ dungeon, player, knownSpells }) => {
 
   return (
     <div style={s.panel}>
-      {/* Map */}
+      {/* Map — dungeon only */}
       {dungeon && (
-        <DungeonMap dungeon={dungeon} playerRoomId={dungeon.currentRoomId} />
+        <>
+          <DungeonMap dungeon={dungeon} playerRoomId={dungeon.currentRoomId} />
+          <div style={s.divider} />
+        </>
       )}
 
       {/* Menu tabs */}
@@ -135,6 +138,7 @@ const EquipmentPanel = ({ player }) => {
 
 const s = {
   panel: { display: 'flex', flexDirection: 'column', gap: '0', flex: '0 0 240px', background: '#0d0d0d', borderLeft: '1px solid #2a2a2a', overflowY: 'auto', maxHeight: '100vh' },
+  divider: { height: '1px', background: '#2a2a2a', margin: '0' },
   tabs: { display: 'flex', gap: '0', borderTop: '1px solid #2a2a2a', borderBottom: '1px solid #2a2a2a', flexWrap: 'wrap' },
   tab: { flex: '1 1 50%', padding: '8px 6px', background: 'none', border: 'none', color: '#8a8a8a', fontSize: '0.7rem', textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.06em', borderRight: '1px solid #2a2a2a', borderBottom: '1px solid #2a2a2a' },
   tabActive: { color: '#c9a227', background: '#1a1410', borderBottomColor: '#c9a227' },
