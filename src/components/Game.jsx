@@ -597,130 +597,144 @@ const Game = () => {
   // acts (you-then-all-enemies), then drain + win checks. `mutate(ctx)` returns
   // { ok, msg }: if ok is false the turn is aborted (no enemy turn, no round
   // spent) so a misjudged reach just costs a message, not the round.
+  // Split into two state updates for visual bar animation: player action first,
+  // then enemy turn (so bar fills visibly, then drains visibly).
   const runPlayerTurn = (mutate) => {
     setCombatState(prev => {
       if (!prev || prev.status !== 'active') return prev;
       try {
-        return runPlayerTurnImpl(prev, mutate);
+        return runPlayerActionPhase(prev, mutate);
       } catch (err) {
         console.error('Combat action failed:', err);
         return { ...prev, log: [...prev.log, `That action misfired (${err.message}).`].slice(-10) };
       }
     });
+    // Schedule enemy phase for next update (after this one renders).
+    setTimeout(() => {
+      setCombatState(prev => {
+        if (!prev || prev.status !== 'active') return prev;
+        return runEnemyPhase(prev);
+      });
+    }, 0);
   };
 
-  const runPlayerTurnImpl = (prev, mutate) => {
-    {
-      const player = gameState.getPlayer();
-      if (!player) return prev;
-      const { combat } = prev;
-      const mod = prev.modifier || {};
-      const log = [...prev.log];
-      const playerPos = combat.playerCombatant();
-      const selEnemyC = combat.combatants.find(c => c.entity.id === prev.selectedEnemyId && c.entity.isEnemy);
+  const runPlayerActionPhase = (prev, mutate) => {
+    const player = gameState.getPlayer();
+    if (!player) return prev;
+    const { combat } = prev;
+    const mod = prev.modifier || {};
+    const log = [...prev.log];
+    const playerPos = combat.playerCombatant();
+    const selEnemyC = combat.combatants.find(c => c.entity.id === prev.selectedEnemyId && c.entity.isEnemy);
 
-      const res = mutate({ player, combat, mod, log, playerPos, selEnemy: selEnemyC?.entity, selEnemyPos: selEnemyC });
-      if (res?.msg) log.push(res.msg);
-      if (res && res.ok === false) {
-        return { ...prev, log: log.slice(-10) }; // aborted — no turn spent
-      }
-
-      // Legendary resistance: boss shakes off near-defeat once.
-      if (selEnemyC && (selEnemyC.entity.legendaryResists ?? 0) > 0) {
-        const ws = checkWinState(selEnemyC.entity);
-        if (ws) {
-          selEnemyC.entity.legendaryResists -= 1;
-          // Partial purge: shakes off to 40% full
-          selEnemyC.entity.fullness = (selEnemyC.entity.stomachCapacity || 0) * 0.40;
-          log.push(`${selEnemyC.entity.name} resists — legendary endurance flares. Not yet.`);
-          // Don't proceed to win check this round
-          let sel = prev.selectedEnemyId;
-          if (!combat.livingEnemies().some(c => c.entity.id === sel)) sel = combat.livingEnemies()[0]?.entity.id ?? null;
-          return { ...prev, round: prev.round + 1, selectedEnemyId: sel, log: log.slice(-10) };
-        }
-      }
-
-      // Mark any enemies defeated by the player's action.
-      const living = combat.livingEnemies().map(c => c.entity);
-      for (const e of prev.enemies) {
-        if (!e._dead && !living.includes(e)) {
-          e._dead = true;
-          e._defeatCondition = checkWinState(e)?.state ?? 'immobilized';
-          log.push(`${e.name} is defeated!`);
-          const dt = e.defeatText?.[e._defeatCondition];
-          if (dt) log.push(dt);
-        }
-      }
-
-      // Boss phase check — fire phase transitions for living enemies that crossed a fat threshold.
-      for (const e of prev.enemies) {
-        if (e._dead) continue;
-        const phase = checkFatPhase(e);
-        if (phase > 0) {
-          const prevPhase = bossPhaseRef.current[e.id] ?? 0;
-          if (phase > prevPhase) {
-            bossPhaseRef.current[e.id] = phase;
-            const phaseEntry = e.phases?.[phase - 1]; // phases is 0-indexed; phase1=index0
-            if (phaseEntry?.text) log.push(phaseEntry.text);
-            if (phaseEntry?.aiShift) e._trait = phaseEntry.aiShift;
-          }
-        }
-      }
-
-      if (combat.encounterWon()) {
-        // Check fat phase gate for bosses — can't be immobilized/succumbed until fat threshold met.
-        const unmetGate = combat.livingEnemies().find(ec => {
-          const req = ec.entity.requiresFatPhase ?? 0;
-          if (!req) return false;
-          return (bossPhaseRef.current[ec.entity.id] ?? 0) < req;
-        });
-        if (unmetGate) {
-          log.push(`${unmetGate.entity.name} shrugs off the finisher — she must be fattened further first.`);
-          // Restore the enemy so the encounter continues.
-          unmetGate.entity._dead = false;
-          unmetGate.entity._defeatState = undefined;
-        } else {
-          return { ...prev, round: prev.round + 1, status: 'won', log: log.slice(-10) };
-        }
-      }
-
-      // Enemy turns: each living foe acts on the player.
-      for (const ec of combat.livingEnemies()) {
-        const self = ec.entity;
-        const playerBefore = player.fullness || 0;
-        const selfBefore = self.fullness || 0;
-        const ctrl = controllerFor(self._trait);
-        ctrl({ self, opponent: player, selfPos: ec, oppPos: playerPos, actions: actionsAvailable(self), combat, field: prev.field || FIELD });
-        if (mod.willDrift) self.willingness = Math.min(100, (self.willingness ?? 50) + mod.willDrift);
-        const playerFed = Math.round((player.fullness || 0) - playerBefore);
-        const selfFull = self.fullness || 0;
-        if (selfFull < selfBefore) log.push(`${self.name} sheds the filling — the weight slides off her.`);
-        else if (selfFull > selfBefore) log.push(`${self.name} gorges hungrily.`);
-        if (playerFed > 0) log.push(`${self.name} forces a mouthful on you.`);
-        else if (selfFull === selfBefore && playerFed === 0) log.push(`${self.name} repositions.`);
-      }
-
-      // Per-round fullness drain for everyone (biome drainScale scales it).
-      const drainScale = mod.drainScale ?? 1;
-      for (const c of combat.combatants) {
-        const resist = (c.entity === player) ? (1 - (player.drainResistFactor || 0) / 100) : 1;
-        const rate = (c.entity === player)
-          ? 0.1 * drainScale * resist
-          : 0.1 * (1 - player.feedClingFactor) * drainScale;
-        const cap = c.entity.stomachCapacity || 0;
-        if (cap) c.entity.fullness = Math.max(0, (c.entity.fullness || 0) - cap * rate);
-      }
-
-      if (checkWinState(player)) {
-        log.push('You collapse, too stuffed to fight on!');
-        return { ...prev, round: prev.round + 1, status: 'lost', log: log.slice(-10) };
-      }
-
-      // Keep the selected target valid (jump to a living foe if the old one fell).
-      let sel = prev.selectedEnemyId;
-      if (!combat.livingEnemies().some(c => c.entity.id === sel)) sel = combat.livingEnemies()[0]?.entity.id ?? null;
-      return { ...prev, round: prev.round + 1, selectedEnemyId: sel, log: log.slice(-10) };
+    const res = mutate({ player, combat, mod, log, playerPos, selEnemy: selEnemyC?.entity, selEnemyPos: selEnemyC });
+    if (res?.msg) log.push(res.msg);
+    if (res && res.ok === false) {
+      return { ...prev, log: log.slice(-10) };
     }
+
+    // Legendary resistance: boss shakes off near-defeat once.
+    if (selEnemyC && (selEnemyC.entity.legendaryResists ?? 0) > 0) {
+      const ws = checkWinState(selEnemyC.entity);
+      if (ws) {
+        selEnemyC.entity.legendaryResists -= 1;
+        selEnemyC.entity.fullness = (selEnemyC.entity.stomachCapacity || 0) * 0.40;
+        log.push(`${selEnemyC.entity.name} resists — legendary endurance flares. Not yet.`);
+        let sel = prev.selectedEnemyId;
+        if (!combat.livingEnemies().some(c => c.entity.id === sel)) sel = combat.livingEnemies()[0]?.entity.id ?? null;
+        return { ...prev, round: prev.round + 1, selectedEnemyId: sel, log: log.slice(-10) };
+      }
+    }
+
+    // Mark any enemies defeated by the player's action.
+    const living = combat.livingEnemies().map(c => c.entity);
+    for (const e of prev.enemies) {
+      if (!e._dead && !living.includes(e)) {
+        e._dead = true;
+        e._defeatCondition = checkWinState(e)?.state ?? 'immobilized';
+        log.push(`${e.name} is defeated!`);
+        const dt = e.defeatText?.[e._defeatCondition];
+        if (dt) log.push(dt);
+      }
+    }
+
+    // Boss phase check.
+    for (const e of prev.enemies) {
+      if (e._dead) continue;
+      const phase = checkFatPhase(e);
+      if (phase > 0) {
+        const prevPhase = bossPhaseRef.current[e.id] ?? 0;
+        if (phase > prevPhase) {
+          bossPhaseRef.current[e.id] = phase;
+          const phaseEntry = e.phases?.[phase - 1];
+          if (phaseEntry?.text) log.push(phaseEntry.text);
+          if (phaseEntry?.aiShift) e._trait = phaseEntry.aiShift;
+        }
+      }
+    }
+
+    if (combat.encounterWon()) {
+      const unmetGate = combat.livingEnemies().find(ec => {
+        const req = ec.entity.requiresFatPhase ?? 0;
+        if (!req) return false;
+        return (bossPhaseRef.current[ec.entity.id] ?? 0) < req;
+      });
+      if (unmetGate) {
+        log.push(`${unmetGate.entity.name} shrugs off the finisher — she must be fattened further first.`);
+        unmetGate.entity._dead = false;
+        unmetGate.entity._defeatState = undefined;
+      } else {
+        return { ...prev, status: 'won', log: log.slice(-10) };
+      }
+    }
+
+    return { ...prev, log: log.slice(-10) };
+  };
+
+  const runEnemyPhase = (prev) => {
+    const player = gameState.getPlayer();
+    if (!player) return prev;
+    const { combat } = prev;
+    const mod = prev.modifier || {};
+    const log = [...prev.log];
+    const playerPos = combat.playerCombatant();
+
+    // Enemy turns: each living foe acts on the player.
+    for (const ec of combat.livingEnemies()) {
+      const self = ec.entity;
+      const playerBefore = player.fullness || 0;
+      const selfBefore = self.fullness || 0;
+      const ctrl = controllerFor(self._trait);
+      ctrl({ self, opponent: player, selfPos: ec, oppPos: playerPos, actions: actionsAvailable(self), combat, field: prev.field || FIELD });
+      const mod2 = prev.modifier || {};
+      if (mod2.willDrift) self.willingness = Math.min(100, (self.willingness ?? 50) + mod2.willDrift);
+      const playerFed = Math.round((player.fullness || 0) - playerBefore);
+      const selfFull = self.fullness || 0;
+      if (selfFull < selfBefore) log.push(`${self.name} sheds the filling — the weight slides off her.`);
+      else if (selfFull > selfBefore) log.push(`${self.name} gorges hungrily.`);
+      if (playerFed > 0) log.push(`${self.name} forces a mouthful on you.`);
+      else if (selfFull === selfBefore && playerFed === 0) log.push(`${self.name} repositions.`);
+    }
+
+    // Per-round fullness drain.
+    const drainScale = mod.drainScale ?? 1;
+    for (const c of combat.combatants) {
+      const resist = (c.entity === player) ? (1 - (player.drainResistFactor || 0) / 100) : 1;
+      const rate = (c.entity === player)
+        ? 0.1 * drainScale * resist
+        : 0.1 * (1 - player.feedClingFactor) * drainScale;
+      const cap = c.entity.stomachCapacity || 0;
+      if (cap) c.entity.fullness = Math.max(0, (c.entity.fullness || 0) - cap * rate);
+    }
+
+    if (checkWinState(player)) {
+      log.push('You collapse, too stuffed to fight on!');
+      return { ...prev, round: prev.round + 1, status: 'lost', log: log.slice(-10) };
+    }
+
+    let sel = prev.selectedEnemyId;
+    if (!combat.livingEnemies().some(c => c.entity.id === sel)) sel = combat.livingEnemies()[0]?.entity.id ?? null;
+    return { ...prev, round: prev.round + 1, selectedEnemyId: sel, log: log.slice(-10) };
   };
 
   // Spell reach: ranged with a per-spell range (cells) + line of sight. Generous
