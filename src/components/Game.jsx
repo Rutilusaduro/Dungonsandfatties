@@ -99,6 +99,7 @@ const Game = () => {
   const bossPhaseRef = useRef({}); // enemyId → highestPhaseReached (ref so it's accessible inside functional updaters)
   const [savedRunExists] = useState(() => hasSave());
   const [debugInfiniteSlots, setDebugInfiniteSlots] = useState(false);
+  const [debugUnlockAllSpells, setDebugUnlockAllSpells] = useState(false);
   const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
   const [discoveryTick, setDiscoveryTick] = useState(0); // bump to force re-render after reveal
 
@@ -937,6 +938,18 @@ const Game = () => {
         </div>
 
         <RightPanel dungeon={dungeon} player={player} knownSpells={knownSpells} />
+        {!dungeon && !combatState && (
+          <SpellCaster
+            spellLibrary={spellLibrary}
+            knownSpells={knownSpells}
+            onCastSpell={handleCastSpell}
+            currentZone={currentZone}
+            playerStats={{ spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
+            discovery={discovery}
+            debugUnlockAll={debugUnlockAllSpells}
+            onToggleDebugSpells={() => setDebugUnlockAllSpells(v => !v)}
+          />
+        )}
       </div>
 
       {selectedNPC && (

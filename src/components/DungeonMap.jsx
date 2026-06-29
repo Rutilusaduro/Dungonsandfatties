@@ -20,11 +20,10 @@ const DungeonMap = ({ dungeon, playerRoomId }) => {
         {/* Edges */}
         {Object.entries(rooms).map(([roomId, room]) => {
           const from = layout[roomId];
-          if (!from) return null;
+          if (!from || !room.discovered) return null;
           return Object.entries(room.exits).map(([dir, toId]) => {
             const to = layout[toId];
-            if (!to) return null;
-            const discovered = room.discovered && rooms[toId]?.discovered;
+            if (!to || !rooms[toId]?.discovered) return null;
             return (
               <line
                 key={`edge_${roomId}_${toId}`}
@@ -32,7 +31,7 @@ const DungeonMap = ({ dungeon, playerRoomId }) => {
                 y1={from.y * cellSize + cellSize / 2}
                 x2={to.x * cellSize + cellSize / 2}
                 y2={to.y * cellSize + cellSize / 2}
-                stroke={discovered ? '#4a7a4a' : '#2a3a2a'}
+                stroke="#4a7a4a"
                 strokeWidth={1}
               />
             );
@@ -46,11 +45,13 @@ const DungeonMap = ({ dungeon, playerRoomId }) => {
 
           const isPlayer = roomId === playerRoomId;
           const discovered = room.discovered;
+          if (!discovered && !isPlayer) return null;
+
           const isEntry = roomId === dungeon.entryId;
           const isStairs = room.contents?.kind === 'stairs';
 
-          const fill = !discovered ? '#1a1a1a' : isStairs ? '#8b5cf6' : isEntry ? '#6b4a9a' : isPlayer ? '#c9a227' : '#2a3a2a';
-          const stroke = isPlayer ? '#e8d4a0' : discovered ? '#4a7a4a' : '#1a2a1a';
+          const fill = isStairs ? '#8b5cf6' : isEntry ? '#6b4a9a' : isPlayer ? '#c9a227' : '#2a3a2a';
+          const stroke = isPlayer ? '#e8d4a0' : '#4a7a4a';
 
           return (
             <g key={`room_${roomId}`}>
@@ -127,14 +128,19 @@ function generateRoomLayout(rooms) {
     const room = rooms[roomId];
     const pos = layout[roomId];
 
-    let childX = pos.x;
     for (const [dir, childId] of Object.entries(room.exits || {})) {
       if (!visited.has(childId)) {
         visited.add(childId);
-        const childPos = dir === 'down' ? { x: pos.x, y: pos.y + 1 } : { x: childX, y: pos.y + 1 };
+        let childPos;
+        if (dir === 'north') childPos = { x: pos.x, y: pos.y - 1 };
+        else if (dir === 'south') childPos = { x: pos.x, y: pos.y + 1 };
+        else if (dir === 'west') childPos = { x: pos.x - 1, y: pos.y };
+        else if (dir === 'east') childPos = { x: pos.x + 1, y: pos.y };
+        else if (dir === 'up') childPos = { x: pos.x, y: pos.y - 1 };
+        else if (dir === 'down') childPos = { x: pos.x, y: pos.y + 1 };
+        else childPos = { x: pos.x + 1, y: pos.y };
         layout[childId] = childPos;
         queue.push(childId);
-        childX = childPos.x + 1;
       }
     }
   }

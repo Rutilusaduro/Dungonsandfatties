@@ -16,7 +16,7 @@ const SCHOOL_COLORS = {
 const LEVEL_COLORS = { 1: '#9a9a9a', 2: '#5fa45f', 3: '#c9a227' };
 const levelColor = (lvl) => LEVEL_COLORS[lvl] || '#c94a4a';
 
-const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, playerStats, discovery }) => {
+const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, playerStats, discovery, debugUnlockAll, onToggleDebugSpells }) => {
   // Fog-of-war: only things you've "looked around" and seen are targetable.
   const seen = (entity) => !discovery || !currentZone || discovery.has(currentZone.id, idOf(entity));
   const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'you'
@@ -29,7 +29,7 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
   const [selectedSchool, setSelectedSchool] = useState(null);
 
   const spells = (spellLibrary ? spellLibrary.getAllSpells() : [])
-    .filter(s => !knownSpells || knownSpells.has(s.name));
+    .filter(s => debugUnlockAll || !knownSpells || knownSpells.has(s.name));
 
   // School filtering
   const schools = [...new Set(spells.map(s => s.school))];
@@ -193,6 +193,26 @@ const SpellCaster = ({ spellLibrary, knownSpells, onCastSpell, currentZone, play
           You
         </button>
       </div>
+
+      {onToggleDebugSpells && (
+        <button
+          onClick={onToggleDebugSpells}
+          style={{
+            width: '100%',
+            padding: '4px 8px',
+            background: debugUnlockAll ? '#c9a227' : '#3a2a1a',
+            color: debugUnlockAll ? '#000' : '#8a8a8a',
+            border: '1px solid #2a2a2a',
+            fontSize: '0.7rem',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginTop: '4px',
+          }}
+        >
+          {debugUnlockAll ? '✔ All Spells' : 'Unlock All'}
+        </button>
+      )}
 
       {/* Spell Slot Bar */}
       {playerStats?.spellSlots && (
