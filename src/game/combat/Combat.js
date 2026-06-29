@@ -49,6 +49,8 @@ export function combatMobilityFor(entity) {
 }
 
 export function actionsAvailable(entity) {
+  // Check if restrained/asleep — 0 actions allowed
+  if (entity.conditions?.has('restrained') || entity.conditions?.has('asleep')) return 0;
   return ACTIONS_BY_MOBILITY[combatMobilityFor(entity)] ?? 0;
 }
 

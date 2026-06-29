@@ -28,6 +28,7 @@ import CombatScreen from './CombatScreen';
 import { DungeonState } from '../game/dungeon/DungeonState.js';
 import { Combat, fillUp, fattenUp, checkFatPhase, isFatDefeated, checkWinState, actionsAvailable, canReach, lineOfSight, move as moveCombatant, distance } from '../game/combat/Combat.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
+import { narrativeFor } from '../game/combat/SpellNarrative.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 import { Discovery, idOf } from '../game/discovery/Discovery.js';
 import RightPanel from './RightPanel.jsx';
@@ -772,10 +773,11 @@ const Game = () => {
       const l3Pct = player.level >= 19 ? EPIC_FILL.tier2 : player.level >= 16 ? EPIC_FILL.tier1 : EPIC_FILL.base;
       const pct = isCantrip ? 0.10 : cost === 1 ? 0.20 : cost === 2 ? 0.35 : l3Pct;
       const before = selEnemy.fullness || 0;
+      const narrative = narrativeFor(spell, player, selEnemy);
       if (spell.isFatten || spell.options?.[0]?.isFatten) {
         const lbs = Math.round((FATTEN_PCT[cost] ?? FATTEN_PCT[1]) * (selEnemy.baseWeight ?? 100));
         fattenUp(selEnemy, lbs);
-        log.push(`You cast ${spell.name} on ${selEnemy.name}. She puts on ${lbs} lbs.`);
+        log.push(narrative);
         if (isFatDefeated(selEnemy)) {
           selEnemy._dead = true;
           selEnemy._defeatCondition = 'fattened';
@@ -785,7 +787,7 @@ const Game = () => {
         const fillAmt = pct * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1);
         const isCritSpell = Math.random() * 100 < (player.critFeedChance || 0);
         fillUp(selEnemy, isCritSpell ? fillAmt * 2 : fillAmt);
-        log.push(`You cast ${spell.name} on ${selEnemy.name}.`);
+        log.push(narrative);
         if (isCritSpell) log.push(`Critical spellcast — ${spell.name} doubles!`);
         if (cost === 3 && player.level >= 16) log.push(`Epic spellcraft — ${spell.name} surges.`);
         narrateFatten(selEnemy, before, log);
