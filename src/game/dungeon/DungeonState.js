@@ -4,9 +4,10 @@
 // gates the stairs -> stairs down. Biome modifiers (the anti-monotony lever)
 // ride on the floor and are read in Game.jsx combat.
 
-import { makeEnemy } from './Enemies.js';
+import { makeEnemy, ENEMY_BY_NAME } from './Enemies.js';
 import { ITEMS, FLOOR_LOOT, itemByKey } from '../items/Equipment.js';
 import { generateFloor } from './RoomGraph.js';
+import { makeReturnLedger, recordDefeat, dueReturns } from './ReturnLedger.js';
 
 // Biome modifiers. null = vanilla. Each non-null field is read in combat:
 //   drainScale  — multiplies per-round fullness drain (rich air keeps fights long)
@@ -53,17 +54,32 @@ export class DungeonState {
     this.floorIndex = 0;
     this.completed  = false;
     this.lootPile   = []; // items banked but not yet picked up
+    this.returns    = makeReturnLedger();  // recurring-foe arc, keyed by name
+    this.injectedReturns = {};             // frozen per-floor snapshot of returns due
     this._loadFloor(0);
   }
 
   _loadFloor(idx) {
-    const { rooms, entryId, stairsId } = generateFloor(idx, this.seed);
+    // Freeze which returns surface on this floor the first time we enter it, so
+    // resume (which regenerates rooms from seed) reproduces the same layout.
+    if (!this.injectedReturns[idx]) this.injectedReturns[idx] = dueReturns(this.returns, idx);
+    const { rooms, entryId, stairsId } = generateFloor(idx, this.seed, this.injectedReturns[idx]);
     this.rooms        = rooms;
     this.entryId      = entryId;
     this.stairsId     = stairsId;
     this.currentRoomId = entryId;
     rooms[entryId].discovered = true;
   }
+
+  // Record an encounter defeat into the recurring-foe ledger. Only foes flagged
+  // canReturn, beaten by immobilized/fattened, re-arm a heavier return.
+  recordEncounterDefeat(name, defeatVia) {
+    const canReturn = !!ENEMY_BY_NAME[name]?.canReturn;
+    recordDefeat(this.returns, name, defeatVia, this.floorIndex, canReturn);
+  }
+
+  // Returns due to first surface on the current floor (for a herald line).
+  pendingReturns() { return this.injectedReturns[this.floorIndex] || []; }
 
   get currentFloor() { return FLOOR_META[this.floorIndex] || null; }
   get currentRoom()  { return this.rooms[this.currentRoomId] || null; }
@@ -137,6 +153,8 @@ export class DungeonState {
       currentRoomId: this.currentRoomId,
       completed:     this.completed,
       lootPile:      this.lootPile.map(it => it.key).filter(Boolean),
+      returns:       this.returns,
+      injectedReturns: this.injectedReturns,
       roomFlags,
     };
   }
@@ -144,6 +162,10 @@ export class DungeonState {
   static hydrate(data = {}) {
     const ds = new DungeonState(data.seed ?? randSeed());
     ds.floorIndex = data.floorIndex ?? 0;
+    // Restore the ledger + frozen snapshots BEFORE regenerating the floor so the
+    // injected return rooms come back identically.
+    ds.returns = data.returns ?? makeReturnLedger();
+    ds.injectedReturns = data.injectedReturns ?? {};
     ds._loadFloor(ds.floorIndex); // regenerate this floor from the seed
     if (data.currentRoomId && ds.rooms[data.currentRoomId]) ds.currentRoomId = data.currentRoomId;
     for (const [id, f] of Object.entries(data.roomFlags || {})) {

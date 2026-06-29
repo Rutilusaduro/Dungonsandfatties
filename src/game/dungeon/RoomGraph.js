@@ -25,8 +25,10 @@ function link(rooms, aId, dir, bId) {
   rooms[bId].exits[OPP[dir]] = aId;
 }
 
-// generateFloor(floorIndex, seed) -> { rooms: {id->Room}, entryId, stairsId }
-export function generateFloor(floorIndex, seed = 1) {
+// generateFloor(floorIndex, seed, returns) -> { rooms, entryId, stairsId }
+// `returns` is a frozen snapshot of recurring foes due on this floor:
+//   [ { name, stage } ] — each becomes a branch combat room off the corridor.
+export function generateFloor(floorIndex, seed = 1, returns = []) {
   const floorNum = floorIndex + 1;
   const enemyDefs = ENEMIES[`FLOOR${floorNum}_ENEMIES`] || [];
   const lootKeys = FLOOR_LOOT[floorNum] || [];
@@ -73,6 +75,23 @@ export function generateFloor(floorIndex, seed = 1) {
     link(rooms, host, dir, lootId);
   }
 
+  // Recurring foes, returned fatter: one branch combat room each, hung off a
+  // random non-gate corridor room on whichever side is free.
+  returns.forEach((r, i) => {
+    const srcDef = ENEMIES.ENEMY_BY_NAME?.[r.name];
+    if (!srcDef) return;
+    const retDef = ENEMIES.buildReturnDef(srcDef, r.stage);
+    if (!retDef) return;
+    // Only hosts with a free north/south can take a branch (don't clobber loot).
+    const free = corridor.slice(0, -1).filter(id => !rooms[id].exits.north || !rooms[id].exits.south);
+    if (!free.length) return;
+    const host = free[Math.floor(rand() * free.length)];
+    const dir = !rooms[host].exits.north ? 'north' : 'south';
+    const retId = `${prefix}_ret${i}`;
+    mk(retId, { kind: 'combat', enemyDefs: [retDef], isReturn: true });
+    link(rooms, host, dir, retId);
+  });
+
   return { rooms, entryId: `${prefix}_entry`, stairsId };
 }
 
@@ -95,7 +114,7 @@ if (typeof process !== 'undefined' && process.argv?.[1] && import.meta.url === `
     for (const seed of [1, 7, 42, 999]) {
       const { rooms, entryId, stairsId } = generateFloor(f, seed);
       const ids = Object.keys(rooms);
-      console.assert(ids.length >= 4 && ids.length <= 6, `floor ${f + 1} seed ${seed}: ${ids.length} rooms (want 4-6)`);
+      console.assert(ids.length >= 4 && ids.length <= 8, `floor ${f + 1} seed ${seed}: ${ids.length} rooms (want 4-8)`);
       const reach = reachableFrom(rooms, entryId);
       console.assert(reach.has(stairsId), `floor ${f + 1} seed ${seed}: stairs unreachable`);
       // Gate is on every path to stairs: stairs' only neighbour is the gate room.

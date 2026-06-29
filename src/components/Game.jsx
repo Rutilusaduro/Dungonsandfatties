@@ -643,6 +643,9 @@ const Game = () => {
       } else {
         addEntry(`— ${dungeon.currentFloor?.name} —`, 'divider');
         addEntry(dungeon.currentFloor?.description || 'You descend deeper.');
+        if (dungeon.pendingReturns().length) {
+          addEntry('Something you left behind on a floor above has been waiting down here — and it has not gone hungry in the meantime.', 'italic');
+        }
         setFloorWeights(new Map()); // new floor — weight persistence resets
         bossPhaseRef.current = {};
         setDungeonTick(t => t + 1);
@@ -918,6 +921,11 @@ const Game = () => {
     if (status === 'won') {
       const enemy = enemies[0];
       if (enemy.bossEvent) addEntry(enemy.bossEvent);
+
+      // Recurring foes: log this defeat so they can return fatter deeper down.
+      for (const e of enemies) {
+        if (e._dead && e._defeatCondition) dungeon.recordEncounterDefeat(e.name, e._defeatCondition);
+      }
 
       // Persist per-floor weight gains for enemies that weren't fattened to death.
       setFloorWeights(prev => {

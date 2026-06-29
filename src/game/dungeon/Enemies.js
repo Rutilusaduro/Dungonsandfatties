@@ -35,6 +35,8 @@ export function makeEnemy(def) {
     isBoss:          def.isBoss ?? false,
     isMiniBoss:      def.isMiniBoss ?? def.isMiniBosse ?? false,
     legendaryResists: def.legendaryResists ?? 0,
+    canReturn:       def.canReturn ?? false,
+    _returnStage:    def._returnStage ?? 0,
     dialogue:         def.dialogue ?? null,
     _dialogueIndex:   0,
     _postcombatTalked: false,
@@ -44,12 +46,51 @@ export function makeEnemy(def) {
   };
 }
 
+// ── Recurring foes ────────────────────────────────────────────
+// A foe with `canReturn: true` comes back fatter after being immobilized or
+// fattened (see ReturnLedger). buildReturnDef stamps a heavier instance for a
+// given return stage (1-4). Stage rides on a bigger BASE weight — not pre-loaded
+// fullness — so the fat-defeat threshold doesn't insta-resolve the new fight.
+
+const RETURN_SCALE = { 1: 1.6, 2: 2.2, 3: 3.0, 4: 4.0 };
+
+// Diegetic fallback descriptions when a stage has no authored `returns` text.
+const RETURN_FLAVOR = {
+  1: 'softer and slower than you left her, and in no hurry to fix it',
+  2: 'gone thick and heavy since you last put her down',
+  3: 'vast now, every step a slow argument with her own weight',
+  4: 'enormous, barely able to shift, and still somehow in your way',
+};
+
+// Build a heavier instance of a recurring foe for a return stage (1-4).
+// Pulls stage-specific text from def.returns[stage] when present; otherwise
+// reuses the source's barks and defeat lines with a scaled description.
+export function buildReturnDef(def, stage) {
+  if (!def) return null;
+  const mult = RETURN_SCALE[stage] ?? RETURN_SCALE[1];
+  const ret = def.returns?.[stage] || {};
+  const newBase = Math.round(def.baseWeight * mult);
+  return {
+    ...def,
+    baseWeight:      newBase,
+    currentWeight:   newBase,
+    stomachCapacity: Math.round((def.stomachCapacity ?? def.baseWeight * 0.8) * mult),
+    xpValue:         Math.round((def.xpValue ?? 100) * (1 + stage * 0.5)),
+    description:     ret.description || `${def.name}, back again — ${RETURN_FLAVOR[stage] || RETURN_FLAVOR[1]}.`,
+    dialogue:        ret.dialogue || def.dialogue,
+    defeatText:      ret.defeatText || def.defeatText,
+    canReturn:       true,
+    _returnStage:    stage,
+  };
+}
+
 // ── Floor 1 — The Pantry ──────────────────────────────────────
 
 export const FLOOR1_ENEMIES = [
   {
     name: 'Kitchen Imp',
     archetype: 'flyer',
+    canReturn: true,
     baseWeight: 80,
     stomachCapacity: 90,
     willingness: 45,
@@ -80,6 +121,7 @@ export const FLOOR1_ENEMIES = [
   {
     name: 'Pantry Goblin',
     archetype: 'brute',
+    canReturn: true,
     baseWeight: 140,
     stomachCapacity: 200,
     willingness: 55,
@@ -156,6 +198,7 @@ export const FLOOR2_ENEMIES = [
   {
     name: 'Banquet Specter',
     archetype: 'glutton',
+    canReturn: true,
     baseWeight: 160,
     stomachCapacity: 350,
     willingness: 80,
@@ -186,6 +229,7 @@ export const FLOOR2_ENEMIES = [
   {
     name: 'Oven Imp',
     archetype: 'flyer',
+    canReturn: true,
     baseWeight: 90,
     stomachCapacity: 100,
     willingness: 40,
@@ -1245,3 +1289,13 @@ export const FLOOR12_ENEMIES = [
     },
   },
 ];
+
+// Name → source def, across all floors. buildReturnDef / RoomGraph resolve a
+// recurring foe's return from its name + stage.
+export const ENEMY_BY_NAME = Object.fromEntries(
+  [
+    ...FLOOR1_ENEMIES, ...FLOOR2_ENEMIES, ...FLOOR3_ENEMIES, ...FLOOR4_ENEMIES,
+    ...FLOOR5_ENEMIES, ...FLOOR6_ENEMIES, ...FLOOR7_ENEMIES, ...FLOOR8_ENEMIES,
+    ...FLOOR9_ENEMIES, ...FLOOR10_ENEMIES, ...FLOOR11_ENEMIES, ...FLOOR12_ENEMIES,
+  ].map(def => [def.name, def]),
+);
