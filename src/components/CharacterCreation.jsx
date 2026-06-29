@@ -19,6 +19,7 @@ const CharacterCreation = ({ onStart, onResume }) => {
 
       <h1 style={s.title}>Dungeons &amp; Fatties</h1>
       <p style={s.subtitle}>A Text-Based Fattening Adventure</p>
+      <div style={s.divider} />
 
       {onResume && (
         <button style={s.resumeBtn} className="class-card" onClick={onResume}>
@@ -29,6 +30,7 @@ const CharacterCreation = ({ onStart, onResume }) => {
       <div style={s.nameRow}>
         <input
           style={s.nameInput}
+          className="cc-name"
           type="text"
           placeholder="Enter your name"
           value={playerName}
@@ -58,7 +60,7 @@ const CharacterCreation = ({ onStart, onResume }) => {
               className="class-card"
               onClick={() => setSelectedClass(cls.name)}
             >
-              <div style={{ ...s.classInitial, color: cls.accentColor }}>{cls.name[0]}</div>
+              <div style={{ ...s.classInitial, color: cls.accentColor, ...(selected ? { textShadow: `0 0 16px ${cls.accentColor}` } : {}) }}>{cls.name[0]}</div>
               <div style={{ ...s.className, color: cls.accentColor }}>{cls.name}</div>
               <div style={s.offHand}>Off-hand: {cls.offHand}</div>
               <p style={s.desc}>{cls.description}</p>
@@ -100,6 +102,10 @@ const css = `
   .class-card:active {
     transform: scale(0.98);
   }
+  .cc-name:focus {
+    border-color: #c9a22780 !important;
+    box-shadow: 0 0 0 2px rgba(201,162,39,0.15);
+  }
 `;
 
 const s = {
@@ -118,14 +124,22 @@ const s = {
     fontWeight: 700,
     color: '#c9a227',
     margin: '0 0 8px',
-    textShadow: '0 2px 12px rgba(201,162,39,0.3)',
+    letterSpacing: '0.08em',
+    textShadow: '0 0 40px rgba(201,162,39,0.4), 0 2px 12px rgba(201,162,39,0.3), 0 4px 2px rgba(0,0,0,0.8)',
     textWrap: 'balance',
   },
   subtitle: {
-    color: '#888',
-    margin: '0 0 40px',
+    color: '#b09a60',
+    margin: '0 0 16px',
     fontSize: '0.95rem',
-    letterSpacing: '0.05em',
+    letterSpacing: '0.12em',
+    fontStyle: 'italic',
+  },
+  divider: {
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, #c9a22760, transparent)',
+    margin: '0 0 32px',
+    width: '320px',
   },
   nameRow: {
     marginBottom: '32px',
@@ -235,14 +249,15 @@ const s = {
   startBtn: {
     padding: '14px 40px',
     fontSize: '1rem',
-    backgroundColor: '#8B4513',
+    background: 'linear-gradient(135deg, #a85520 0%, #6a3010 100%)',
     color: '#fff',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     fontFamily: 'Georgia, serif',
     fontWeight: 700,
-    letterSpacing: '0.05em',
+    letterSpacing: '0.1em',
     transition: 'opacity 150ms',
+    boxShadow: '0 4px 16px rgba(139,69,19,0.5), 0 2px 4px rgba(0,0,0,0.4)',
   },
 };
 
