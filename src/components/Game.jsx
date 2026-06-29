@@ -97,6 +97,7 @@ const Game = () => {
   const [floorWeights, setFloorWeights] = useState(new Map()); // enemyName → currentWeight, cleared on floor change
   const bossPhaseRef = useRef({}); // enemyId → highestPhaseReached (ref so it's accessible inside functional updaters)
   const [savedRunExists] = useState(() => hasSave());
+  const [debugInfiniteSlots, setDebugInfiniteSlots] = useState(false);
   const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
   const [discoveryTick, setDiscoveryTick] = useState(0); // bump to force re-render after reveal
 
@@ -685,11 +686,19 @@ const Game = () => {
 
       // Enemy turns: each living foe acts on the player.
       for (const ec of combat.livingEnemies()) {
-        const ctrl = controllerFor(ec.entity._trait);
-        ctrl({ self: ec.entity, opponent: player, selfPos: ec, oppPos: playerPos, actions: actionsAvailable(ec.entity), combat, field: prev.field || FIELD });
-        if (mod.willDrift) ec.entity.willingness = Math.min(100, (ec.entity.willingness ?? 50) + mod.willDrift);
+        const self = ec.entity;
+        const playerBefore = player.fullness || 0;
+        const selfBefore = self.fullness || 0;
+        const ctrl = controllerFor(self._trait);
+        ctrl({ self, opponent: player, selfPos: ec, oppPos: playerPos, actions: actionsAvailable(self), combat, field: prev.field || FIELD });
+        if (mod.willDrift) self.willingness = Math.min(100, (self.willingness ?? 50) + mod.willDrift);
+        const playerFed = Math.round((player.fullness || 0) - playerBefore);
+        const selfFull = self.fullness || 0;
+        if (selfFull < selfBefore) log.push(`${self.name} sheds the filling — the weight slides off her.`);
+        else if (selfFull > selfBefore) log.push(`${self.name} gorges hungrily.`);
+        if (playerFed > 0) log.push(`${self.name} forces a mouthful on you.`);
+        else if (selfFull === selfBefore && playerFed === 0) log.push(`${self.name} repositions.`);
       }
-      log.push('The foes press in.');
 
       // Per-round fullness drain for everyone (biome drainScale scales it).
       const drainScale = mod.drainScale ?? 1;
@@ -740,7 +749,7 @@ const Game = () => {
       const lvl = spell.level ?? 1;
       const isCantrip = lvl <= 0;
       const cost = isCantrip ? 0 : lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
-      if (!isCantrip) {
+      if (!isCantrip && !debugInfiniteSlots) {
         if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `No L${cost} slots — ${spell.name} fizzles.` };
         player.spellSlots[cost] -= 1;
       }
@@ -765,6 +774,8 @@ const Game = () => {
         if (cost === 3 && player.level >= 16) log.push(`Epic spellcraft — ${spell.name} surges.`);
         narrateFatten(selEnemy, before, log);
       }
+      // Feeding wears down resistance — willingness rises a little no matter which path.
+      selEnemy.willingness = Math.min(100, (selEnemy.willingness ?? 50) + 2);
       return { ok: true };
     });
   };
@@ -783,6 +794,8 @@ const Game = () => {
       log.push(`You force-feed ${selEnemy.name}.`);
       if (isCrit) log.push(`Critical feed on ${selEnemy.name}!`);
       narrateFatten(selEnemy, before, log);
+      // Sustained force-feeding wears down resistance faster than spells.
+      selEnemy.willingness = Math.min(100, (selEnemy.willingness ?? 50) + 4);
       return { ok: true };
     });
   };
@@ -978,6 +991,8 @@ const Game = () => {
           onMove={handleCombatMove}
           onFlee={handleFlee}
           onContinue={handleCombatContinue}
+          debugMode={debugInfiniteSlots}
+          onToggleDebug={() => setDebugInfiniteSlots(v => !v)}
         />
       )}
     </div>

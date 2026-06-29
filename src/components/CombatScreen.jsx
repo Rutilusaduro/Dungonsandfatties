@@ -20,13 +20,22 @@ const fb = {
 
 const STATUS_LABEL = { active: 'In Combat', won: 'Victory!', lost: 'Defeated' };
 
+const MOBILITY_LABEL = {
+  full: 'agile', present: 'winded', planning: 'sluggish',
+  economy: 'struggling', minimal: 'straining', immobile: 'immobilized',
+};
+
 const CombatScreen = ({
   player, combat, enemies, field, selectedEnemyId, round, status, combatLog,
   knownSpells, spellLibrary, playerStats,
   onSelectEnemy, onCastSpell, onForceFeed, onMove, onFlee, onContinue,
+  debugMode, onToggleDebug,
 }) => {
   const [showSpells, setShowSpells] = useState(false);
+  const [flashId, setFlashId] = useState(null);
   if (!player || !combat) return null;
+
+  const flash = (id) => { setFlashId(id); setTimeout(() => setFlashId(null), 500); };
 
   const playerC = combat.playerCombatant();
   const livingEnemyCs = combat.combatants.filter(c => c.entity.isEnemy && !c.entity._dead);
@@ -62,7 +71,7 @@ const CombatScreen = ({
               <button
                 key={e.id}
                 className="cs-enemy"
-                style={{ ...s.enemyCard, ...(isSel ? s.enemyCardSel : {}) }}
+                style={{ ...s.enemyCard, ...(isSel ? s.enemyCardSel : {}), ...(flashId === e.id ? s.enemyCardFlash : {}) }}
                 onClick={() => onSelectEnemy?.(e.id)}
                 aria-pressed={isSel}
               >
@@ -70,7 +79,7 @@ const CombatScreen = ({
                   <span style={s.enemyName}>{e.name}</span>
                   <span style={s.enemyDist}>{d === 0 ? 'adjacent' : `${d} away`}</span>
                 </div>
-                <div style={s.enemySub}>{e.currentWeight} lbs · {combatMobilityFor(e)}</div>
+                <div style={s.enemySub}>{e.currentWeight} lbs · {MOBILITY_LABEL[combatMobilityFor(e)] ?? combatMobilityFor(e)}</div>
                 <FullnessBar entity={e} compact />
               </button>
             );
@@ -141,12 +150,15 @@ const CombatScreen = ({
                   <button
                     className="cs-btn"
                     style={{ ...s.actionBtn('#5a3a1a'), opacity: canFeed ? 1 : 0.5 }}
-                    onClick={onForceFeed}
+                    onClick={() => { if (selC) flash(selC.entity.id); onForceFeed?.(); }}
                     title={canFeed ? 'Force-feed the target' : 'Move adjacent to force-feed'}
                   >
                     Force Feed{!canFeed && selC ? ' (too far)' : ''}
                   </button>
                   <button className="cs-btn" style={s.actionBtn('#2a2a4a')} onClick={onFlee}>Flee</button>
+                  <button className="cs-btn" style={{ ...s.actionBtn('#1a1a2a'), fontSize: '0.65rem', opacity: 0.6 }} onClick={onToggleDebug}>
+                    {debugMode ? '∞ slots ON' : '∞ slots OFF'}
+                  </button>
                 </div>
               </>
             ) : (
@@ -161,7 +173,7 @@ const CombatScreen = ({
                   const cost = spellCost(spell);
                   const isCantrip = cost === 0;
                   const reach = spellReach(spell);
-                  const hasSlot = isCantrip || (playerStats?.spellSlots?.[cost] ?? 0) > 0;
+                  const hasSlot = debugMode || isCantrip || (playerStats?.spellSlots?.[cost] ?? 0) > 0;
                   const inRange = selDist != null && selDist <= reach;
                   const ok = hasSlot && inRange;
                   return (
@@ -170,7 +182,7 @@ const CombatScreen = ({
                       className="cs-btn"
                       style={{ ...s.spellBtn, opacity: ok ? 1 : 0.45 }}
                       disabled={!ok}
-                      onClick={() => { setShowSpells(false); onCastSpell(spell); }}
+                      onClick={() => { setShowSpells(false); if (selC) flash(selC.entity.id); onCastSpell(spell); }}
                       title={!hasSlot ? 'No slots' : !inRange ? `Out of range (reach ${reach})` : `Range ${reach}`}
                     >
                       <span>{spell.name}</span>
@@ -219,6 +231,7 @@ const s = {
   roster: { display: 'flex', gap: '8px', flexWrap: 'wrap' },
   enemyCard: { flex: '1 1 150px', minWidth: '140px', textAlign: 'left', background: '#1a1212', border: '1px solid #2a2020', borderRadius: '9px', padding: '8px 10px', cursor: 'pointer', color: '#e0e0e0', fontFamily: 'Georgia, serif', display: 'flex', flexDirection: 'column', gap: '4px' },
   enemyCardSel: { borderColor: '#c9a227', background: '#241c14', boxShadow: '0 0 0 1px #c9a22744' },
+  enemyCardFlash: { borderColor: '#e8c060', background: '#2a2010', boxShadow: '0 0 0 2px #c9a22799, 0 0 18px #c9a22755', transition: 'none' },
   enemyTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '6px' },
   enemyName: { fontWeight: 700, fontSize: '0.84rem' },
   enemyDist: { fontSize: '0.66rem', color: '#a98', fontVariantNumeric: 'tabular-nums' },
