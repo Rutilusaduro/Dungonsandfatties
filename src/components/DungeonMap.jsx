@@ -69,9 +69,13 @@ const DungeonMap = ({ dungeon, playerRoomId }) => {
                 </text>
               )}
               {isStairs && (
-                <text x={pos.x * cellSize + cellSize / 2} y={pos.y * cellSize + cellSize / 2} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#fff" fontWeight="bold">
-                  ↓
-                </text>
+                <g transform={`translate(${pos.x * cellSize + cellSize / 2 - 6}, ${pos.y * cellSize + cellSize / 2 - 6})`}>
+                  <line x1="0" y1="4" x2="4" y2="4" stroke="#fff" strokeWidth="1" />
+                  <line x1="4" y1="4" x2="4" y2="8" stroke="#fff" strokeWidth="1" />
+                  <line x1="4" y1="8" x2="8" y2="8" stroke="#fff" strokeWidth="1" />
+                  <line x1="8" y1="8" x2="8" y2="12" stroke="#fff" strokeWidth="1" />
+                  <line x1="8" y1="12" x2="12" y2="12" stroke="#fff" strokeWidth="1" />
+                </g>
               )}
               {isPlayer && (
                 <text x={pos.x * cellSize + cellSize / 2} y={pos.y * cellSize + cellSize / 2} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#000" fontWeight="bold">
