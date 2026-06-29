@@ -46,9 +46,10 @@ const DungeonMap = ({ dungeon, playerRoomId }) => {
 
           const isPlayer = roomId === playerRoomId;
           const discovered = room.discovered;
+          const isEntry = roomId === dungeon.entryId;
           const isStairs = room.contents?.kind === 'stairs';
 
-          const fill = !discovered ? '#1a1a1a' : isStairs ? '#8b5cf6' : isPlayer ? '#c9a227' : '#2a3a2a';
+          const fill = !discovered ? '#1a1a1a' : isStairs ? '#8b5cf6' : isEntry ? '#6b4a9a' : isPlayer ? '#c9a227' : '#2a3a2a';
           const stroke = isPlayer ? '#e8d4a0' : discovered ? '#4a7a4a' : '#1a2a1a';
 
           return (
@@ -62,6 +63,11 @@ const DungeonMap = ({ dungeon, playerRoomId }) => {
                 stroke={stroke}
                 strokeWidth={isPlayer ? 2 : 1}
               />
+              {isEntry && (
+                <text x={pos.x * cellSize + cellSize / 2} y={pos.y * cellSize + cellSize / 2} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#fff" fontWeight="bold">
+                  ↑
+                </text>
+              )}
               {isStairs && (
                 <text x={pos.x * cellSize + cellSize / 2} y={pos.y * cellSize + cellSize / 2} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#fff" fontWeight="bold">
                   ↓
@@ -79,9 +85,9 @@ const DungeonMap = ({ dungeon, playerRoomId }) => {
 
       {/* Legend */}
       <div style={s.legend}>
+        <div style={s.legendItem}><div style={{ ...s.legendBox, background: '#6b4a9a' }} />Entry</div>
         <div style={s.legendItem}><div style={{ ...s.legendBox, background: '#2a3a2a' }} />Combat</div>
-        <div style={s.legendItem}><div style={{ ...s.legendBox, background: '#8b5cf6' }} />Stairs</div>
-        <div style={s.legendItem}><div style={{ ...s.legendBox, background: '#c9a227' }} />You</div>
+        <div style={s.legendItem}><div style={{ ...s.legendBox, background: '#8b5cf6' }} />Descent</div>
       </div>
     </div>
   );
