@@ -28,6 +28,16 @@ export function xpForFloor(floorIndex, base = 80) {
   return Math.round(base * floorScale(floorIndex));
 }
 
+// Fat path thresholds (fraction of baseWeight gain)
+export const FAT_THRESHOLD = {
+  regular: 0.50,  // regular enemy defeated
+  phase1:  0.50,  // boss phase 1 trigger
+  phase2:  1.00,  // boss phase 2 trigger
+};
+
+// Fatten spell: lbs added = FATTEN_PCT[spellLevel] * entity.baseWeight
+export const FATTEN_PCT = { 1: 0.15, 2: 0.25, 3: 0.35 };
+
 // ── self-check: node src/game/mechanics/Balance.js ──
 if (typeof process !== 'undefined' && process.argv?.[1] && import.meta.url === `file://${process.argv[1]}`) {
   console.assert(clampSlots({ 1: 99, 2: 1, 3: 99 })[1] === 6, 'L1 cap');

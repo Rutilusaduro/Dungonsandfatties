@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import TextDisplay from './TextDisplay';
 import CharacterPanel from './CharacterPanel';
 import SpellCaster from './SpellCaster';
@@ -25,7 +25,8 @@ import { ITEMS } from '../game/items/Equipment.js';
 import { awardXP, applyLevelBonus, levelUpChoices, xpToNextLevel } from '../game/mechanics/ProgressionSystem.js';
 import CombatScreen from './CombatScreen';
 import { DungeonState } from '../game/dungeon/DungeonState.js';
-import { Combat, fillUp, checkWinState, actionsAvailable, canReach, lineOfSight, move as moveCombatant, distance } from '../game/combat/Combat.js';
+import { Combat, fillUp, fattenUp, checkFatPhase, isFatDefeated, checkWinState, actionsAvailable, canReach, lineOfSight, move as moveCombatant, distance } from '../game/combat/Combat.js';
+import { FAT_THRESHOLD, FATTEN_PCT } from '../game/mechanics/Balance.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 import { Discovery, idOf } from '../game/discovery/Discovery.js';
@@ -86,6 +87,8 @@ const Game = () => {
   const [dungeon, setDungeon] = useState(null);        // DungeonState instance
   const [dungeonTick, setDungeonTick] = useState(0);   // bump to re-render after in-place room mutation
   const [combatState, setCombatState] = useState(null); // { combat, enemies, round, status, log }
+  const [floorWeights, setFloorWeights] = useState(new Map()); // enemyName → currentWeight, cleared on floor change
+  const bossPhaseRef = useRef({}); // enemyId → highestPhaseReached (ref so it's accessible inside functional updaters)
   const [savedRunExists] = useState(() => hasSave());
   const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
   const [discoveryTick, setDiscoveryTick] = useState(0); // bump to force re-render after reveal
@@ -475,7 +478,12 @@ const Game = () => {
     const player = gameState.getPlayer();
     const enemies = ds.roomEnemies();
     if (!enemies.length) return;
-    enemies.forEach(e => { e._dead = false; });
+    enemies.forEach(e => {
+      e._dead = false;
+      // Restore weight gained earlier on this floor.
+      const stored = floorWeights.get(e.name);
+      if (stored != null) e.currentWeight = stored;
+    });
     // Player anchors left-center; enemies spread along the right edge.
     const combat = new Combat([
       { entity: player, initiative: 10, x: 0, y: 1 },
@@ -548,9 +556,12 @@ const Game = () => {
         addEntry('You have conquered the dungeon. A legend is born.');
         setDungeon(null);
         clearSave();
+        setFloorWeights(new Map());
       } else {
         addEntry(`— ${dungeon.currentFloor?.name} —`, 'divider');
         addEntry(dungeon.currentFloor?.description || 'You descend deeper.');
+        setFloorWeights(new Map()); // new floor — weight persistence resets
+        bossPhaseRef.current = {};
         setDungeonTick(t => t + 1);
       }
       setTextBuffer(textEngine.getBuffer());
@@ -603,8 +614,37 @@ const Game = () => {
       for (const e of prev.enemies) {
         if (!e._dead && !living.includes(e)) { e._dead = true; log.push(`${e.name} is defeated!`); }
       }
+
+      // Boss phase check — fire phase transitions for living enemies that crossed a fat threshold.
+      for (const e of prev.enemies) {
+        if (e._dead) continue;
+        const phase = checkFatPhase(e);
+        if (phase > 0) {
+          const prevPhase = bossPhaseRef.current[e.id] ?? 0;
+          if (phase > prevPhase) {
+            bossPhaseRef.current[e.id] = phase;
+            const phaseEntry = e.phases?.[phase - 1]; // phases is 0-indexed; phase1=index0
+            if (phaseEntry?.text) log.push(phaseEntry.text);
+            if (phaseEntry?.aiShift) e._trait = phaseEntry.aiShift;
+          }
+        }
+      }
+
       if (combat.encounterWon()) {
-        return { ...prev, round: prev.round + 1, status: 'won', log: log.slice(-10) };
+        // Check fat phase gate for bosses — can't be immobilized/succumbed until fat threshold met.
+        const unmetGate = combat.livingEnemies().find(ec => {
+          const req = ec.entity.requiresFatPhase ?? 0;
+          if (!req) return false;
+          return (bossPhaseRef.current[ec.entity.id] ?? 0) < req;
+        });
+        if (unmetGate) {
+          log.push(`${unmetGate.entity.name} shrugs off the finisher — she must be fattened further first.`);
+          // Restore the enemy so the encounter continues.
+          unmetGate.entity._dead = false;
+          unmetGate.entity._defeatState = undefined;
+        } else {
+          return { ...prev, round: prev.round + 1, status: 'won', log: log.slice(-10) };
+        }
       }
 
       // Enemy turns: each living foe acts on the player.
@@ -667,9 +707,21 @@ const Game = () => {
       }
       const pct = isCantrip ? 0.10 : cost === 1 ? 0.20 : cost === 2 ? 0.35 : 0.50;
       const before = selEnemy.fullness || 0;
-      fillUp(selEnemy, pct * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
-      log.push(`You cast ${spell.name} on ${selEnemy.name}.`);
-      narrateFatten(selEnemy, before, log);
+      if (spell.isFatten) {
+        // Fatten path: add permanent weight instead of (or in addition to) fullness.
+        const lbs = Math.round((FATTEN_PCT[cost] ?? FATTEN_PCT[1]) * (selEnemy.baseWeight ?? 100));
+        fattenUp(selEnemy, lbs);
+        log.push(`You cast ${spell.name} on ${selEnemy.name}. She puts on ${lbs} lbs.`);
+        if (isFatDefeated(selEnemy)) {
+          selEnemy._dead = true;
+          selEnemy._defeatCondition = 'fattened';
+          log.push(`${selEnemy.name} has grown too heavy to continue — she's defeated!`);
+        }
+      } else {
+        fillUp(selEnemy, pct * (selEnemy.stomachCapacity || 100) * (player.feedBonusMultiplier || 1) * (mod.feedScale ?? 1));
+        log.push(`You cast ${spell.name} on ${selEnemy.name}.`);
+        narrateFatten(selEnemy, before, log);
+      }
       return { ok: true };
     });
   };
@@ -712,6 +764,17 @@ const Game = () => {
     if (status === 'won') {
       const enemy = enemies[0];
       if (enemy.bossEvent) addEntry(enemy.bossEvent);
+
+      // Persist per-floor weight gains for enemies that weren't fattened to death.
+      setFloorWeights(prev => {
+        const next = new Map(prev);
+        for (const e of enemies) {
+          if (e._defeatCondition !== 'fattened' && e.currentWeight != null) {
+            next.set(e.name, e.currentWeight);
+          }
+        }
+        return next;
+      });
 
       // Clear the room (banks loot), drop combat → back to traversal. Award XP last
       // so a level-up modal doesn't race the room transition.
