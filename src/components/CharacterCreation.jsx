@@ -3,7 +3,7 @@ import CLASS_REGISTRY from '../game/classes/ClassRegistry.js';
 
 const classes = Object.values(CLASS_REGISTRY);
 
-const CharacterCreation = ({ onStart, onResume }) => {
+const CharacterCreation = ({ onStart, onResume, onAltar }) => {
   const [playerName, setPlayerName] = useState('');
   const [selectedClass, setSelectedClass] = useState(null);
 
@@ -24,6 +24,11 @@ const CharacterCreation = ({ onStart, onResume }) => {
       {onResume && (
         <button style={s.resumeBtn} className="class-card" onClick={onResume}>
           ▸ Continue saved run
+        </button>
+      )}
+      {onAltar && (
+        <button style={s.altarBtn} className="class-card" onClick={onAltar}>
+          ◆ Visit the Offering Altar
         </button>
       )}
 
@@ -233,9 +238,22 @@ const s = {
     color: '#888',
     lineHeight: 1.6,
   },
+  altarBtn: {
+    padding: '10px 24px',
+    marginBottom: '16px',
+    fontSize: '0.85rem',
+    backgroundColor: '#1a140a',
+    color: '#c9a227',
+    border: '1px solid #3a2e10',
+    borderRadius: '6px',
+    fontFamily: 'Georgia, serif',
+    fontWeight: 700,
+    cursor: 'pointer',
+    letterSpacing: '0.05em',
+  },
   resumeBtn: {
     padding: '10px 24px',
-    marginBottom: '28px',
+    marginBottom: '16px',
     fontSize: '0.9rem',
     backgroundColor: '#1d2a1d',
     color: '#9fd99f',

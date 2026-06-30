@@ -33,6 +33,8 @@ import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 import { Discovery, idOf } from '../game/discovery/Discovery.js';
 import RightPanel from './RightPanel.jsx';
 import EnemyDialoguePanel from './EnemyDialoguePanel.jsx';
+import AltarScreen from './AltarScreen.jsx';
+import { loadMeta, saveMeta, getRank, devotionForExtraction, devotionForDeath } from '../game/MetaState.js';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -99,7 +101,10 @@ const Game = () => {
   const [combatState, setCombatState] = useState(null); // { combat, enemies, round, status, log }
   const [floorWeights, setFloorWeights] = useState(new Map()); // enemyName → currentWeight, cleared on floor change
   const bossPhaseRef = useRef({}); // enemyId → highestPhaseReached (ref so it's accessible inside functional updaters)
-  const [savedRunExists] = useState(() => hasSave());
+  const [savedRunExists, setSavedRunExists] = useState(() => hasSave());
+  const [meta, setMeta] = useState(() => loadMeta());
+  const [altarOpen, setAltarOpen] = useState(false);
+  const [altarEarned, setAltarEarned] = useState(0);
   const [debugInfiniteSlots, setDebugInfiniteSlots] = useState(false);
   const [debugUnlockAllSpells, setDebugUnlockAllSpells] = useState(false);
   const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
@@ -184,6 +189,7 @@ const Game = () => {
     const classDef = CLASS_REGISTRY[classKey];
     if (!classDef) throw new Error(`Unknown class: ${classKey}`);
     clearSave(); // fresh run abandons any prior save
+    setSavedRunExists(false);
     const character = new Character(playerName, {
       race: 'Human',
       class: classKey,
@@ -193,6 +199,14 @@ const Game = () => {
     // Every class knows the basic fattening cantrips — at-will, no slot cost.
     const CANTRIPS = ['Conjure Morsel', 'Sating Spark', 'Greasy Flick'];
     setKnownSpells(new Set([...classDef.startingSpells, ...CANTRIPS]));
+
+    // Apply permanent altar upgrades from meta.
+    const slotBonus = getRank(meta, 'extra_slot');
+    if (slotBonus) character.spellSlots[1] = Math.min((character.spellSlots[1] || 0) + slotBonus, 6);
+    const feedRank = getRank(meta, 'feed_bonus');
+    if (feedRank) character.feedBonusMultiplier = (character.feedBonusMultiplier || 1) + feedRank * 0.07;
+    const headStart = getRank(meta, 'head_start');
+    if (headStart) character.experience = (character.experience || 0) + headStart * 50;
 
     // Starting gear by class offhand type
     const startingGear = {
@@ -207,11 +221,10 @@ const Game = () => {
 
     gameState.setPlayer(character);
     textEngine.clearBuffer();
+    setAltarOpen(false);
 
-    // Add initial message
-    textEngine.addText(`Welcome, ${playerName}!`);
-    textEngine.addText('You find yourself in The Bloated Boar Tavern...');
-    textEngine.addText('Barkeep Boris leans across the bar, voice dropping low. "You\'ve got the look of someone who goes hunting for trouble. There\'s plenty of it under our feet. A stair behind the cellar door drops into the old dungeon — kitchens that still cook, halls still laid for a feast no one living was invited to. They say something waits at the bottom that never once stopped eating. Mind the cold down there. It does strange things to a person\'s appetite."')
+    textEngine.addText(`${playerName} steps into the tavern.`);
+    textEngine.addText('Boris sets down a mug he has been polishing for the past minute — the shelf behind him bare where there used to be barrels. "You\'ve got the look of someone who goes into places sensible folk avoid. Good. We\'ve got one of those." He taps the floor with one boot. "Dungeon under the cellar. Used to feed half the valley — kitchens that never cooled, larders that never emptied. Then something woke up at the bottom and started keeping everything for itself. Our stores ran thin three months ago." He leans in. "Whatever it\'s been hoarding down there is ours. Bring it back and this town will give you what it has."');
     setTextBuffer(textEngine.getBuffer());
 
     // Set starting zone
@@ -222,6 +235,42 @@ const Game = () => {
   };
 
   const addEntry = (text, type) => textEngine.addText(text, type ? { type } : {});
+
+  // End a run (death or extraction) — bank devotion, carry the foe ledger to meta,
+  // then drop back to the altar so the player can spend before the next descent.
+  const endRun = (devotionEarned, reason) => {
+    setMeta(prev => {
+      // Merge this run's return ledger into meta so recurring foes persist across deaths.
+      const next = {
+        ...prev,
+        devotion: prev.devotion + devotionEarned,
+        returnLedger: dungeon ? { ...dungeon.returns } : prev.returnLedger,
+      };
+      saveMeta(next);
+      return next;
+    });
+    setAltarEarned(devotionEarned);
+    clearSave();
+    setSavedRunExists(false);
+    setCombatState(null);
+    setDungeon(null);
+    setFloorWeights(new Map());
+    setGameStarted(false);
+    setCurrentZone(null);
+
+    if (reason === 'death') {
+      addEntry('— Defeated —', 'divider');
+      addEntry('You surface empty-handed. The dungeon keeps what you dropped, but the town will remember you tried.');
+    } else if (reason === 'extract') {
+      addEntry('— You surface —', 'divider');
+      addEntry('You bring what you found back to the light. Something in the town stirs.');
+    } else {
+      addEntry('— The Depths Silenced —', 'divider');
+      addEntry('The hoarding is done. You carry the full weight of it home.');
+    }
+    setTextBuffer(textEngine.getBuffer());
+    setAltarOpen(true);
+  };
 
   const handleCastSpell = (args) => {
     try {
@@ -486,7 +535,8 @@ const Game = () => {
   const handleEnterDungeon = () => {
     const player = gameState.getPlayer();
     if (!player) return;
-    const ds = new DungeonState();
+    // Seed the new run with the accumulated recurring-foe ledger from meta.
+    const ds = new DungeonState(undefined, meta.returnLedger);
     setDungeon(ds);
     setDungeonTick(t => t + 1);
     addEntry(`— ${ds.currentFloor?.name} —`, 'divider');
@@ -635,11 +685,10 @@ const Game = () => {
       setPostCombatEnemy(null);
       const { dungeonComplete } = dungeon.descend();
       if (dungeonComplete) {
-        addEntry('— Dungeon Cleared! —', 'divider');
-        addEntry('You have conquered the dungeon. A legend is born.');
-        setDungeon(null);
-        clearSave();
-        setFloorWeights(new Map());
+        // Full clear: max extraction bonus
+        const earned = devotionForExtraction(11, dungeon.lootPile.length) + 200;
+        endRun(earned, 'complete');
+        return; // endRun handles teardown
       } else {
         addEntry(`— ${dungeon.currentFloor?.name} —`, 'divider');
         addEntry(dungeon.currentFloor?.description || 'You descend deeper.');
@@ -652,10 +701,8 @@ const Game = () => {
       }
       setTextBuffer(textEngine.getBuffer());
     } else if (id === 'leave') {
-      addEntry('— You retreat to the surface —', 'divider');
-      addEntry('The dungeon will be waiting when you return.');
-      setDungeon(null);
-      setTextBuffer(textEngine.getBuffer());
+      const earned = devotionForExtraction(dungeon.floorIndex, dungeon.lootPile.length);
+      endRun(earned, 'extract');
     }
   };
 
@@ -956,17 +1003,31 @@ const Game = () => {
       setDungeonTick(t => t + 1);
       gainXP(enemy.xpValue || 100);
     } else {
-      // lost — flee the dungeon, keep the character
-      setCombatState(null);
-      setDungeon(null);
-      addEntry('— Defeated —', 'divider');
-      addEntry('You retreat to the surface, licking your wounds.');
+      // lost — bank partial devotion, reset run, show altar
+      endRun(devotionForDeath(dungeon?.floorIndex ?? 0), 'death');
+      return; // endRun calls setTextBuffer
     }
     setTextBuffer(textEngine.getBuffer());
   };
 
   if (!gameStarted) {
-    return <CharacterCreation onStart={startGame} onResume={savedRunExists ? resumeGame : null} />;
+    if (altarOpen) {
+      return (
+        <AltarScreen
+          meta={meta}
+          earned={altarEarned}
+          onMetaChange={setMeta}
+          onContinue={() => setAltarOpen(false)}
+        />
+      );
+    }
+    return (
+      <CharacterCreation
+        onStart={startGame}
+        onResume={savedRunExists ? resumeGame : null}
+        onAltar={meta.devotion > 0 ? () => setAltarOpen(true) : null}
+      />
+    );
   }
 
   const player = gameState.getPlayer();

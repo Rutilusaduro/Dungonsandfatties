@@ -49,12 +49,13 @@ const FLOOR_META = FLOOR_DEFS.map(d => ({
 const randSeed = () => (Math.random() * 1e9) | 0;
 
 export class DungeonState {
-  constructor(seed = randSeed()) {
+  constructor(seed = randSeed(), initialReturns = null) {
     this.seed       = seed;
     this.floorIndex = 0;
     this.completed  = false;
     this.lootPile   = []; // items banked but not yet picked up
-    this.returns    = makeReturnLedger();  // recurring-foe arc, keyed by name
+    // initialReturns lets the meta-ledger (cross-run history) seed a new run.
+    this.returns    = initialReturns ? { ...initialReturns } : makeReturnLedger();
     this.injectedReturns = {};             // frozen per-floor snapshot of returns due
     this._loadFloor(0);
   }
