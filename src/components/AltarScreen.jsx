@@ -3,7 +3,7 @@ import { ALTAR_UPGRADES, TOWN_STAGES, getTownStage, getNextStage, getRank, canBu
 
 const STAGE_COLORS = ['#6b5a3a', '#8a7040', '#a08848', '#b09030', '#c9a227'];
 
-const AltarScreen = ({ meta, onMetaChange, earned, onContinue }) => {
+const AltarScreen = ({ meta, onMetaChange, earned, gradBonus, onContinue }) => {
   const [localMeta, setLocalMeta] = useState(meta);
   const stage = getTownStage(localMeta);
   const nextStage = getNextStage(localMeta);
@@ -50,6 +50,9 @@ const AltarScreen = ({ meta, onMetaChange, earned, onContinue }) => {
         <span style={s.devotionLabel}>devotion</span>
         {earned > 0 && (
           <span style={s.earnedBadge}>+{earned} this descent</span>
+        )}
+        {gradBonus > 0 && (
+          <span style={s.gradBadge}>◆ {gradBonus} from retirements</span>
         )}
       </div>
 
@@ -174,6 +177,15 @@ const s = {
     color: '#8ab870',
     background: '#0d1a08',
     border: '1px solid #2a4018',
+    borderRadius: '4px',
+    padding: '2px 10px',
+    marginLeft: '4px',
+  },
+  gradBadge: {
+    fontSize: '0.8rem',
+    color: '#c9a227',
+    background: '#131008',
+    border: '1px solid #5a4820',
     borderRadius: '4px',
     padding: '2px 10px',
     marginLeft: '4px',

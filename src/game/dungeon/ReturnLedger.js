@@ -6,6 +6,9 @@
 // every other defeat is terminal. Stage 5 = retired (truly gone, max fat).
 
 export const RETURN_STAGE_MAX = 5;
+export const GRADUATION_BONUS = 75;
+
+export function claimGraduation(ledger, name) { delete ledger[name]; }
 
 export function makeReturnLedger() { return {}; }
 
@@ -20,7 +23,7 @@ export function recordDefeat(ledger, name, defeatVia, floorIndex, canReturn) {
   const delta = defeatVia === 'fattened' ? 2 : 1;
   const stage = cur.stage + delta;
   if (stage >= RETURN_STAGE_MAX) {
-    ledger[name] = { stage: RETURN_STAGE_MAX, nextFloor: null, retired: true };
+    ledger[name] = { stage: RETURN_STAGE_MAX, nextFloor: null, retired: true, graduated: true };
   } else {
     ledger[name] = { stage, nextFloor: floorIndex + 1, retired: false };
   }

@@ -26,6 +26,7 @@ import { awardXP, applyLevelBonus, levelUpChoices, xpToNextLevel } from '../game
 import { EPIC_FILL, FAT_THRESHOLD, FATTEN_PCT } from '../game/mechanics/Balance.js';
 import CombatScreen from './CombatScreen';
 import { DungeonState } from '../game/dungeon/DungeonState.js';
+import { GRADUATION_BONUS, claimGraduation } from '../game/dungeon/ReturnLedger.js';
 import { Combat, fillUp, fattenUp, checkFatPhase, isFatDefeated, checkWinState, actionsAvailable, canReach, lineOfSight, move as moveCombatant, distance } from '../game/combat/Combat.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
 import { narrativeFor } from '../game/combat/SpellNarrative.js';
@@ -105,6 +106,8 @@ const Game = () => {
   const [meta, setMeta] = useState(() => loadMeta());
   const [altarOpen, setAltarOpen] = useState(false);
   const [altarEarned, setAltarEarned] = useState(0);
+  const [altarGradBonus, setAltarGradBonus] = useState(0);
+  const graduationBonusRef = useRef(0);
   const [debugInfiniteSlots, setDebugInfiniteSlots] = useState(false);
   const [debugUnlockAllSpells, setDebugUnlockAllSpells] = useState(false);
   const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
@@ -239,17 +242,21 @@ const Game = () => {
   // End a run (death or extraction) — bank devotion, carry the foe ledger to meta,
   // then drop back to the altar so the player can spend before the next descent.
   const endRun = (devotionEarned, reason) => {
+    const gradBonus = graduationBonusRef.current;
+    graduationBonusRef.current = 0;
+    const totalEarned = devotionEarned + gradBonus;
     setMeta(prev => {
       // Merge this run's return ledger into meta so recurring foes persist across deaths.
       const next = {
         ...prev,
-        devotion: prev.devotion + devotionEarned,
+        devotion: prev.devotion + totalEarned,
         returnLedger: dungeon ? { ...dungeon.returns } : prev.returnLedger,
       };
       saveMeta(next);
       return next;
     });
-    setAltarEarned(devotionEarned);
+    setAltarEarned(totalEarned);
+    setAltarGradBonus(gradBonus);
     clearSave();
     setSavedRunExists(false);
     setCombatState(null);
@@ -974,6 +981,16 @@ const Game = () => {
         if (e._dead && e._defeatCondition) dungeon.recordEncounterDefeat(e.name, e._defeatCondition);
       }
 
+      // Graduation: foes that just hit stage 5 leave the dungeon for good.
+      for (const e of enemies) {
+        if (e._dead && e._defeatCondition && dungeon.returns[e.name]?.graduated) {
+          addEntry(`— ${e.name} departs —`, 'divider');
+          addEntry(e.graduationText || `${e.name} has outgrown the dungeon.`, 'italic');
+          claimGraduation(dungeon.returns, e.name);
+          graduationBonusRef.current += GRADUATION_BONUS;
+        }
+      }
+
       // Persist per-floor weight gains for enemies that weren't fattened to death.
       setFloorWeights(prev => {
         const next = new Map(prev);
@@ -1016,6 +1033,7 @@ const Game = () => {
         <AltarScreen
           meta={meta}
           earned={altarEarned}
+          gradBonus={altarGradBonus}
           onMetaChange={setMeta}
           onContinue={() => setAltarOpen(false)}
         />
