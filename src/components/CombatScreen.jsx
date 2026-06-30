@@ -25,6 +25,14 @@ const MOBILITY_LABEL = {
   economy: 'struggling', minimal: 'straining', immobile: 'immobilized',
 };
 
+// Diegetic "you've met her before, and she's bigger" tell for recurring foes.
+const RETURN_TELL = {
+  1: 'heavier than before',
+  2: 'heavier still',
+  3: 'vast now',
+  4: 'at her heaviest',
+};
+
 const CombatScreen = ({
   player, combat, enemies, field, selectedEnemyId, round, status, combatLog,
   knownSpells, spellLibrary, playerStats,
@@ -79,6 +87,11 @@ const CombatScreen = ({
                   <span style={s.enemyName}>{e.name}</span>
                   <span style={s.enemyDist}>{d === 0 ? 'adjacent' : `${d} away`}</span>
                 </div>
+                {e._returnStage > 0 && RETURN_TELL[e._returnStage] && (
+                  <span style={s.returnTell} aria-label={`You've faced her before — ${RETURN_TELL[e._returnStage]}`}>
+                    ↩ {RETURN_TELL[e._returnStage]}
+                  </span>
+                )}
                 <div style={s.enemySub}>{e.currentWeight} lbs · {MOBILITY_LABEL[combatMobilityFor(e)] ?? combatMobilityFor(e)}</div>
                 <FullnessBar entity={e} compact />
               </button>
@@ -243,6 +256,7 @@ const s = {
   enemyName: { fontWeight: 700, fontSize: '0.84rem' },
   enemyDist: { fontSize: '0.66rem', color: '#a98', fontVariantNumeric: 'tabular-nums' },
   enemySub: { fontSize: '0.68rem', color: '#888', textTransform: 'capitalize' },
+  returnTell: { alignSelf: 'flex-start', fontSize: '0.62rem', fontStyle: 'italic', color: '#e0bd63', background: '#241c0e', border: '1px solid #4a3a1a', borderRadius: '5px', padding: '1px 7px', letterSpacing: '0.03em' },
   grid: { display: 'grid', gap: '4px', background: '#0d0d0d', borderRadius: '10px', padding: '8px', aspectRatio: '5 / 3', position: 'relative' },
   cell: { background: '#171717', borderRadius: '6px', border: '1px solid #1f1f1f' },
   token: { width: '100%', height: '100%', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '1.4rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', placeSelf: 'stretch' },
