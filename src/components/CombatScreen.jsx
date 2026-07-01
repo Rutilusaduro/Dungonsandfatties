@@ -25,6 +25,14 @@ const MOBILITY_LABEL = {
   economy: 'struggling', minimal: 'straining', immobile: 'immobilized',
 };
 
+// Diegetic "you've met her before, and she's bigger" tell for recurring foes.
+const RETURN_TELL = {
+  1: 'heavier than before',
+  2: 'heavier still',
+  3: 'vast now',
+  4: 'at her heaviest',
+};
+
 const CombatScreen = ({
   player, combat, enemies, field, selectedEnemyId, round, status, combatLog,
   knownSpells, spellLibrary, playerStats,
@@ -47,7 +55,7 @@ const CombatScreen = ({
   const tokens = combat.combatants.filter(c => c.entity === player || !c.entity._dead);
 
   const spells = spellLibrary
-    ? spellLibrary.getAllSpells().filter(s => !knownSpells || knownSpells.size === 0 || knownSpells.has(s.name))
+    ? spellLibrary.getAllSpells().filter(s => debugMode || !knownSpells || knownSpells.size === 0 || knownSpells.has(s.name))
     : [];
   const spellCost = (sp) => { const l = sp.level ?? 1; return l <= 0 ? 0 : l <= 1 ? 1 : l <= 3 ? 2 : 3; };
   const spellReach = (sp) => sp.combatRange ?? ((sp.level ?? 1) <= 2 ? 4 : 6);
@@ -79,6 +87,11 @@ const CombatScreen = ({
                   <span style={s.enemyName}>{e.name}</span>
                   <span style={s.enemyDist}>{d === 0 ? 'adjacent' : `${d} away`}</span>
                 </div>
+                {e._returnStage > 0 && RETURN_TELL[e._returnStage] && (
+                  <span style={s.returnTell} aria-label={`You've faced her before — ${RETURN_TELL[e._returnStage]}`}>
+                    ↩ {RETURN_TELL[e._returnStage]}
+                  </span>
+                )}
                 <div style={s.enemySub}>{e.currentWeight} lbs · {MOBILITY_LABEL[combatMobilityFor(e)] ?? combatMobilityFor(e)}</div>
                 <FullnessBar entity={e} compact />
               </button>
@@ -195,6 +208,13 @@ const CombatScreen = ({
           </div>
         )}
 
+        {status === 'won' && enemies.some(e => e._dead && e.defeatText?.[e._defeatCondition]) && (
+          <div style={s.victoryCard}>
+            {enemies.filter(e => e._dead && e.defeatText?.[e._defeatCondition]).map(e => (
+              <div key={e.id} style={s.victoryText}>{e.defeatText[e._defeatCondition]}</div>
+            ))}
+          </div>
+        )}
         {(status === 'won' || status === 'lost') && (
           <button style={s.continue(status)} onClick={onContinue}>
             {status === 'won' ? 'Continue' : 'Retreat'}
@@ -236,6 +256,7 @@ const s = {
   enemyName: { fontWeight: 700, fontSize: '0.84rem' },
   enemyDist: { fontSize: '0.66rem', color: '#a98', fontVariantNumeric: 'tabular-nums' },
   enemySub: { fontSize: '0.68rem', color: '#888', textTransform: 'capitalize' },
+  returnTell: { alignSelf: 'flex-start', fontSize: '0.62rem', fontStyle: 'italic', color: '#e0bd63', background: '#241c0e', border: '1px solid #4a3a1a', borderRadius: '5px', padding: '1px 7px', letterSpacing: '0.03em' },
   grid: { display: 'grid', gap: '4px', background: '#0d0d0d', borderRadius: '10px', padding: '8px', aspectRatio: '5 / 3', position: 'relative' },
   cell: { background: '#171717', borderRadius: '6px', border: '1px solid #1f1f1f' },
   token: { width: '100%', height: '100%', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '1.4rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', placeSelf: 'stretch' },
@@ -260,6 +281,8 @@ const s = {
   spellBtn: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1e1e1e', border: '1px solid #2a2a2a', borderRadius: '6px', padding: '9px 11px', cursor: 'pointer', color: '#e0e0e0', fontFamily: 'Georgia, serif', fontSize: '0.8rem' },
   spellMeta: { fontSize: '0.66rem', color: '#888', fontVariantNumeric: 'tabular-nums' },
   continue: (st) => ({ width: '100%', padding: '13px', background: st === 'won' ? 'linear-gradient(135deg, #5a7a32 0%, #3a5020 100%)' : 'linear-gradient(135deg, #5a2020 0%, #3a1010 100%)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Georgia, serif', fontSize: '0.95rem', fontWeight: 700, transition: 'transform 80ms' }),
+  victoryCard: { background: '#0d0a06', border: '1px solid #4a3020', borderRadius: '8px', padding: '14px 16px' },
+  victoryText: { fontSize: '0.88rem', lineHeight: 1.75, color: '#c4b490', fontStyle: 'italic' },
 };
 
 export default CombatScreen;

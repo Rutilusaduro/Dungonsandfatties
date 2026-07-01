@@ -26,12 +26,16 @@ import { awardXP, applyLevelBonus, levelUpChoices, xpToNextLevel } from '../game
 import { EPIC_FILL, FAT_THRESHOLD, FATTEN_PCT } from '../game/mechanics/Balance.js';
 import CombatScreen from './CombatScreen';
 import { DungeonState } from '../game/dungeon/DungeonState.js';
+import { GRADUATION_BONUS, claimGraduation } from '../game/dungeon/ReturnLedger.js';
 import { Combat, fillUp, fattenUp, checkFatPhase, isFatDefeated, checkWinState, actionsAvailable, canReach, lineOfSight, move as moveCombatant, distance } from '../game/combat/Combat.js';
 import { controllerFor } from '../game/combat/EnemyController.js';
 import { narrativeFor } from '../game/combat/SpellNarrative.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 import { Discovery, idOf } from '../game/discovery/Discovery.js';
 import RightPanel from './RightPanel.jsx';
+import EnemyDialoguePanel from './EnemyDialoguePanel.jsx';
+import AltarScreen from './AltarScreen.jsx';
+import { loadMeta, saveMeta, getRank, devotionForExtraction, devotionForDeath } from '../game/MetaState.js';
 
 // Persist lingering spell conditions onto a target so the text engine narrates
 // them afterward (examine, dialogue, body.desc) and future spells can react.
@@ -98,11 +102,18 @@ const Game = () => {
   const [combatState, setCombatState] = useState(null); // { combat, enemies, round, status, log }
   const [floorWeights, setFloorWeights] = useState(new Map()); // enemyName → currentWeight, cleared on floor change
   const bossPhaseRef = useRef({}); // enemyId → highestPhaseReached (ref so it's accessible inside functional updaters)
-  const [savedRunExists] = useState(() => hasSave());
+  const [savedRunExists, setSavedRunExists] = useState(() => hasSave());
+  const [meta, setMeta] = useState(() => loadMeta());
+  const [altarOpen, setAltarOpen] = useState(false);
+  const [altarEarned, setAltarEarned] = useState(0);
+  const [altarGradBonus, setAltarGradBonus] = useState(0);
+  const graduationBonusRef = useRef(0);
   const [debugInfiniteSlots, setDebugInfiniteSlots] = useState(false);
   const [debugUnlockAllSpells, setDebugUnlockAllSpells] = useState(false);
   const [discovery, setDiscovery] = useState(() => new Discovery()); // fog-of-war: what you've seen
   const [discoveryTick, setDiscoveryTick] = useState(0); // bump to force re-render after reveal
+  const [postCombatEnemy, setPostCombatEnemy] = useState(null); // defeated enemy stashed for post-combat talk
+  const [selectedEnemy, setSelectedEnemy] = useState(null);     // { name, lines, isPostCombat }
 
   // All discoverable things present in a zone, with their entity refs.
   const zonePresent = (zone) => [
@@ -181,6 +192,7 @@ const Game = () => {
     const classDef = CLASS_REGISTRY[classKey];
     if (!classDef) throw new Error(`Unknown class: ${classKey}`);
     clearSave(); // fresh run abandons any prior save
+    setSavedRunExists(false);
     const character = new Character(playerName, {
       race: 'Human',
       class: classKey,
@@ -190,6 +202,14 @@ const Game = () => {
     // Every class knows the basic fattening cantrips — at-will, no slot cost.
     const CANTRIPS = ['Conjure Morsel', 'Sating Spark', 'Greasy Flick'];
     setKnownSpells(new Set([...classDef.startingSpells, ...CANTRIPS]));
+
+    // Apply permanent altar upgrades from meta.
+    const slotBonus = getRank(meta, 'extra_slot');
+    if (slotBonus) character.spellSlots[1] = Math.min((character.spellSlots[1] || 0) + slotBonus, 6);
+    const feedRank = getRank(meta, 'feed_bonus');
+    if (feedRank) character.feedBonusMultiplier = (character.feedBonusMultiplier || 1) + feedRank * 0.07;
+    const headStart = getRank(meta, 'head_start');
+    if (headStart) character.experience = (character.experience || 0) + headStart * 50;
 
     // Starting gear by class offhand type
     const startingGear = {
@@ -204,11 +224,10 @@ const Game = () => {
 
     gameState.setPlayer(character);
     textEngine.clearBuffer();
+    setAltarOpen(false);
 
-    // Add initial message
-    textEngine.addText(`Welcome, ${playerName}!`);
-    textEngine.addText('You find yourself in The Bloated Boar Tavern...');
-    textEngine.addText('Barkeep Boris leans across the bar, voice dropping low. "You\'ve got the look of someone who goes hunting for trouble. There\'s plenty of it under our feet. A stair behind the cellar door drops into the old dungeon — kitchens that still cook, halls still laid for a feast no one living was invited to. They say something waits at the bottom that never once stopped eating. Mind the cold down there. It does strange things to a person\'s appetite."')
+    textEngine.addText(`${playerName} steps into the tavern.`);
+    textEngine.addText('Boris sets down a mug he has been polishing for the past minute — the shelf behind him bare where there used to be barrels. "You\'ve got the look of someone who goes into places sensible folk avoid. Good. We\'ve got one of those." He taps the floor with one boot. "Dungeon under the cellar. Used to feed half the valley — kitchens that never cooled, larders that never emptied. Then something woke up at the bottom and started keeping everything for itself. Our stores ran thin three months ago." He leans in. "Whatever it\'s been hoarding down there is ours. Bring it back and this town will give you what it has."');
     setTextBuffer(textEngine.getBuffer());
 
     // Set starting zone
@@ -219,6 +238,46 @@ const Game = () => {
   };
 
   const addEntry = (text, type) => textEngine.addText(text, type ? { type } : {});
+
+  // End a run (death or extraction) — bank devotion, carry the foe ledger to meta,
+  // then drop back to the altar so the player can spend before the next descent.
+  const endRun = (devotionEarned, reason) => {
+    const gradBonus = graduationBonusRef.current;
+    graduationBonusRef.current = 0;
+    const totalEarned = devotionEarned + gradBonus;
+    setMeta(prev => {
+      // Merge this run's return ledger into meta so recurring foes persist across deaths.
+      const next = {
+        ...prev,
+        devotion: prev.devotion + totalEarned,
+        returnLedger: dungeon ? { ...dungeon.returns } : prev.returnLedger,
+      };
+      saveMeta(next);
+      return next;
+    });
+    setAltarEarned(totalEarned);
+    setAltarGradBonus(gradBonus);
+    clearSave();
+    setSavedRunExists(false);
+    setCombatState(null);
+    setDungeon(null);
+    setFloorWeights(new Map());
+    setGameStarted(false);
+    setCurrentZone(null);
+
+    if (reason === 'death') {
+      addEntry('— Defeated —', 'divider');
+      addEntry('You surface empty-handed. The dungeon keeps what you dropped, but the town will remember you tried.');
+    } else if (reason === 'extract') {
+      addEntry('— You surface —', 'divider');
+      addEntry('You bring what you found back to the light. Something in the town stirs.');
+    } else {
+      addEntry('— The Depths Silenced —', 'divider');
+      addEntry('The hoarding is done. You carry the full weight of it home.');
+    }
+    setTextBuffer(textEngine.getBuffer());
+    setAltarOpen(true);
+  };
 
   const handleCastSpell = (args) => {
     try {
@@ -242,7 +301,7 @@ const Game = () => {
       const available = caster.spellSlots[slotLevel] ?? 0;
       if (available <= 0) {
         addEntry(`— ${spell.name} —`, 'divider');
-        addEntry(`No level ${slotLevel} spell slots remaining. Long rest to restore.`, 'error');
+        addEntry(`The incantation dies half-formed — too much spent and the well runs dry.`, 'error');
         setTextBuffer(textEngine.getBuffer());
         return;
       }
@@ -325,7 +384,7 @@ const Game = () => {
         // Show pending rest gain only if the spell fed the target (not for restraints etc.)
         if (totalCaloriesLogged > 0 && totalImmediateWeightGain === 0) {
           const pendingGain = target.pendingWeightGain || 0;
-          if (pendingGain > 0) addEntry(`${target.name} will gain an estimated +${pendingGain} lbs after rest.`, 'info');
+          if (pendingGain > 0) addEntry(`${target.name} looks heavier already — it will settle by morning.`, 'info');
         }
 
         applySpellConditions(spell, target, selectedOption);
@@ -450,7 +509,6 @@ const Game = () => {
     const player = gameState.getPlayer();
     if (!player) return;
     const { leveledUp, newLevel } = awardXP(player, amount);
-    addEntry(`+${amount} XP`, 'info');
     if (leveledUp) {
       const choices = levelUpChoices(player, knownSpells);
       setLevelUpState({ level: newLevel, choices });
@@ -484,7 +542,8 @@ const Game = () => {
   const handleEnterDungeon = () => {
     const player = gameState.getPlayer();
     if (!player) return;
-    const ds = new DungeonState();
+    // Seed the new run with the accumulated recurring-foe ledger from meta.
+    const ds = new DungeonState(undefined, meta.returnLedger);
     setDungeon(ds);
     setDungeonTick(t => t + 1);
     addEntry(`— ${ds.currentFloor?.name} —`, 'divider');
@@ -509,10 +568,14 @@ const Game = () => {
       ...enemies.map((e, i) => ({ entity: e, initiative: 5, x: FIELD.maxX, y: Math.min(i, FIELD.maxY) })),
     ]);
     const floor = ds.currentFloor;
+    const openingLine = enemies.length === 1 ? enemies[0]?.dialogue?.precombat?.[0] : null;
     setCombatState({
       combat, enemies, round: 1, status: 'active', modifier: floor?.modifier || null,
       selectedEnemyId: enemies[0].id, field: FIELD,
-      log: [enemies.length > 1 ? `${enemies.length} foes block your way!` : `${enemies[0]?.name} blocks your way!`],
+      log: [
+        enemies.length > 1 ? `${enemies.length} foes block your way!` : `${enemies[0]?.name} blocks your way!`,
+        ...(openingLine ? [`"${openingLine}"`] : []),
+      ],
     });
   };
 
@@ -536,6 +599,7 @@ const Game = () => {
     if (!dungeon) return;
     const room = dungeon.move(dir);
     if (!room) return;
+    setPostCombatEnemy(null);
     setDungeonTick(t => t + 1);
     addEntry(`— You go ${dir} —`, 'divider');
     addEntry(dungeon.currentFloor?.name + '. The passage opens into another room.');
@@ -556,6 +620,62 @@ const Game = () => {
     setTextBuffer(textEngine.getBuffer());
   };
 
+  // Build the dungeon location descriptor, enabling talk for enemies that have dialogue.
+  const buildDungeonLocation = (ds) => {
+    const loc = roomToLocation(ds);
+    if (!loc) return null;
+    const prompts = [...loc.prompts, { id: 'leave', label: 'Retreat to the surface', tone: 'neutral' }];
+    let discovered = [...loc.discovered];
+
+    // Pre-combat: mark foe as talkable if it has precombat dialogue.
+    const room = ds.currentRoom;
+    if (room?.contents?.kind === 'combat' && !room.cleared) {
+      const foe = room.contents.enemyDefs?.[0];
+      if (foe?.dialogue?.precombat) {
+        discovered = discovered.map(r => r.id.endsWith('_foe') ? { ...r, canTalk: true } : r);
+      }
+    }
+
+    // Post-combat: inject a row for the defeated enemy if she has something to say.
+    if (postCombatEnemy && !postCombatEnemy._postcombatTalked) {
+      const line = postCombatEnemy.dialogue?.postcombat?.[postCombatEnemy._defeatCondition];
+      if (line) {
+        discovered = [...discovered, {
+          id: 'postcombat_enemy',
+          kind: 'creature',
+          name: postCombatEnemy.name,
+          canExamine: false,
+          canTalk: true,
+        }];
+      }
+    }
+
+    const totalRooms = Object.keys(ds.rooms).length;
+    const clearedRooms = Object.values(ds.rooms).filter(r => r.cleared).length;
+    return { ...loc, prompts, discovered, floorProgress: { cleared: clearedRooms, total: totalRooms } };
+  };
+
+  const handleDungeonTalkRow = (row) => {
+    if (!dungeon) return;
+    if (row.id === 'postcombat_enemy' && postCombatEnemy) {
+      const line = postCombatEnemy.dialogue?.postcombat?.[postCombatEnemy._defeatCondition];
+      if (line) setSelectedEnemy({ name: postCombatEnemy.name, lines: [line], isPostCombat: true });
+    } else if (row.id.endsWith('_foe')) {
+      const foe = dungeon.currentRoom?.contents?.enemyDefs?.[0];
+      if (foe?.dialogue?.precombat) {
+        setSelectedEnemy({ name: foe.name, lines: foe.dialogue.precombat, isPostCombat: false });
+      }
+    }
+  };
+
+  const handleEnemyDialogueClose = () => {
+    if (selectedEnemy?.isPostCombat && postCombatEnemy) {
+      postCombatEnemy._postcombatTalked = true;
+      setPostCombatEnemy(null);
+    }
+    setSelectedEnemy(null);
+  };
+
   const handleRoomPrompt = (id) => {
     if (!dungeon) return;
     if (id === 'engage') {
@@ -569,26 +689,27 @@ const Game = () => {
       setDungeonTick(t => t + 1);
       setTextBuffer(textEngine.getBuffer());
     } else if (id === 'descend') {
+      setPostCombatEnemy(null);
       const { dungeonComplete } = dungeon.descend();
       if (dungeonComplete) {
-        addEntry('— Dungeon Cleared! —', 'divider');
-        addEntry('You have conquered the dungeon. A legend is born.');
-        setDungeon(null);
-        clearSave();
-        setFloorWeights(new Map());
+        // Full clear: max extraction bonus
+        const earned = devotionForExtraction(11, dungeon.lootPile.length) + 200;
+        endRun(earned, 'complete');
+        return; // endRun handles teardown
       } else {
         addEntry(`— ${dungeon.currentFloor?.name} —`, 'divider');
         addEntry(dungeon.currentFloor?.description || 'You descend deeper.');
+        if (dungeon.pendingReturns().length) {
+          addEntry('Something you left behind on a floor above has been waiting down here — and it has not gone hungry in the meantime.', 'italic');
+        }
         setFloorWeights(new Map()); // new floor — weight persistence resets
         bossPhaseRef.current = {};
         setDungeonTick(t => t + 1);
       }
       setTextBuffer(textEngine.getBuffer());
     } else if (id === 'leave') {
-      addEntry('— You retreat to the surface —', 'divider');
-      addEntry('The dungeon will be waiting when you return.');
-      setDungeon(null);
-      setTextBuffer(textEngine.getBuffer());
+      const earned = devotionForExtraction(dungeon.floorIndex, dungeon.lootPile.length);
+      endRun(earned, 'extract');
     }
   };
 
@@ -654,10 +775,10 @@ const Game = () => {
     for (const e of prev.enemies) {
       if (!e._dead && !living.includes(e)) {
         e._dead = true;
-        e._defeatCondition = checkWinState(e)?.state ?? 'immobilized';
+        e._defeatCondition = e.conditions?.has('buried') ? 'buried'
+          : e.conditions?.has('satiated') ? 'asleep'
+          : checkWinState(e)?.state ?? 'immobilized';
         log.push(`${e.name} is defeated!`);
-        const dt = e.defeatText?.[e._defeatCondition];
-        if (dt) log.push(dt);
       }
     }
 
@@ -715,7 +836,19 @@ const Game = () => {
       const selfFull = self.fullness || 0;
       if (selfFull < selfBefore) log.push(`${self.name} sheds the filling — the weight slides off her.`);
       else if (selfFull > selfBefore) log.push(`${self.name} gorges hungrily.`);
-      if (playerFed > 0) log.push(`${self.name} forces a mouthful on you.`);
+      if (playerFed > 0) {
+        log.push(`${self.name} forces a mouthful on you.`);
+        const playerCap = player.stomachCapacity || 0;
+        if (playerCap) {
+          const pBefore = playerBefore / playerCap, pAfter = (player.fullness || 0) / playerCap;
+          if (FATTEN_BANDS.some(bnd => pBefore < bnd && pAfter >= bnd)) {
+            log.push(pAfter >= 1.0 ? 'You strain at the seams, gorged past reason.'
+              : pAfter >= 0.85 ? 'Your belly presses tight — breathing comes harder.'
+              : pAfter >= 0.70 ? 'A heaviness settles through your middle.'
+              : 'Your stomach starts to push back.');
+          }
+        }
+      }
       else if (selfFull === selfBefore && playerFed === 0) log.push(`${self.name} repositions.`);
     }
 
@@ -767,7 +900,7 @@ const Game = () => {
       const isCantrip = lvl <= 0;
       const cost = isCantrip ? 0 : lvl <= 1 ? 1 : lvl <= 3 ? 2 : 3;
       if (!isCantrip && !debugInfiniteSlots) {
-        if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `No L${cost} slots — ${spell.name} fizzles.` };
+        if ((player.spellSlots[cost] ?? 0) <= 0) return { ok: false, msg: `${spell.name} falls apart — you've spent the well dry.` };
         player.spellSlots[cost] -= 1;
       }
       const l3Pct = player.level >= 19 ? EPIC_FILL.tier2 : player.level >= 16 ? EPIC_FILL.tier1 : EPIC_FILL.base;
@@ -788,8 +921,8 @@ const Game = () => {
         const isCritSpell = Math.random() * 100 < (player.critFeedChance || 0);
         fillUp(selEnemy, isCritSpell ? fillAmt * 2 : fillAmt);
         log.push(narrative);
-        if (isCritSpell) log.push(`Critical spellcast — ${spell.name} doubles!`);
-        if (cost === 3 && player.level >= 16) log.push(`Epic spellcraft — ${spell.name} surges.`);
+        if (isCritSpell) log.push(`The spell catches beyond your intent — it surges.`);
+        if (cost === 3 && player.level >= 16) log.push(`Something vast answers the casting.`);
         narrateFatten(selEnemy, before, log);
       }
       // Feeding wears down resistance — willingness rises a little no matter which path.
@@ -810,7 +943,7 @@ const Game = () => {
       const isCrit = critRoll < (player.critFeedChance || 0);
       fillUp(selEnemy, isCrit ? fillAmt * 2 : fillAmt);
       log.push(`You force-feed ${selEnemy.name}.`);
-      if (isCrit) log.push(`Critical feed on ${selEnemy.name}!`);
+      if (isCrit) log.push(`${selEnemy.name} reels — you pushed that past her limit.`);
       narrateFatten(selEnemy, before, log);
       // Sustained force-feeding wears down resistance faster than spells.
       selEnemy.willingness = Math.min(100, (selEnemy.willingness ?? 50) + 4);
@@ -842,9 +975,20 @@ const Game = () => {
     if (status === 'won') {
       const enemy = enemies[0];
       if (enemy.bossEvent) addEntry(enemy.bossEvent);
+
+      // Recurring foes: log this defeat so they can return fatter deeper down.
       for (const e of enemies) {
-        const dt = e.defeatText?.[e._defeatCondition];
-        if (dt) addEntry(dt, 'italic');
+        if (e._dead && e._defeatCondition) dungeon.recordEncounterDefeat(e.name, e._defeatCondition);
+      }
+
+      // Graduation: foes that just hit stage 5 leave the dungeon for good.
+      for (const e of enemies) {
+        if (e._dead && e._defeatCondition && dungeon.returns[e.name]?.graduated) {
+          addEntry(`— ${e.name} departs —`, 'divider');
+          addEntry(e.graduationText || `${e.name} has outgrown the dungeon.`, 'italic');
+          claimGraduation(dungeon.returns, e.name);
+          graduationBonusRef.current += GRADUATION_BONUS;
+        }
       }
 
       // Persist per-floor weight gains for enemies that weren't fattened to death.
@@ -858,13 +1002,17 @@ const Game = () => {
         return next;
       });
 
+      // Stash a defeated enemy with post-combat dialogue before clearing combat.
+      const talkable = enemies.find(e => e.dialogue?.postcombat?.[e._defeatCondition]);
+      if (talkable) setPostCombatEnemy(talkable);
+
       // Clear the room (banks loot), drop combat → back to traversal. Award XP last
       // so a level-up modal doesn't race the room transition.
       const items = dungeon.clearRoom();
       const player = gameState.getPlayer();
       items.forEach(item => player.inventory.push(item));
       addEntry(`— ${enemy.name} defeated —`, 'divider');
-      if (items.length) addEntry(`Loot: ${items.map(i => i.name).join(', ')}.`, 'info');
+      if (items.length) addEntry(`Loot: ${items.map(i => i.name).join(', ')}.`, 'loot');
       addEntry(dungeon.canDescend || dungeon.currentRoom?.contents?.isGate
         ? 'The way deeper is clear.'
         : 'The room falls quiet. You may move on.');
@@ -872,17 +1020,32 @@ const Game = () => {
       setDungeonTick(t => t + 1);
       gainXP(enemy.xpValue || 100);
     } else {
-      // lost — flee the dungeon, keep the character
-      setCombatState(null);
-      setDungeon(null);
-      addEntry('— Defeated —', 'divider');
-      addEntry('You retreat to the surface, licking your wounds.');
+      // lost — bank partial devotion, reset run, show altar
+      endRun(devotionForDeath(dungeon?.floorIndex ?? 0), 'death');
+      return; // endRun calls setTextBuffer
     }
     setTextBuffer(textEngine.getBuffer());
   };
 
   if (!gameStarted) {
-    return <CharacterCreation onStart={startGame} onResume={savedRunExists ? resumeGame : null} />;
+    if (altarOpen) {
+      return (
+        <AltarScreen
+          meta={meta}
+          earned={altarEarned}
+          gradBonus={altarGradBonus}
+          onMetaChange={setMeta}
+          onContinue={() => setAltarOpen(false)}
+        />
+      );
+    }
+    return (
+      <CharacterCreation
+        onStart={startGame}
+        onResume={savedRunExists ? resumeGame : null}
+        onAltar={meta.devotion > 0 ? () => setAltarOpen(true) : null}
+      />
+    );
   }
 
   const player = gameState.getPlayer();
@@ -909,12 +1072,10 @@ const Game = () => {
           {dungeon && !combatState ? (
             <div style={styles.zoneSection}>
               <LocationView
-                location={(() => {
-                  const loc = roomToLocation(dungeon);
-                  return loc ? { ...loc, prompts: [...loc.prompts, { id: 'leave', label: 'Retreat to the surface', tone: 'neutral' }] } : loc;
-                })()}
+                location={buildDungeonLocation(dungeon)}
                 onLookAround={handleDungeonLook}
                 onExamine={handleDungeonExamine}
+                onTalk={handleDungeonTalkRow}
                 onMove={handleDungeonMove}
                 onPrompt={handleRoomPrompt}
               />
@@ -944,7 +1105,7 @@ const Game = () => {
           player={player}
           knownSpells={knownSpells}
           spellLibrary={spellLibrary}
-          onCastSpell={!dungeon ? handleCastSpell : handleCastSpell}
+          onCastSpell={handleCastSpell}
           currentZone={currentZone}
           playerStats={{ spellSlots: player.spellSlots, maxSpellSlots: player.maxSpellSlots }}
           discovery={discovery}
@@ -958,6 +1119,15 @@ const Game = () => {
           npc={selectedNPC}
           onClose={handleCloseNPC}
           onAction={handleNPCAction}
+        />
+      )}
+
+      {selectedEnemy && (
+        <EnemyDialoguePanel
+          enemyName={selectedEnemy.name}
+          lines={selectedEnemy.lines}
+          mode={selectedEnemy.isPostCombat ? 'narration' : 'speech'}
+          onClose={handleEnemyDialogueClose}
         />
       )}
 

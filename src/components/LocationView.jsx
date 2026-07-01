@@ -13,7 +13,7 @@ const KIND = {
 const LocationView = ({ location, onLookAround, onExamine, onTalk, onMove, onPrompt }) => {
   if (!location) return <div style={s.empty}>Nowhere to be found.</div>;
 
-  const { name, description, discovered = [], hiddenCount = 0, exits = [], prompts = [] } = location;
+  const { name, description, discovered = [], hiddenCount = 0, exits = [], prompts = [], floorProgress } = location;
   const nothingSeen = discovered.length === 0;
 
   return (
@@ -22,6 +22,13 @@ const LocationView = ({ location, onLookAround, onExamine, onTalk, onMove, onPro
 
       <header>
         <h2 style={s.title}>{name}</h2>
+        {floorProgress && (
+          <div style={s.progress} aria-label={`${floorProgress.cleared} of ${floorProgress.total} rooms cleared`}>
+            {Array.from({ length: floorProgress.total }).map((_, i) => (
+              <span key={i} style={i < floorProgress.cleared ? s.dotOn : s.dotOff}>●</span>
+            ))}
+          </div>
+        )}
         <p style={s.desc}>{description}</p>
       </header>
 
@@ -134,6 +141,9 @@ const s = {
     letterSpacing: '0.04em',
     boxShadow: '0 2px 8px rgba(74,106,42,0.4), 0 4px 2px rgba(0,0,0,0.3)',
   },
+  progress: { display: 'flex', gap: '5px', marginTop: '6px', marginBottom: '-4px' },
+  dotOn:  { color: '#c9a227', fontSize: '0.55rem', lineHeight: 1 },
+  dotOff: { color: '#2e2820', fontSize: '0.55rem', lineHeight: 1 },
   hint: { fontSize: '0.82rem', color: '#8a7a55', fontStyle: 'italic' },
   list: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' },
   item: {

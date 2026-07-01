@@ -6,7 +6,7 @@ import Character from './Character.js';
 import { DungeonState } from './dungeon/DungeonState.js';
 
 const KEY = 'daf_save';
-const VERSION = 2;
+const VERSION = 3;
 
 // Pack the run into a versioned plain blob.
 // `discovery` is an already-serialized plain object (Discovery.serialize()) or null;
@@ -27,7 +27,11 @@ export function packSave({ player, dungeon, knownSpells, discovery }) {
 // dungeon hydrates without rooms and regenerates on resume).
 function migrate(blob) {
   if (blob.v === 1) {
-    return { ...blob, v: 2, discovery: null };
+    blob = { ...blob, v: 2, discovery: null };
+  }
+  if (blob.v === 2) {
+    // v3 adds the recurring-foe ledger; DungeonState.hydrate defaults it empty.
+    blob = { ...blob, v: 3 };
   }
   return blob;
 }
@@ -78,8 +82,9 @@ if (typeof process !== 'undefined' && process.argv?.[1] && import.meta.url === `
   p.equip(ITEMS.gluttons_tome);
   p.conditions.add('satiated', { intensity: 2 });
   const dungeon = new DungeonState();
-  dungeon.floorIndex = 1; dungeon.encounterIndex = 2;
+  dungeon.floorIndex = 1;
   dungeon.lootPile = [ITEMS.feast_plate];
+  dungeon.recordEncounterDefeat('Kitchen Imp', 'fattened'); // arm a recurring return
 
   // round-trip through JSON (no localStorage)
   const blob = JSON.parse(JSON.stringify(packSave({ player: p, dungeon, knownSpells: new Set(['Grease', 'Fireball']) })));
@@ -90,8 +95,9 @@ if (typeof process !== 'undefined' && process.argv?.[1] && import.meta.url === `
   console.assert(run.player.equippedItems.offhand?.key === 'gluttons_tome', 'equipment restored by key');
   console.assert(run.player.conditions.has('satiated'), 'conditions restored');
   console.assert(run.player.conditions.get('satiated').intensity === 2, 'condition meta survives');
-  console.assert(run.dungeon.floorIndex === 1 && run.dungeon.encounterIndex === 2, 'dungeon progress survives');
+  console.assert(run.dungeon.floorIndex === 1, 'dungeon progress survives');
   console.assert(run.dungeon.lootPile[0]?.key === 'feast_plate', 'lootPile restored by key');
+  console.assert(run.dungeon.returns['Kitchen Imp']?.stage === 2, 'recurring-foe ledger survives round-trip');
   console.assert(run.knownSpells.has('Fireball'), 'known spells survive');
   console.assert(run.discovery === null, 'discovery defaults null');
 

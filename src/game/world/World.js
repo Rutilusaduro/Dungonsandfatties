@@ -84,7 +84,7 @@ class World {
     // TAVERN ZONE
     const tavern = new Zone('tavern', 'The Bloated Boar Tavern', {
       description:
-        'A warm and welcoming tavern filled with the aromas of hearty food and drinks. The wooden tables are laden with platters of meat, bread, and pastries. The inn is decorated with hunting trophies and cozy fireplaces.',
+        'The tavern feels hollow at this hour. Half the tables are empty, the platters sparse. The smell of bread from the kitchen is thinner than it used to be, and the barrels behind the counter are lower than anyone will admit.',
       theme: 'tavern',
       difficulty: 'low',
       isIndoors: true,
@@ -220,23 +220,23 @@ class World {
     // Add NPCs to tavern
     tavern.addNPC(
       new Innkeeper('Barkeep Boris', {
-        description: 'A jolly innkeeper with a generous belly',
-        baseWeight: 240,
+        description: 'A lean innkeeper with hollow cheeks and a polishing rag that never stops moving. He looks like he used to be bigger.',
+        baseWeight: 165,
         foodPreferences: ['hearty stews', 'fresh bread', 'honey mead'],
       })
     );
     tavern.addNPC(
       new Merchant('Silvia the Spice Merchant', {
-        description: 'A merchant woman with exotic spices and foods from distant lands',
-        baseWeight: 170,
+        description: 'A merchant woman with sharp eyes and a half-empty pack. Her trade routes have thinned with the town.',
+        baseWeight: 145,
       })
     );
     tavern.addNPC(
       new NPC('Mira the Regular', {
         role: 'Bar Patron',
         personality: 'friendly',
-        description: 'A relaxed patron perched on a stool with an unfinished drink and a plate of tavern food',
-        baseWeight: 185,
+        description: 'A regular nursing a single drink. The stool she sits on has more cushion than she does.',
+        baseWeight: 140,
         willingness: 68,
         foodLoves: ['Beer', 'Bread', 'Pastry'],
         foodLikes: ['Meat', 'Cream', 'Ice Cream'],
@@ -247,8 +247,8 @@ class World {
       new NPC('Tansy the Drinker', {
         role: 'Bar Patron',
         personality: 'boisterous',
-        description: 'A loud tavern regular guarding a beer bottle and laughing between bites',
-        baseWeight: 210,
+        description: 'Still loud, still laughing — but her plate has been empty for a while and she is not rushing to fill it.',
+        baseWeight: 155,
         willingness: 72,
         foodLoves: ['Ale', 'Bread', 'Meat'],
         foodLikes: ['Pastry'],
@@ -259,16 +259,16 @@ class World {
       new Guard('Off-Duty Captain Lenna', {
         role: 'Off-Duty Guard',
         personality: 'stern',
-        description: 'A guard off shift, leaning against the bar with a heavy mug and a watchful eye on the room',
-        baseWeight: 200,
+        description: 'A guard off shift, watching the room with the tight-shouldered look of someone who has been skipping meals.',
+        baseWeight: 155,
         foodLikes: ['Beer', 'Meat', 'Bread'],
       })
     );
 
     // GARDEN ZONE
-    const garden = new Zone('garden', 'The Abundant Garden', {
+    const garden = new Zone('garden', 'The Garden', {
       description:
-        'A lush garden overflowing with produce. Fruit trees hang heavy with ripe fruit, vegetable patches overflow with abundance, and flowering vines cover the stone walls. The air is thick with the scent of growing things.',
+        'A garden that used to overflow. The trees are there, the rows are planted, but the yield has been thin for months. Something under the ground pulls the richness downward.',
       theme: 'garden',
       difficulty: 'low',
       isIndoors: false,
