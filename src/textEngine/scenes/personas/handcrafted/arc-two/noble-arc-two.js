@@ -9,7 +9,7 @@ export default mergeArcTwo(
   buildArcTwo('dottie_maid', {
     examine: [
       arcExamine(
-        'Dottie moves through Mirabel\'s corridors with keys jangling and uniform let out at the waist — pear shape ripening beneath crisp linen, iron efficiency unchanged but gravity increased. She inventories silver with one hand and rests the other on a hip that has grown plush from tasting what she serves. Mirabel pretends the countess runs the house; Dottie pretends she has not outgrown the servants\' stairs. Neither pretense fools anyone who watches Wendy pass with a tray.',
+        'Dottie moves through Mirabel\'s corridors with keys jangling and uniform let out at the waist — pear shape ripening, iron efficiency unchanged but gravity increased. She inventories silver with one hand and rests the other on a hip grown plush from tasting what she serves. Mirabel pretends the countess runs the house; Dottie pretends she has not outgrown the servants\' stairs.',
         { ...ARC.warming },
       ),
       arcExamine(
@@ -335,7 +335,7 @@ export default mergeArcTwo(
   buildArcTwo('keys_pianist', {
     examine: [
       arcExamine(
-        'Keys sits at Mirabel\'s grand piano with fingers poised and gown adjusted at seams that groan in harmony — bust filling silk, hips widening on a bench that creaks differently now. She plays waltzes between galas the countess cancels and snacks on canapés meant for guests who never arrive, cream staining lips she licks slowly between movements. Mirabel sighs upstairs; Keys performs downstairs for ghosts and cream puffs alike.',
+        'Keys sits at Mirabel\'s grand piano with fingers poised and gown adjusted at seams that groan in harmony — bust filling silk, hips widening on a bench that creaks differently now. She plays waltzes between galas the countess cancels and snacks on canapés meant for guests who never arrive. Mirabel sighs upstairs; Keys performs downstairs for ghosts and cream puffs alike.',
         { ...ARC.warming },
       ),
       arcExamine(

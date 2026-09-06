@@ -9,7 +9,7 @@ export default mergeArcTwo(
   buildArcTwo('hope_pilgrim', {
     examine: [
       arcExamine(
-        'Hope greets you at the steps with pamphlets stacked like white bread — still radiant, still faithful, but her habit tells a story Patrice has been writing in soup. The hollow-cheeked guide is gone; warmth lives in her face now, in the way her belt has surrendered notch by notch. She presses a blessing into your palm and does not flinch when your eyes linger on the soft curve beneath her linen. Margaret would call it honesty. Hope calls it arrival.',
+        'Hope greets you at the steps with pamphlets stacked like white bread — still radiant, still faithful, but her habit tells a story Patrice has been writing in soup. Warmth lives in her face now, in the way her belt has surrendered notch by notch. Margaret would call it honesty. Hope calls it arrival.',
         { ...ARC.warming },
       ),
       arcExamine(
