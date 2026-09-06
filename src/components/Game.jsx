@@ -177,6 +177,9 @@ const Game = () => {
   const resumeGame = () => {
     const run = loadGame();
     if (!run) return;
+    if (!run.player.knownSkills?.length) {
+      initializeSkills(run.player, run.player.class_);
+    }
     gameState.setPlayer(run.player);
     setKnownSpells(run.knownSpells);
     setDungeon(run.dungeon);

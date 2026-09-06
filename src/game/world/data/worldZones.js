@@ -43,7 +43,7 @@ export const WORLD_ZONES = [
       east: 'bee_yard',
       west: 'greenhouse',
     },
-    npcKeys: ['gregg_gardener'],
+    npcKeys: ['gregg_gardener', 'garden_herbalist_ivy'],
     creatureKeys: ['fatling_pig', 'waddles_duck'],
   },
   {
@@ -63,7 +63,7 @@ export const WORLD_ZONES = [
       east: 'smokehouse',
       south: 'dairy_room',
     },
-    npcKeys: ['gertrude_chef'],
+    npcKeys: ['gertrude_chef', 'kitchen_sous_amelie'],
   },
   {
     id: 'dungeon',
@@ -80,7 +80,7 @@ export const WORLD_ZONES = [
       up: 'tavern',
       down: 'catacombs',
     },
-    npcKeys: ['dungeon_watcher_uma'],
+    npcKeys: ['dungeon_watcher_uma', 'depth_scout_ren'],
     creatureKeys: ['chained_cow'],
   },
 
@@ -197,7 +197,7 @@ export const WORLD_ZONES = [
     exits: {
       west: 'kitchen',
     },
-    npcKeys: ['smokehouse_cook_brigit'],
+    npcKeys: ['smokehouse_cook_brigit', 'smokehouse_slicer_gina'],
   },
   {
     id: 'dairy_room',
@@ -266,7 +266,7 @@ export const WORLD_ZONES = [
       west: 'catacombs',
       north: 'ritual_chamber',
     },
-    npcKeys: ['mycologist_thalia'],
+    npcKeys: ['mycologist_thalia', 'mushroom_apprentice_spore'],
   },
   {
     id: 'flooded_tunnel',
@@ -282,7 +282,7 @@ export const WORLD_ZONES = [
       north: 'catacombs',
       west: 'sewer_junction',
     },
-    npcKeys: ['tunnel_diver_marlowe'],
+    npcKeys: ['tunnel_diver_marlowe', 'tunnel_boatman_reef'],
   },
   {
     id: 'ritual_chamber',
@@ -298,7 +298,7 @@ export const WORLD_ZONES = [
     exits: {
       south: 'mushroom_grotto',
     },
-    npcKeys: ['ritual_acolyte_venus'],
+    npcKeys: ['ritual_acolyte_venus', 'ritual_guardian_lyra'],
   },
 
   // ── Town ───────────────────────────────────────────────────────────────────
@@ -336,7 +336,7 @@ export const WORLD_ZONES = [
       east: 'temple_steps',
       south: 'estate_gate',
     },
-    npcKeys: ['square_clerk_sophie'],
+    npcKeys: ['square_clerk_sophie', 'square_bard_fable'],
   },
   {
     id: 'fountain_plaza',
@@ -351,7 +351,7 @@ export const WORLD_ZONES = [
     exits: {
       south: 'town_square',
     },
-    npcKeys: ['plaza_fountain_keeper_delia'],
+    npcKeys: ['plaza_fountain_keeper_delia', 'fountain_poet_ode'],
   },
   {
     id: 'back_alley',
@@ -405,7 +405,7 @@ export const WORLD_ZONES = [
       south: 'bakery_front',
       down: 'apothecary',
     },
-    npcKeys: ['market_master_gwen'],
+    npcKeys: ['market_master_gwen', 'market_basket_weaver_nia'],
   },
   {
     id: 'spice_stall',
@@ -420,7 +420,7 @@ export const WORLD_ZONES = [
     exits: {
       west: 'market_square',
     },
-    npcKeys: ['silvia_spice'],
+    npcKeys: ['silvia_spice', 'spice_grinder_saffron'],
   },
   {
     id: 'butcher_shop',
@@ -483,7 +483,7 @@ export const WORLD_ZONES = [
       west: 'town_square',
       up: 'shrine_interior',
     },
-    npcKeys: ['pilgrim_guide_hope'],
+    npcKeys: ['pilgrim_guide_hope', 'temple_candle_bearer_wick'],
   },
   {
     id: 'shrine_interior',
@@ -500,7 +500,7 @@ export const WORLD_ZONES = [
       east: 'confession_booth',
       south: 'pilgrim_hostel',
     },
-    npcKeys: ['high_priestess_margaret'],
+    npcKeys: ['high_priestess_margaret', 'shrine_choir_alto_hymn'],
   },
   {
     id: 'confession_booth',
@@ -515,7 +515,7 @@ export const WORLD_ZONES = [
     exits: {
       west: 'shrine_interior',
     },
-    npcKeys: ['confessor_sister_agnes'],
+    npcKeys: ['confessor_sister_agnes', 'confession_incense_keeper_myrrh'],
   },
   {
     id: 'pilgrim_hostel',
@@ -549,7 +549,7 @@ export const WORLD_ZONES = [
       east: 'servants_hall',
       south: 'grand_ballroom',
     },
-    npcKeys: ['gate_warden_portia'],
+    npcKeys: ['gate_warden_portia', 'gate_herald_vale'],
   },
   {
     id: 'grand_ballroom',
@@ -566,7 +566,7 @@ export const WORLD_ZONES = [
       up: 'countess_parlor',
       down: 'wine_cellar_noble',
     },
-    npcKeys: ['ballroom_dancer_coral'],
+    npcKeys: ['ballroom_dancer_coral', 'ballroom_pianist_keys'],
   },
   {
     id: 'countess_parlor',
@@ -581,7 +581,7 @@ export const WORLD_ZONES = [
     exits: {
       down: 'grand_ballroom',
     },
-    npcKeys: ['countess_mirabel'],
+    npcKeys: ['countess_mirabel', 'countess_lady_wendy'],
   },
   {
     id: 'servants_hall',
@@ -611,7 +611,7 @@ export const WORLD_ZONES = [
     exits: {
       up: 'grand_ballroom',
     },
-    npcKeys: ['sommelier_camille'],
+    npcKeys: ['sommelier_camille', 'wine_cellar_sipper_tipsy'],
   },
 
   // ── Harbor ─────────────────────────────────────────────────────────────────
@@ -661,7 +661,7 @@ export const WORLD_ZONES = [
       east: 'back_alley',
       south: 'docks',
     },
-    npcKeys: ['warehouse_foreman_tess'],
+    npcKeys: ['warehouse_foreman_tess', 'warehouse_tally_faye'],
   },
   {
     id: 'captain_quarters',
@@ -676,7 +676,7 @@ export const WORLD_ZONES = [
     exits: {
       west: 'docks',
     },
-    npcKeys: ['sea_captain_morgan'],
+    npcKeys: ['sea_captain_morgan', 'captain_navigator_stella'],
   },
 ];
 

@@ -3,8 +3,9 @@ import { buildWorld, getZoneCount, getNpcCount } from '../game/world/WorldBuilde
 import { WORLD_ZONES } from '../game/world/data/worldZones.js';
 import { NPC_ROSTER } from '../game/world/data/npcRoster.js';
 import { initializeSkills, useSkill } from '../game/mechanics/SkillResolver.js';
-import { getSkill } from '../game/mechanics/SkillRegistry.js';
+import { getSkill, skillsForClass, SKILL_REGISTRY } from '../game/mechanics/SkillRegistry.js';
 import Character from '../game/Character.js';
+import { getTextEngine, initializeTextEngine } from '../textEngine/index.js';
 
 describe('10x world expansion', () => {
   it('builds 40 connected zones', () => {
@@ -27,8 +28,8 @@ describe('10x world expansion', () => {
     expect(visited.size).toBe(40);
   });
 
-  it('has 60+ NPCs in roster with valid persona keys', () => {
-    expect(getNpcCount()).toBeGreaterThanOrEqual(60);
+  it('has 80 NPCs in roster (10× from ~8)', () => {
+    expect(getNpcCount()).toBe(80);
     for (const def of Object.values(NPC_ROSTER)) {
       expect(def.persona).toBeTruthy();
       expect(def.name).toBeTruthy();
@@ -41,6 +42,50 @@ describe('10x world expansion', () => {
       for (const key of zone.npcKeys || []) {
         expect(NPC_ROSTER[key], `${zone.id} → ${key}`).toBeTruthy();
       }
+    }
+  });
+
+  it('world places 80 NPC instances across zones', () => {
+    const world = buildWorld();
+    let total = 0;
+    for (const zone of world.getAllZones()) {
+      total += zone.getNPCs().length;
+    }
+    expect(total).toBe(80);
+  });
+
+  it('district dialogue topics resolve in text engine', () => {
+    initializeTextEngine();
+    const engine = getTextEngine();
+    for (const topic of ['market_banter', 'temple_sermon', 'noble_gossip', 'harbor_tales']) {
+      expect(engine.hasModule(`npc.dialogue.${topic}`)).toBe(true);
+    }
+  });
+
+  it('handcrafted personas render examine at multiple weight stages', () => {
+    initializeTextEngine();
+    const engine = getTextEngine();
+    const npc = Object.assign(new (class {})(), {
+      name: 'Countess Mirabel',
+      persona: 'mirabel_countess',
+      role: 'Countess',
+      personality: 'regal',
+      baseWeight: 172,
+      currentWeight: 400,
+      playerReputation: 60,
+      willingness: 50,
+      conditions: { keys: () => [] },
+    });
+    const ctx = { subject: npc };
+    const text = engine.render('npc.examine', ctx);
+    expect(text.length).toBeGreaterThan(20);
+    expect(text.toLowerCase()).toContain('mirabel');
+  });
+
+  it('class skills: 18 total, 3 per class across 6 classes', () => {
+    expect(Object.keys(SKILL_REGISTRY).length).toBe(18);
+    for (const cls of ['Paladin', 'Mage', 'Warlock', 'Cleric', 'Druid', 'Bard']) {
+      expect(skillsForClass(cls).length).toBe(3);
     }
   });
 

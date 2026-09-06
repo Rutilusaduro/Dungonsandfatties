@@ -298,6 +298,118 @@ export function registerNPCModules(engine, lexicon) {
     },
   ]);
 
+  // ─── MARKET BANTER ───────────────────────────────────────────────────────────
+
+  engine.registerPool('npc.dialogue.market_banter', [
+    {
+      when: { reputation: { min: 40 }, stage: { min: 4 } },
+      text: [
+        'Stalls are fuller when bellies are. Coin follows appetite — always has.',
+        'You look like someone who understands supply and demand. The demand, especially.',
+      ],
+      weight: 2,
+    },
+    {
+      when: { willingness: { min: 60 } },
+      text: [
+        'Sample? Of course there\'s a sample. There\'s always a sample if you ask sweetly.',
+        'The best customers are the hungry ones. You seem... promising.',
+      ],
+      weight: 2,
+    },
+    {
+      when: {},
+      text: [
+        'Prices are fair. Quality is better. Hunger makes both feel like bargains.',
+        'Market day hums when everyone\'s thinking about their next meal.',
+      ],
+    },
+  ]);
+
+  // ─── TEMPLE SERMON ───────────────────────────────────────────────────────────
+
+  engine.registerPool('npc.dialogue.temple_sermon', [
+    {
+      when: { reputation: { min: 50 }, stage: { min: 5 } },
+      text: [
+        'Abundance is not sin when it is shared. The altar remembers who brought bread to the hungry.',
+        'The body is a vessel. Fill it with gratitude, not guilt — though both can be heavy.',
+      ],
+      weight: 3,
+    },
+    {
+      when: { willingness: { min: 55 } },
+      text: [
+        'Hunger teaches humility. Satisfaction teaches grace. Both are holy, in their season.',
+        'We break bread so no one breaks alone. That is the oldest sermon I know.',
+      ],
+      weight: 2,
+    },
+    {
+      when: {},
+      text: [
+        'The shrine welcomes all who come in hunger — of body or spirit.',
+        'Prayer is quieter after a good meal. The soul settles when the belly does.',
+      ],
+    },
+  ]);
+
+  // ─── NOBLE GOSSIP ────────────────────────────────────────────────────────────
+
+  engine.registerPool('npc.dialogue.noble_gossip', [
+    {
+      when: { reputation: { min: 50 }, stage: { min: 4 } },
+      text: [
+        'The countess hosted three courses last night and ate five. The servants talk — but only to those they trust.',
+        'Mirabel\'s corset maker has been summoned twice this month. Draw your own conclusions.',
+      ],
+      weight: 3,
+    },
+    {
+      when: { reputation: { min: 25 } },
+      text: [
+        'Between us? The ballroom hasn\'t seen a gala in weeks, but the kitchen hasn\'t slowed.',
+        'Nobles pretend at restraint. The servants\' hall tells a different story.',
+      ],
+      weight: 2,
+    },
+    {
+      when: {},
+      text: [
+        'One does not repeat what one hears above the salt. But one may hint.',
+        'The estate thrives on appearances. Appetites are the one thing they cannot quite hide.',
+      ],
+    },
+  ]);
+
+  // ─── HARBOR TALES ────────────────────────────────────────────────────────────
+
+  engine.registerPool('npc.dialogue.harbor_tales', [
+    {
+      when: { reputation: { min: 40 }, stage: { min: 3 } },
+      text: [
+        'Sailors swear the tide brings more than fish — rumors, cravings, things that grow fat on long voyages.',
+        'Morgan\'s last crew came back heavier than they left. She calls it good provisioning.',
+      ],
+      weight: 2,
+    },
+    {
+      when: { willingness: { min: 55 } },
+      text: [
+        'A ship eats cargo. A crew eats everything else. The harbor feeds both.',
+        'Salt air sharpens hunger. That\'s why the stalls do such brisk business.',
+      ],
+      weight: 2,
+    },
+    {
+      when: {},
+      text: [
+        'Every crate that lands has a story. Most of them end at a dinner table.',
+        'The docks never sleep hungry for long — too much trade, too much temptation.',
+      ],
+    },
+  ]);
+
   // ─── EXAMINE ─────────────────────────────────────────────────────────────────
   // Status-aware: restrained/suspended/stuffed variants take priority over weight stage.
 

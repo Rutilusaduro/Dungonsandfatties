@@ -8,7 +8,11 @@ import { NPC_ROSTER } from '../../game/world/data/npcRoster.js';
 import { registerProfilePersonas } from './personaFactory.js';
 
 // Personas already fully authored in personas.js — skip to avoid dilution.
-const HANDCRAFTED = new Set(['bella', 'silvia', 'gregg', 'cassandra', 'gertrude']);
+const HANDCRAFTED = new Set([
+  'bella', 'silvia', 'gregg', 'cassandra', 'gertrude',
+  'mira', 'tansy', 'lenna',
+  'gwen_market', 'margaret_priestess', 'mirabel_countess', 'morgan_captain',
+]);
 
 const TOPIC_LINES = {
   tavern_chat: [
@@ -46,6 +50,22 @@ const TOPIC_LINES = {
   offer_food: [
     { when: { willingnessMin: 65 }, text: 'Oh — for me? I wouldn\'t say no.', weight: 3 },
     { when: {}, text: 'What are you offering?', weight: 1 },
+  ],
+  market_banter: [
+    { when: { reputationMin: 35 }, text: 'Stalls are moving — appetite\'s up. Good for business.', weight: 2 },
+    { when: {}, text: 'Fair trade and full baskets. That\'s the market way.', weight: 1 },
+  ],
+  temple_sermon: [
+    { when: { reputationMin: 35 }, text: 'Hunger is honest. The shrine answers it without judgment.', weight: 2 },
+    { when: {}, text: 'Peace sits easier after bread shared.', weight: 1 },
+  ],
+  noble_gossip: [
+    { when: { reputationMin: 30 }, text: 'Above the salt, they pretend. Below it, the staff knows.', weight: 2 },
+    { when: {}, text: 'Appearances are expensive. Appetites are harder to hide.', weight: 1 },
+  ],
+  harbor_tales: [
+    { when: { reputationMin: 30 }, text: 'Salt air sharpens hunger. The docks never run empty long.', weight: 2 },
+    { when: {}, text: 'Every crate has a story. Most end at a table.', weight: 1 },
   ],
 };
 
