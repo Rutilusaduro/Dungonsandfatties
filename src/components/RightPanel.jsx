@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import DungeonMap from './DungeonMap';
 import SpellCaster from './SpellCaster';
+import SkillsPanel from './SkillsPanel.jsx';
 
-const RightPanel = ({ dungeon, player, knownSpells, spellLibrary, onCastSpell, currentZone, playerStats, discovery, debugUnlockAll, onToggleDebugSpells }) => {
-  const [tab, setTab] = useState('stats'); // stats, weight, spells, equipment
+const RightPanel = ({ dungeon, player, knownSpells, spellLibrary, onCastSpell, currentZone, playerStats, discovery, debugUnlockAll, onToggleDebugSpells, onUseSkill }) => {
+  const [tab, setTab] = useState('stats'); // stats, weight, spells, equipment, abilities
 
   return (
     <div style={s.panel}>
@@ -17,7 +18,7 @@ const RightPanel = ({ dungeon, player, knownSpells, spellLibrary, onCastSpell, c
 
       {/* Menu tabs */}
       <div style={s.tabs}>
-        {['stats', 'weight', 'spells', 'equipment'].map(t => (
+        {['stats', 'weight', 'spells', 'abilities', 'equipment'].map(t => (
           <button
             key={t}
             style={{ ...s.tab, ...(tab === t ? s.tabActive : {}) }}
@@ -51,6 +52,9 @@ const RightPanel = ({ dungeon, player, knownSpells, spellLibrary, onCastSpell, c
           ) : (
             <SpellsPanel knownSpells={knownSpells} />
           )
+        )}
+        {tab === 'abilities' && player && onUseSkill && (
+          <SkillsPanel character={player} onUseSkill={onUseSkill} />
         )}
         {tab === 'equipment' && player && (
           <EquipmentPanel player={player} />

@@ -15,6 +15,7 @@ import registerNPCModules from './scenes/npc.js';
 import registerSpellModules from './scenes/spell.js';
 import registerCombatModules from './scenes/combat.js';
 import registerNPCPersonas from './scenes/personas.js';
+import registerRosterPersonas from './scenes/rosterPersonas.js';
 
 // Wrap a raw dims object / {subject,...} / full ctx into an engine context.
 function toContext(raw) {
@@ -83,6 +84,7 @@ export function initializeTextEngine() {
     registerSpellModules(engine);
     registerCombatModules(engine);
     registerNPCPersonas(engine);
+    registerRosterPersonas(engine);
     globalEngine = engine;
   }
   return globalEngine;
