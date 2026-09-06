@@ -10,6 +10,8 @@ import town from './town.js';
 import market from './market.js';
 import { ANNEX_TAVERN_PERSONAS } from './annex-tavern.js';
 import { GARDEN_PERSONAS } from './garden.js';
+import { KITCHEN_PERSONAS } from './kitchen.js';
+import { UNDERGROUND_PERSONAS } from './underground.js';
 
 export default mergePersonas(
   coreTwenty,
@@ -20,4 +22,6 @@ export default mergePersonas(
   market,
   ANNEX_TAVERN_PERSONAS,
   GARDEN_PERSONAS,
+  KITCHEN_PERSONAS,
+  UNDERGROUND_PERSONAS,
 );

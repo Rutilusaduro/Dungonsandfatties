@@ -33,6 +33,11 @@ const HANDCRAFTED = new Set([
   // Garden expansion
   'petra_orchard', 'tilde_cider', 'violet_greenhouse', 'sage_fern',
   'yara_bee', 'luna_wax', 'ivy_herbal',
+  // Kitchen annex
+  'ruth_pantry', 'greta_larder', 'clara_dairy', 'helena_cheese', 'amelie_sous', 'gina_slicer',
+  // Underground
+  'uma_depth', 'eve_tomb', 'pix_rat', 'thalia_fungi', 'marlowe_tunnel', 'venus_ritual',
+  'ren_scout', 'spore_apprentice', 'reef_boat', 'lyra_guardian',
 ]);
 
 export function registerRosterPersonas(engine) {
