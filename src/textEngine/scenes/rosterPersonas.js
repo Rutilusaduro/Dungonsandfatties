@@ -15,6 +15,12 @@ const HANDCRAFTED = new Set([
   'gwen_market', 'margaret_priestess', 'mirabel_countess', 'morgan_captain',
   'bess_butcher', 'nell_fish', 'coral_dancer', 'agnes_confessor',
   'brigit_smoke', 'rosa_baker', 'portia_gate', 'patrice_hostel',
+  // Town square
+  'lottie_crier', 'june_ribbon', 'sophie_clerk', 'delia_fountain',
+  'roxy_fence', 'kitt_alley', 'jade_guard', 'fable_bard', 'ode_poet',
+  // Market row
+  'rhea_cleaver', 'lydia_pastry', 'iris_apothecary', 'wren_herb',
+  'nia_basket', 'saffron_grinder',
   // Temple district
   'hope_pilgrim', 'serene_pilgrim', 'wick_candle', 'hymn_choir', 'myrrh_incense',
   // Noble district
@@ -22,6 +28,11 @@ const HANDCRAFTED = new Set([
   'vale_herald', 'keys_pianist',
   // Harbor district
   'sal_dock', 'tina_rope', 'pearl_oyster', 'tess_warehouse', 'faye_tally', 'stella_nav',
+  // Tavern annex
+  'marta_cellar', 'hilda_cask', 'elsie_loft', 'nora_attic',
+  // Garden expansion
+  'petra_orchard', 'tilde_cider', 'violet_greenhouse', 'sage_fern',
+  'yara_bee', 'luna_wax', 'ivy_herbal',
 ]);
 
 export function registerRosterPersonas(engine) {
