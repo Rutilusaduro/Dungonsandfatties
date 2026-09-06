@@ -12,6 +12,9 @@ import { ITEMS, FLOOR_LOOT } from '../src/game/items/Equipment.js';
 import * as ENEMY_MODULE from '../src/game/dungeon/Enemies.js';
 import CLASS_REGISTRY from '../src/game/classes/ClassRegistry.js';
 import { LEVEL_UP_SPELLS } from '../src/game/mechanics/ProgressionSystem.js';
+import { WORLD_ZONES } from '../src/game/world/data/worldZones.js';
+import { NPC_ROSTER } from '../src/game/world/data/npcRoster.js';
+import { SKILL_REGISTRY } from '../src/game/mechanics/SkillRegistry.js';
 
 // SpellLibrary is pure JS (no React) — load it for names + target validation
 const lib = new SpellLibrary();
@@ -188,9 +191,59 @@ for (const [cls, pool] of Object.entries(LEVEL_UP_SPELLS)) {
   }
 }
 
+// World expansion inventory (10× scope gates)
+const ZONE_MIN = 40;
+const NPC_MIN = 80;
+const SKILL_MIN = 18;
+if (WORLD_ZONES.length < ZONE_MIN) {
+  console.error(`content:lint ERROR [world] ${WORLD_ZONES.length} zones — need >= ${ZONE_MIN}`);
+  errors++;
+}
+const rosterKeys = Object.keys(NPC_ROSTER);
+if (rosterKeys.length < NPC_MIN) {
+  console.error(`content:lint ERROR [world] ${rosterKeys.length} NPCs — need >= ${NPC_MIN}`);
+  errors++;
+}
+for (const zone of WORLD_ZONES) {
+  for (const key of zone.npcKeys || []) {
+    if (!NPC_ROSTER[key]) {
+      console.error(`content:lint ERROR [world:${zone.id}] unknown npcKey '${key}'`);
+      errors++;
+    }
+    for (const [dir, target] of Object.entries(zone.exits || {})) {
+      if (!WORLD_ZONES.some(z => z.id === target)) {
+        console.error(`content:lint ERROR [world:${zone.id}] exit ${dir} → unknown zone '${target}'`);
+        errors++;
+      }
+    }
+  }
+}
+for (const topic of ['market_banter', 'temple_sermon', 'noble_gossip', 'harbor_tales']) {
+  if (!engine.hasModule(`npc.dialogue.${topic}`)) {
+    console.error(`content:lint ERROR [world] missing dialogue module npc.dialogue.${topic}`);
+    errors++;
+  }
+}
+if (Object.keys(SKILL_REGISTRY).length < SKILL_MIN) {
+  console.error(`content:lint ERROR [skills] ${Object.keys(SKILL_REGISTRY).length} skills — need >= ${SKILL_MIN}`);
+  errors++;
+}
+
+// Every roster NPC must have persona + dialogue topics
+for (const [key, def] of Object.entries(NPC_ROSTER)) {
+  if (!def.persona) {
+    console.error(`content:lint ERROR [npc:${key}] missing persona`);
+    errors++;
+  }
+  if (!def.dialogueTopics?.includes('greeting')) {
+    console.error(`content:lint ERROR [npc:${key}] missing greeting topic`);
+    errors++;
+  }
+}
+
 if (errors > 0) {
   console.error(`\ncontent:lint: ${errors} error(s). Fix before shipping.`);
   process.exit(1);
 } else {
-  console.log(`content:lint: ${TABLE.length} combos, ${ALL_ENEMIES.length} enemies, ${itemKeys.size} items, ${knownSpells.length} spells — clean.`);
+  console.log(`content:lint: ${TABLE.length} combos, ${ALL_ENEMIES.length} enemies, ${itemKeys.size} items, ${knownSpells.length} spells, ${WORLD_ZONES.length} zones, ${rosterKeys.length} NPCs, ${Object.keys(SKILL_REGISTRY).length} skills — clean.`);
 }

@@ -32,6 +32,8 @@ import { controllerFor } from '../game/combat/EnemyController.js';
 import { narrativeFor } from '../game/combat/SpellNarrative.js';
 import { saveGame, loadGame, hasSave, clearSave } from '../game/SaveSystem.js';
 import { Discovery, idOf } from '../game/discovery/Discovery.js';
+import { initializeSkills, useSkill, grantLevelSkills, tickSkillCooldowns } from '../game/mechanics/SkillResolver.js';
+import SkillsPanel from './SkillsPanel.jsx';
 import RightPanel from './RightPanel.jsx';
 import EnemyDialoguePanel from './EnemyDialoguePanel.jsx';
 import AltarScreen from './AltarScreen.jsx';
@@ -175,6 +177,9 @@ const Game = () => {
   const resumeGame = () => {
     const run = loadGame();
     if (!run) return;
+    if (!run.player.knownSkills?.length) {
+      initializeSkills(run.player, run.player.class_);
+    }
     gameState.setPlayer(run.player);
     setKnownSpells(run.knownSpells);
     setDungeon(run.dungeon);
@@ -222,12 +227,14 @@ const Game = () => {
     const offhand = startingGear[classDef.offHand];
     if (offhand) character.equip(offhand);
 
+    initializeSkills(character, classKey);
+
     gameState.setPlayer(character);
     textEngine.clearBuffer();
     setAltarOpen(false);
 
     textEngine.addText(`${playerName} steps into the tavern.`);
-    textEngine.addText('Boris sets down a mug he has been polishing for the past minute — the shelf behind him bare where there used to be barrels. "You\'ve got the look of someone who goes into places sensible folk avoid. Good. We\'ve got one of those." He taps the floor with one boot. "Dungeon under the cellar. Used to feed half the valley — kitchens that never cooled, larders that never emptied. Then something woke up at the bottom and started keeping everything for itself. Our stores ran thin three months ago." He leans in. "Whatever it\'s been hoarding down there is ours. Bring it back and this town will give you what it has."');
+    textEngine.addText('Bella sets down a mug she has been polishing — the shelf behind her bare where there used to be barrels. "You\'ve got the look of someone who goes into places sensible folk avoid. Good. We\'ve got one of those." She taps the floor with one boot. "Dungeon under the cellar. Used to feed half the valley — kitchens that never cooled, larders that never emptied. Then something woke up at the bottom and started keeping everything for itself. Our stores ran thin three months ago." She leans in. "Whatever it\'s been hoarding down there is ours. Bring it back and this town will give you what it has."');
     setTextBuffer(textEngine.getBuffer());
 
     // Set starting zone
@@ -487,6 +494,23 @@ const Game = () => {
     setSelectedNPC(null);
   };
 
+  const handleUseSkill = (skillId) => {
+    const player = gameState.getPlayer();
+    if (!player || combatState) return;
+    const result = useSkill(skillId, {
+      player,
+      target: selectedNPC,
+      zone: currentZone,
+    });
+    if (result.ok) {
+      addEntry(`— ${result.skill.name} —`, 'divider');
+      addEntry(result.message);
+    } else {
+      addEntry(result.message, 'info');
+    }
+    setTextBuffer(textEngine.getBuffer());
+  };
+
   const handleEquip = (item, invIndex) => {
     const player = gameState.getPlayer();
     if (!player) return;
@@ -519,6 +543,7 @@ const Game = () => {
   const handleLevelUpChoice = (spellName) => {
     const player = gameState.getPlayer();
     applyLevelBonus(player);
+    grantLevelSkills(player, player.class_, player.level);
     if (spellName?.startsWith('[CAPSTONE]')) {
       applyCapstone(player);
       addEntry('— Level 20 Capstone —', 'divider');
@@ -1017,6 +1042,8 @@ const Game = () => {
         ? 'The way deeper is clear.'
         : 'The room falls quiet. You may move on.');
       setCombatState(null);
+      const p = gameState.getPlayer();
+      if (p) tickSkillCooldowns(p);
       setDungeonTick(t => t + 1);
       gainXP(enemy.xpValue || 100);
     } else {
@@ -1111,6 +1138,7 @@ const Game = () => {
           discovery={discovery}
           debugUnlockAll={debugUnlockAllSpells}
           onToggleDebugSpells={() => setDebugUnlockAllSpells(v => !v)}
+          onUseSkill={handleUseSkill}
         />
       </div>
 

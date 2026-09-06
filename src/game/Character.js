@@ -77,6 +77,10 @@ class Character {
     this.lastWeightGain = 0;
     this.conditions = new ActiveConditions();
 
+    // Class skills (active abilities distinct from spells)
+    this.knownSkills = options.knownSkills || [];
+    this.skillCooldowns = options.skillCooldowns || {};
+
     initializeNutritionState(this, options);
   }
 
@@ -290,6 +294,8 @@ Weight: ${this.currentWeight} lbs (${weightStatus})
       },
       spellSlots: { ...this.spellSlots },
       maxSpellSlots: { ...this.maxSpellSlots },
+      knownSkills: [...(this.knownSkills || [])],
+      skillCooldowns: { ...(this.skillCooldowns || {}) },
     };
   }
 }

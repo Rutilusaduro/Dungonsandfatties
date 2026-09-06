@@ -20,6 +20,19 @@ const NPCInteraction = ({ npc, onClose, onAction }) => {
     setTalkedOnce(true);
   };
 
+  const handleTopic = (topicKey) => {
+    npc.dialogue_state = topicKey;
+    const dialogue = npc.getDialogue(topicKey);
+    onAction({
+      type: 'talk',
+      npc: npc.name,
+      dialogue,
+    });
+    setTalkedOnce(true);
+  };
+
+  const topicKeys = Object.keys(npc.dialogues || {}).filter(k => k !== 'default');
+
   const handleExamine = () => {
     const description = npc.examine();
     onAction({
@@ -153,6 +166,21 @@ const NPCInteraction = ({ npc, onClose, onAction }) => {
               <button onClick={handleTalk} style={styles.actionButton}>
                 {talkedOnce ? 'Continue Talking' : 'Start Conversation'}
               </button>
+
+              {topicKeys.length > 0 && (
+                <div style={styles.topicSection}>
+                  <p style={styles.label}>Topics</p>
+                  {topicKeys.map(topic => (
+                    <button
+                      key={topic}
+                      onClick={() => handleTopic(topic)}
+                      style={styles.topicButton}
+                    >
+                      {topic.replace(/_/g, ' ')}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -350,6 +378,22 @@ const styles = {
     letterSpacing: '0.04em',
     boxShadow: '0 2px 8px rgba(139,69,19,0.4)',
     transition: 'background-color 0.2s',
+  },
+  topicSection: {
+    marginTop: '12px',
+  },
+  topicButton: {
+    display: 'block',
+    width: '100%',
+    padding: '8px',
+    marginBottom: '6px',
+    background: '#25262b',
+    color: '#d0b894',
+    border: '1px solid #3a2a1a',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '13px',
+    textTransform: 'capitalize',
   },
 };
 
