@@ -229,6 +229,18 @@ if (Object.keys(SKILL_REGISTRY).length < SKILL_MIN) {
   errors++;
 }
 
+// Every roster NPC must have persona + dialogue topics
+for (const [key, def] of Object.entries(NPC_ROSTER)) {
+  if (!def.persona) {
+    console.error(`content:lint ERROR [npc:${key}] missing persona`);
+    errors++;
+  }
+  if (!def.dialogueTopics?.includes('greeting')) {
+    console.error(`content:lint ERROR [npc:${key}] missing greeting topic`);
+    errors++;
+  }
+}
+
 if (errors > 0) {
   console.error(`\ncontent:lint: ${errors} error(s). Fix before shipping.`);
   process.exit(1);
