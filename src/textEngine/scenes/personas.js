@@ -329,6 +329,184 @@ const PERSONAS = {
       { when: {}, text: 'You seem seaworthy. Metaphorically.', weight: 1 },
     ],
   },
+
+  // ── BESS THE BUTCHER — blunt, bloody, hungry ───────────────────────────────
+  bess_butcher: {
+    'npc.dialogue.greeting': [
+      { when: { reputationMin: 50 }, text: 'Back again? Good. I saved you a cut — the good kind.', weight: 3 },
+      { when: { willingnessMin: 65 }, text: 'Don\'t hover. Either buy or tell me what you want off the block.', weight: 2 },
+      { when: {}, text: 'What. I\'m elbow-deep in a haunch.', weight: 1 },
+    ],
+    'npc.examine': [
+      { when: { fullness: 1, stageMin: 5 }, text: 'Bess leans against the butcher block, apron stained, belly distended. The cleaver rests beside her — she\'s too stuffed to lift it.' },
+      { when: { stageMin: 10 }, text: 'Bess the Butcher is enormous — blood-stained apron stretched over a vast, meat-fed frame. The shop feels smaller when she turns.' },
+      { when: { stageMin: 6, stageMax: 9 }, text: 'Bess has grown massive, thick arms and thicker middle. She still handles the knife like a whisper.' },
+      { when: { stageMin: 4, stageMax: 5 }, text: 'Bess is noticeably heavier — muscle and softness both, the butcher who samples her own stock.' },
+      { when: { stageMax: 3 }, text: 'Bess the Butcher — blood to the elbows, blunt smile, cleaver never far from her hand.' },
+    ],
+    'npc.dialogue.selling': [
+      { when: { reputationMin: 40 }, text: 'Best cuts go to people I like. You qualify. Barely.', weight: 2 },
+      { when: {}, text: 'Prices are on the board. Don\'t bleed on my sawdust.', weight: 1 },
+    ],
+    'npc.dialogue.after_feeding': [
+      { when: { willingnessMin: 70 }, text: 'Now THAT was meat worth eating. You have taste.', weight: 3 },
+      { when: {}, text: '...Solid. I\'ll remember you.', weight: 1 },
+    ],
+  },
+
+  // ── NELL THE FISHMONGER ──────────────────────────────────────────────────────
+  nell_fish: {
+    'npc.dialogue.greeting': [
+      { when: { reputationMin: 45 }, text: 'Fresh catch today — and you look like someone who appreciates fresh.', weight: 3 },
+      { when: {}, text: 'Fish or gossip. I sell both. Which first?', weight: 1 },
+    ],
+    'npc.examine': [
+      { when: { stageMin: 9 }, text: 'Nell is enormous — brine-scented, pear-shaped, blocking half the stall. She fillets with one hand and waves customers with the other.' },
+      { when: { stageMin: 5, stageMax: 8 }, text: 'Nell has grown very large, apron tight, arms still quick with the knife. The harbor knows her by silhouette alone.' },
+      { when: { stageMin: 3, stageMax: 4 }, text: 'Nell is softer than when you met her — still sharp-eyed, still sharp-tongued, curves pressing against her oilskin.' },
+      { when: { stageMax: 2 }, text: 'Nell the Fishmonger — quick hands, sharper haggle, brine on everything she owns.' },
+    ],
+    'npc.dialogue.harbor_tales': [
+      { when: { stageMin: 4 }, text: 'Tide brought in more than fish last week. Appetites follow the boats.', weight: 3 },
+      { when: {}, text: 'Salt air makes everyone hungry. I count on it.', weight: 1 },
+    ],
+    'npc.dialogue.haggle': [
+      { when: { reputationMin: 35 }, text: 'For you? A sliver off the top. Don\'t make me regret it.', weight: 2 },
+      { when: {}, text: 'My price is fair. Your offer isn\'t. Yet.', weight: 1 },
+    ],
+  },
+
+  // ── CORAL THE BALLROOM DANCER ──────────────────────────────────────────────
+  coral_dancer: {
+    'npc.dialogue.greeting': [
+      { when: { reputationMin: 50 }, text: 'Darling! The floor is empty but the music isn\'t — care for a turn?', weight: 3 },
+      { when: {}, text: 'One-two-three — oh, it\'s you. Don\'t step on the parquet.', weight: 1 },
+    ],
+    'npc.examine': [
+      { when: { fullness: 1, stageMin: 5 }, text: 'Coral reclines on the ballroom steps, gown straining, too full to waltz. She hums a tune anyway, dreamy and stuffed.' },
+      { when: { stageMin: 8 }, text: 'Coral is vast and graceful — or would be, if the floorboards agreed. She moves like a ship in calm water, slow and inevitable.' },
+      { when: { stageMin: 4, stageMax: 7 }, text: 'Coral has filled out her dancing dresses considerably. She spins slower now, but the smile is the same.' },
+      { when: { stageMax: 3 }, text: 'Coral the Ballroom Dancer — light on her feet, lighter in spirit, practicing alone between galas.' },
+    ],
+    'npc.dialogue.noble_gossip': [
+      { when: { reputationMin: 40 }, text: 'The last gala ended early. The kitchen did not. Draw your own conclusions.', weight: 3 },
+      { when: {}, text: 'Nobles dance hungry. Servants feed them. I see both sides.', weight: 1 },
+    ],
+    'npc.dialogue.offer_food': [
+      { when: { willingnessMin: 65 }, text: 'A canapé? A tart? Darling, don\'t tease — place it in my hand.', weight: 3 },
+      { when: {}, text: 'If it\'s sweet, I\'m interested. If it\'s not, try the kitchen.', weight: 1 },
+    ],
+  },
+
+  // ── SISTER AGNES THE CONFESSOR ─────────────────────────────────────────────
+  agnes_confessor: {
+    'npc.dialogue.greeting': [
+      { when: { reputationMin: 50 }, text: 'Come, child. The lattice is open. What weighs on you — besides appetite?', weight: 3 },
+      { when: {}, text: 'Speak softly. The shrine listens.', weight: 1 },
+    ],
+    'npc.examine': [
+      { when: { stageMin: 9 }, text: 'Sister Agnes is enormous now — soft, pear-shaped, filling the confession booth like a blessing. Her voice is still gentle.' },
+      { when: { stageMin: 5, stageMax: 8 }, text: 'Agnes has grown large and serene behind the lattice, habit adjusted many times. Forgiveness comes easier on a full stomach.' },
+      { when: { stageMax: 4 }, text: 'Sister Agnes the Confessor — gentle eyes behind the screen, hearing sins without judgment.' },
+    ],
+    'npc.dialogue.temple_sermon': [
+      { when: { stageMin: 4 }, text: 'Confession is hunger of the soul. I feed both kinds, when I can.', weight: 3 },
+      { when: {}, text: 'Speak your appetite aloud. The shrine does not blush.', weight: 1 },
+    ],
+    'npc.dialogue.friendly': [
+      { when: { reputationMin: 45 }, text: 'You carry kindness. I hear it in how you treat the hungry.', weight: 2 },
+      { when: {}, text: 'Peace, child. You are welcome here.', weight: 1 },
+    ],
+  },
+
+  // ── BRIGIT THE SMOKEHOUSE COOK ─────────────────────────────────────────────
+  brigit_smoke: {
+    'npc.dialogue.greeting': [
+      { when: { reputationMin: 45 }, text: 'You\'re early. Good — the hams need tasting. Grab an apron.', weight: 3 },
+      { when: {}, text: 'Smoke in your lungs means you\'re close enough. What?', weight: 1 },
+    ],
+    'npc.examine': [
+      { when: { stageMin: 10 }, text: 'Brigit is a mountain of hickory scent and flesh — smokemaster, immovable, the smokehouse built around her.' },
+      { when: { stageMin: 6, stageMax: 9 }, text: 'Brigit has grown enormous, apron like a sail, still judging ham by patience and pressure.' },
+      { when: { stageMin: 4, stageMax: 5 }, text: 'Brigit is thick and permanent-smelling — apple-shaped, gruff, pleased with her work and her portions.' },
+      { when: { stageMax: 3 }, text: 'Brigit the Smokehouse Cook — hickory in her hair, patience in her hands, ham on her mind.' },
+    ],
+    'npc.dialogue.cooking': [
+      { when: { stageMin: 5 }, text: 'Smoke teaches patience. So does hunger. I excel at both.', weight: 3 },
+      { when: {}, text: 'Low and slow. That\'s ham. That\'s life.', weight: 1 },
+    ],
+    'npc.dialogue.after_feeding': [
+      { when: { willingnessMin: 70 }, text: 'Mmm. Properly salted. You know what you\'re doing.', weight: 3 },
+      { when: {}, text: '...Not bad. Could use more smoke.', weight: 1 },
+    ],
+  },
+
+  // ── ROSA THE BAKER ─────────────────────────────────────────────────────────
+  rosa_baker: {
+    'npc.dialogue.greeting': [
+      { when: { reputationMin: 50 }, text: 'Fresh from the oven — and you\'re just in time! Try the crust while it sings.', weight: 3 },
+      { when: { willingnessMin: 70 }, text: 'I pulled a batch early for you. Well — for whoever asks nicely. That\'s you.', weight: 2 },
+      { when: {}, text: 'Welcome! Mind the flour on the floor.', weight: 1 },
+    ],
+    'npc.examine': [
+      { when: { fullness: 1, stageMin: 5 }, text: 'Rosa sits on a flour sack, dusted white, belly round and warm. She smells like yeast and satisfaction.' },
+      { when: { stageMin: 8 }, text: 'Rosa is enormously soft — baker\'s arms, baker\'s belly, smile that could sell bread to the dead.' },
+      { when: { stageMin: 4, stageMax: 7 }, text: 'Rosa has grown plump and flour-dusted, sampling every batch with professional dedication.' },
+      { when: { stageMax: 3 }, text: 'Rosa the Baker — flour in her hair, warmth in her voice, loaves cooling on every rack.' },
+    ],
+    'npc.dialogue.market_banter': [
+      { when: { reputationMin: 35 }, text: 'Bread sells when bellies rumble. I make sure they rumble.', weight: 2 },
+      { when: {}, text: 'Fair price for fair loaf. That\'s the bakery way.', weight: 1 },
+    ],
+    'npc.dialogue.selling': [
+      { when: {}, text: 'Still warm. Still cheap. Still the best you\'ll get today.', weight: 1 },
+    ],
+  },
+
+  // ── PORTIA THE GATE WARDEN ─────────────────────────────────────────────────
+  portia_gate: {
+    'npc.dialogue.greeting': [
+      { when: { reputationMin: 50 }, text: 'You again. The countess mentioned you favorably. I\'ll allow it.', weight: 3 },
+      { when: { reputationMax: 10 }, text: 'Invitation or business. No loitering at the gate.', weight: 2 },
+      { when: {}, text: 'State your purpose. Briefly.', weight: 1 },
+    ],
+    'npc.examine': [
+      { when: { stageMin: 9 }, text: 'Portia the Gate Warden is immense — uniform long surrendered, authority undiminished. The estate gates feel narrower when she stands.' },
+      { when: { stageMin: 5, stageMax: 8 }, text: 'Portia has grown heavy and stern, keys still jangling, gaze still sharp.' },
+      { when: { stageMax: 4 }, text: 'Portia — gate warden, iron discipline, eyes that weigh your worth before you speak.' },
+    ],
+    'npc.dialogue.noble_gossip': [
+      { when: { reputationMin: 40 }, text: 'I see who enters hungry and who leaves hungrier. The estate keeps secrets. I keep the gate.', weight: 3 },
+      { when: {}, text: 'Appearances are policy here. Appetites are... less discussed.', weight: 1 },
+    ],
+    'npc.dialogue.warning': [
+      { when: { reputationMax: -15 }, text: 'One step out of line and the gates close. Try me.', weight: 3 },
+      { when: {}, text: 'Mind the gravel. Mind your manners.', weight: 1 },
+    ],
+  },
+
+  // ── PATRICE THE HOSTEL KEEPER ──────────────────────────────────────────────
+  patrice_hostel: {
+    'npc.dialogue.greeting': [
+      { when: { reputationMin: 50 }, text: 'Come in, come in — soup\'s on and there\'s room by the fire.', weight: 3 },
+      { when: { willingnessMin: 75 }, text: 'You look hungry, dear. Sit. I\'ll ladle before you ask.', weight: 3 },
+      { when: {}, text: 'Pilgrim hostel — cots, hearth, and stew. What do you need?', weight: 1 },
+    ],
+    'npc.examine': [
+      { when: { fullness: 1, stageMin: 5 }, text: 'Patrice stirs the eternal pot, belly resting against the ladle, motherly and utterly stuffed. Pilgrims eat first. She ate second.' },
+      { when: { stageMin: 8 }, text: 'Patrice is enormous — the hearth, the pot, and her frame compete for space. Pilgrims adore her. The soup never ends.' },
+      { when: { stageMin: 4, stageMax: 7 }, text: 'Patrice has grown soft and ample, ladling soup with practiced warmth.' },
+      { when: { stageMax: 3 }, text: 'Patrice the Hostel Keeper — ladle in hand, kindness in her eyes, soup always simmering.' },
+    ],
+    'npc.dialogue.offer_food': [
+      { when: { willingnessMin: 70 }, text: 'For the hostel? Or for me? ...Either way, yes please.', weight: 3 },
+      { when: {}, text: 'Food shared is food blessed. What have you brought?', weight: 1 },
+    ],
+    'npc.dialogue.cooking': [
+      { when: { stageMin: 4 }, text: 'The pot never empties because I never stop tasting. Occupational hazard.', weight: 2 },
+      { when: {}, text: 'Soup feeds everyone. That\'s the rule.', weight: 1 },
+    ],
+  },
 };
 
 export function registerNPCPersonas(engine) {
